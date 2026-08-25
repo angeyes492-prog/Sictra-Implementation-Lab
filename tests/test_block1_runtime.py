@@ -573,7 +573,10 @@ class Block1OperationalTests(unittest.TestCase):
 
     def test_journal_capacity_is_bounded(self):
         self.runtime.close()
-        self.runtime = self.make_runtime(max_records=1, max_attempts=1)
+        self.runtime = self.make_runtime(
+            store_path=Path(self.temp.name) / "journal-capacity.sqlite3",
+            max_records=1, max_attempts=1,
+        )
         first = self.execute("t-journal-1", "r-journal-1", authority=None)
         self.assertEqual(first.payload["enforcement"]["status"], "NOT_EXECUTED")
         with self.assertRaises(ContractViolation):
@@ -585,11 +588,12 @@ class Block1OperationalTests(unittest.TestCase):
 
     def test_journal_capacity_is_bounded_across_connections(self):
         self.runtime.close()
+        capacity_db = Path(self.temp.name) / "journal-multiconnection.sqlite3"
         first = OperationalStore(
-            self.db, integrity_key=STORAGE_KEY, max_records=10, max_attempts=1
+            capacity_db, integrity_key=STORAGE_KEY, max_records=10, max_attempts=1
         )
         second = OperationalStore(
-            self.db, integrity_key=STORAGE_KEY, max_records=10, max_attempts=1
+            capacity_db, integrity_key=STORAGE_KEY, max_records=10, max_attempts=1
         )
         def write(item):
             store, fingerprint = item
@@ -621,11 +625,34 @@ class Block1OperationalTests(unittest.TestCase):
             CREATE TABLE execution_journal(
                 attempt_fingerprint TEXT, run_id TEXT, state TEXT, reason TEXT, updated_at INTEGER
             );
-            PRAGMA user_version = 6;
+            PRAGMA user_version = 7;
         """)
         connection.close()
         with self.assertRaises(ContractViolation):
             OperationalStore(malformed, integrity_key=STORAGE_KEY)
+
+    def test_unapproved_sqlite_trigger_is_rejected_before_effect(self):
+        self.runtime.store._db.execute("""
+            CREATE TRIGGER forbidden_trigger AFTER INSERT ON terminal_runs
+            BEGIN
+                DELETE FROM memory_candidates;
+            END
+        """)
+        with self.assertRaises(ContractViolation):
+            self.execute("t-trigger", "r-trigger")
+        self.assertEqual(self.runtime.memory.history("t-trigger"), ())
+
+    def test_restart_rejects_extra_sqlite_schema_objects(self):
+        self.runtime.close()
+        connection = sqlite3.connect(self.db)
+        connection.execute("CREATE TABLE unapproved_table(value TEXT)")
+        connection.commit()
+        connection.close()
+        with self.assertRaises(ContractViolation):
+            self.runtime = self.make_runtime()
+        self.runtime = self.make_runtime(
+            store_path=Path(self.temp.name) / "replacement.sqlite3"
+        )
 
     def test_post_commit_delivery_failure_preserves_committed_journal(self):
         original = self.runtime.integration.route
@@ -642,6 +669,16 @@ class Block1OperationalTests(unittest.TestCase):
             self.runtime.store.journal("r1")[-1]["state"],
             "EFFECT_AND_TERMINAL_COMMITTED",
         )
+
+    def test_terminal_journal_state_cannot_regress_to_started(self):
+        self.execute()
+        fingerprint = self.runtime.store.get_terminal("r1")[0]
+        self.runtime.store.record_state(
+            fingerprint, "r1", "STARTED", "late concurrent replay", NOW + 1
+        )
+        entry = self.runtime.store.journal("r1")[-1]
+        self.assertEqual(entry["state"], "EFFECT_AND_TERMINAL_COMMITTED")
+        self.assertEqual(entry["reason"], "COMMITTED")
 
     def test_noncanonical_claim_alias_is_rejected(self):
         result = self.execute(
@@ -679,9 +716,30 @@ class Block1OperationalTests(unittest.TestCase):
         with self.assertRaises(ContractViolation):
             self.runtime.store.get_terminal("r1")
 
+    def test_committed_terminal_authenticates_effect_columns_and_record(self):
+        self.execute()
+        self.runtime.store._db.execute(
+            "UPDATE memory_candidates SET task_id = ? WHERE run_id = ?",
+            ("moved-task", "r1"),
+        )
+        with self.assertRaises(ContractViolation):
+            self.runtime.store.get_terminal("r1")
+
+    def test_restart_rejects_wrong_storage_key_and_capacity_drift(self):
+        self.execute()
+        self.runtime.close()
+        with self.assertRaises(ContractViolation):
+            self.runtime = self.make_runtime(storage_integrity_key=b"z" * 32)
+        with self.assertRaises(ContractViolation):
+            self.runtime = self.make_runtime(max_records=99_999)
+        self.runtime = self.make_runtime()
+
     def test_full_memory_store_prevents_e07_false_green(self):
         self.runtime.close()
-        self.runtime = self.make_runtime(max_records=1, max_attempts=10)
+        self.runtime = self.make_runtime(
+            store_path=Path(self.temp.name) / "full-memory.sqlite3",
+            max_records=1, max_attempts=10,
+        )
         self.execute("t-full-1", "r-full-1")
         result = self.execute("t-full-2", "r-full-2")
         self.assertEqual(result.payload["stability"]["health"], "AT_RISK")
@@ -690,8 +748,13 @@ class Block1OperationalTests(unittest.TestCase):
 
     def test_concurrent_last_capacity_is_a_terminal_no_effect_not_failure(self):
         self.runtime.close()
-        first_runtime = self.make_runtime(max_records=1, max_attempts=10)
-        second_runtime = self.make_runtime(max_records=1, max_attempts=10)
+        capacity_db = Path(self.temp.name) / "last-capacity.sqlite3"
+        first_runtime = self.make_runtime(
+            store_path=capacity_db, max_records=1, max_attempts=10
+        )
+        second_runtime = self.make_runtime(
+            store_path=capacity_db, max_records=1, max_attempts=10
+        )
         def run(item):
             runtime, task_id, run_id = item
             return runtime.run(
@@ -746,6 +809,19 @@ class Block1OperationalTests(unittest.TestCase):
         with self.assertRaises(ContractViolation):
             self.runtime.memory.authorize_commit(
                 tampered, action="store_candidate", now=NOW
+            )
+        governance_tampered = replace(decision, payload={
+            **decision.payload,
+            "governance": {
+                **decision.payload["governance"],
+                "decision_is_enforcement": True,
+                "runtime_effect_observed": True,
+                "authority_reason": "FABRICATED",
+            },
+        })
+        with self.assertRaises(ContractViolation):
+            self.runtime.memory.authorize_commit(
+                governance_tampered, action="store_candidate", now=NOW
             )
 
     def test_commit_reauthorization_occurs_inside_lock_and_rejects_expiry(self):

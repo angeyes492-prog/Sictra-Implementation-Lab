@@ -73,10 +73,8 @@ def _candidate_fingerprint(candidate: Mapping[str, Any]) -> str:
 
 def _decision_material(governance: Mapping[str, Any]) -> bytes:
     fields = {
-        key: plain_copy(governance.get(key)) for key in (
-            "decision_issuer", "task_id", "run_id", "action", "decision",
-            "input_fingerprint", "candidate_fingerprint",
-        )
+        key: plain_copy(value) for key, value in governance.items()
+        if key != "decision_attestation"
     }
     return json.dumps(fields, sort_keys=True, separators=(",", ":")).encode()
 

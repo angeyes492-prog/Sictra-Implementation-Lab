@@ -45,10 +45,14 @@ outcome como la evidencia; una sustitución posterior queda `INSUFFICIENT`.
 - El terminal vincula request fingerprint, result fingerprint y envelope en un
   HMAC de integridad verificado al leer.
 - Memoria y journal tienen capacidades configuradas y fallan cerrado al agotarse.
-- Solo schema SQLite v6 exacto es admitido, incluidas restricciones, CHECK e
+- Solo schema SQLite v7 exacto es admitido, incluidas restricciones, CHECK e
   índice parcial exacto;
   una base sin versión que ya contiene tablas protegidas se rechaza sin mutación.
 - Un terminal `COMMITTED` se invalida si falta o difiere su efecto durable.
+- La metadata HMAC fija identidad de clave y capacidades globales; una conexión
+  con configuración divergente no puede abrir el store.
+- Tablas, índices, vistas o triggers no autorizados hacen fallar la apertura o
+  la transacción; la coherencia durable se valida nuevamente antes del commit.
 - Lecturas devuelven snapshots profundamente inmutables.
 - Replay exacto devuelve el terminal existente; collision no escribe.
 

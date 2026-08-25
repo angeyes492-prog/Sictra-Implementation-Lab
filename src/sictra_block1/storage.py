@@ -48,6 +48,7 @@ class OperationalStore:
             self._db.execute("PRAGMA journal_mode = WAL")
             self._db.execute("PRAGMA synchronous = FULL")
         version = self._db.execute("PRAGMA user_version").fetchone()[0]
+        is_new = version == 0
         if version == 0:
             existing = {
                 row["name"] for row in self._db.execute(
@@ -58,9 +59,24 @@ class OperationalStore:
             if existing & protected:
                 self._db.close()
                 raise ContractViolation("unversioned operational tables cannot be promoted implicitly")
-        elif version != 6:
+        elif version != 7:
             self._db.close()
             raise ContractViolation(f"unsupported SQLite schema version: {version}")
+        else:
+            existing_objects = {
+                (row["type"], row["name"]) for row in self._db.execute(
+                    """SELECT type, name FROM sqlite_master
+                       WHERE name NOT LIKE 'sqlite_%'"""
+                ).fetchall()
+            }
+            required_objects = {
+                ("table", "memory_candidates"), ("table", "terminal_runs"),
+                ("table", "execution_journal"), ("table", "store_metadata"),
+                ("index", "one_committed_effect_per_run"),
+            }
+            if existing_objects != required_objects:
+                self._db.close()
+                raise ContractViolation("versioned operational schema is incomplete or extended")
         self._db.executescript("""
             CREATE TABLE IF NOT EXISTS memory_candidates (
                 task_id TEXT NOT NULL,
@@ -89,8 +105,26 @@ class OperationalStore:
                 reason TEXT NOT NULL,
                 updated_at INTEGER NOT NULL
             );
-            PRAGMA user_version = 6;
+            CREATE TABLE IF NOT EXISTS store_metadata (
+                singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
+                max_records INTEGER NOT NULL,
+                max_attempts INTEGER NOT NULL,
+                key_check TEXT NOT NULL
+            );
+            PRAGMA user_version = 7;
         """)
+        if is_new:
+            self._db.execute(
+                """INSERT INTO store_metadata(
+                   singleton, max_records, max_attempts, key_check
+                   ) VALUES (1, ?, ?, ?)""",
+                (
+                    self.max_records, self.max_attempts,
+                    self._mac(
+                        f"sictra-store-v7:{self.max_records}:{self.max_attempts}"
+                    ),
+                ),
+            )
         expected_columns = {
             "memory_candidates": (
                 ("task_id", "TEXT", 1, 1), ("run_id", "TEXT", 1, 0),
@@ -107,6 +141,12 @@ class OperationalStore:
                 ("attempt_fingerprint", "TEXT", 0, 1), ("run_id", "TEXT", 1, 0),
                 ("state", "TEXT", 1, 0), ("reason", "TEXT", 1, 0),
                 ("updated_at", "INTEGER", 1, 0),
+            ),
+            "store_metadata": (
+                ("singleton", "INTEGER", 0, 1),
+                ("max_records", "INTEGER", 1, 0),
+                ("max_attempts", "INTEGER", 1, 0),
+                ("key_check", "TEXT", 1, 0),
             ),
         }
         for table, expected in expected_columns.items():
@@ -153,9 +193,36 @@ class OperationalStore:
         if normalize(index_sql) != expected_index:
             self._db.close()
             raise ContractViolation("committed-effect index predicate is invalid")
+        metadata = self._db.execute(
+            "SELECT max_records, max_attempts, key_check FROM store_metadata WHERE singleton = 1"
+        ).fetchone()
+        expected_key_check = self._mac(
+            f"sictra-store-v7:{self.max_records}:{self.max_attempts}"
+        )
+        if (metadata is None or metadata["max_records"] != self.max_records
+                or metadata["max_attempts"] != self.max_attempts
+                or not hmac.compare_digest(metadata["key_check"], expected_key_check)):
+            self._db.close()
+            raise ContractViolation("storage key or durable capacity configuration mismatch")
+        self._assert_allowed_schema_objects()
 
     def _mac(self, material: str) -> str:
         return hmac.new(self._integrity_key, material.encode(), sha256).hexdigest()
+
+    def _assert_allowed_schema_objects(self) -> None:
+        objects = {
+            (row["type"], row["name"]) for row in self._db.execute(
+                """SELECT type, name FROM sqlite_master
+                   WHERE name NOT LIKE 'sqlite_%'"""
+            ).fetchall()
+        }
+        expected = {
+            ("table", "memory_candidates"), ("table", "terminal_runs"),
+            ("table", "execution_journal"), ("table", "store_metadata"),
+            ("index", "one_committed_effect_per_run"),
+        }
+        if objects != expected:
+            raise ContractViolation("operational SQLite contains unapproved schema objects")
 
     def healthcheck(self, *, write_required: bool = False) -> bool:
         try:
@@ -176,6 +243,7 @@ class OperationalStore:
         with self._lock:
             self._db.execute("BEGIN IMMEDIATE")
             try:
+                self._assert_allowed_schema_objects()
                 exists = self._db.execute(
                     "SELECT 1 FROM execution_journal WHERE attempt_fingerprint = ?",
                     (attempt_fingerprint,),
@@ -190,7 +258,18 @@ class OperationalStore:
                     """INSERT INTO execution_journal(attempt_fingerprint, run_id, state, reason, updated_at)
                        VALUES (?, ?, ?, ?, ?)
                        ON CONFLICT(attempt_fingerprint) DO UPDATE SET
-                       state=excluded.state, reason=excluded.reason, updated_at=excluded.updated_at""",
+                       state=CASE
+                         WHEN execution_journal.state IN (
+                           'EFFECT_AND_TERMINAL_COMMITTED', 'TERMINAL_NO_EFFECT'
+                         ) THEN execution_journal.state ELSE excluded.state END,
+                       reason=CASE
+                         WHEN execution_journal.state IN (
+                           'EFFECT_AND_TERMINAL_COMMITTED', 'TERMINAL_NO_EFFECT'
+                         ) THEN execution_journal.reason ELSE excluded.reason END,
+                       updated_at=CASE
+                         WHEN execution_journal.state IN (
+                           'EFFECT_AND_TERMINAL_COMMITTED', 'TERMINAL_NO_EFFECT'
+                         ) THEN execution_journal.updated_at ELSE excluded.updated_at END""",
                     (attempt_fingerprint, run_id, state, reason, now),
                 )
                 self._db.execute("COMMIT")
@@ -221,7 +300,8 @@ class OperationalStore:
             raise ContractViolation("terminal integrity verification failed")
         if row["effect_committed"]:
             memory = self._db.execute(
-                """SELECT version, record_hash, candidate_fingerprint, record_json
+                """SELECT task_id, run_id, version, previous_hash, record_hash,
+                          candidate_fingerprint, record_json
                    FROM memory_candidates
                    WHERE run_id = ?""", (run_id,)
             ).fetchone()
@@ -230,9 +310,33 @@ class OperationalStore:
                     or memory["candidate_fingerprint"] != enforcement.get("candidate_fingerprint")):
                 raise ContractViolation("terminal effect coherence verification failed")
             stored = json.loads(memory["record_json"])
+            claimed_hash = stored.pop("record_hash", None)
+            calculated_hash = self._mac(memory["previous_hash"] + _encoded(stored))
+            if (
+                memory["task_id"] != envelope.task_id
+                or memory["run_id"] != envelope.run_id
+                or stored.get("task_id") != memory["task_id"]
+                or stored.get("run_id") != memory["run_id"]
+                or stored.get("version") != memory["version"]
+                or stored.get("previous_hash") != memory["previous_hash"]
+                or memory["record_hash"] != calculated_hash
+                or claimed_hash != calculated_hash
+            ):
+                raise ContractViolation("terminal durable effect authentication failed")
+            if memory["version"] == 1:
+                if memory["previous_hash"] != "GENESIS":
+                    raise ContractViolation("terminal effect chain genesis is invalid")
+            else:
+                previous = self._db.execute(
+                    """SELECT record_hash FROM memory_candidates
+                       WHERE task_id = ? AND version = ?""",
+                    (memory["task_id"], memory["version"] - 1),
+                ).fetchone()
+                if previous is None or previous["record_hash"] != memory["previous_hash"]:
+                    raise ContractViolation("terminal effect chain predecessor is invalid")
             candidate = {
                 key: value for key, value in stored.items()
-                if key not in {"version", "previous_hash", "record_hash"}
+                if key not in {"version", "previous_hash"}
             }
             if sha256(_encoded(candidate).encode()).hexdigest() != memory["candidate_fingerprint"]:
                 raise ContractViolation("durable candidate binding verification failed")
@@ -300,6 +404,7 @@ class OperationalStore:
         with self._lock:
             self._db.execute("BEGIN IMMEDIATE")
             try:
+                self._assert_allowed_schema_objects()
                 terminal = self._db.execute(
                     """SELECT request_fingerprint, result_fingerprint, terminal_hash,
                               effect_committed, envelope_json
@@ -384,6 +489,16 @@ class OperationalStore:
                         _encoded(final.to_dict()),
                     ),
                 )
+                terminal_row = self._db.execute(
+                    """SELECT request_fingerprint, result_fingerprint, terminal_hash,
+                              effect_committed, envelope_json
+                       FROM terminal_runs WHERE request_fingerprint = ?""",
+                    (request_fingerprint,),
+                ).fetchone()
+                _, verified_final = self._validated_terminal(
+                    terminal_row, decision_envelope.run_id
+                )
+                self._assert_allowed_schema_objects()
                 self._db.execute(
                     """UPDATE execution_journal SET state = ?, reason = ?, updated_at = ?
                        WHERE attempt_fingerprint = ?""",
@@ -392,8 +507,18 @@ class OperationalStore:
                         commit_time, request_fingerprint,
                     ),
                 )
+                terminal_row = self._db.execute(
+                    """SELECT request_fingerprint, result_fingerprint, terminal_hash,
+                              effect_committed, envelope_json
+                       FROM terminal_runs WHERE request_fingerprint = ?""",
+                    (request_fingerprint,),
+                ).fetchone()
+                _, verified_final = self._validated_terminal(
+                    terminal_row, decision_envelope.run_id
+                )
+                self._assert_allowed_schema_objects()
                 self._db.execute("COMMIT")
-                return final
+                return verified_final
             except Exception:
                 self._db.execute("ROLLBACK")
                 raise
@@ -407,6 +532,7 @@ class OperationalStore:
         with self._lock:
             self._db.execute("BEGIN IMMEDIATE")
             try:
+                self._assert_allowed_schema_objects()
                 self._db.execute(
                     """INSERT INTO terminal_runs(
                        request_fingerprint, run_id, result_fingerprint, terminal_hash,
@@ -431,6 +557,7 @@ class OperationalStore:
                     (request_fingerprint,),
                 ).fetchone()
                 _, result = self._validated_terminal(row, envelope.run_id)
+                self._assert_allowed_schema_objects()
                 self._db.execute("COMMIT")
                 return result
             except Exception:
