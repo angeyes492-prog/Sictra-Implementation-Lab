@@ -115,7 +115,11 @@ class AgentEngine:
         if any(not isinstance(item, Mapping) for item in bounded):
             raise ContractViolation("every source must be a mapping")
         attempt = authority.nonce if authority else "untrusted"
-        root = f"request:{task_id}:{run_id}:{attempt}"
+        root_material = json.dumps(
+            {"task_id": task_id, "run_id": run_id, "attempt": attempt},
+            sort_keys=True, separators=(",", ":"),
+        )
+        root = f"request:{sha256(root_material.encode()).hexdigest()}"
         return Envelope(
             message_id=(
                 f"{task_id}:{run_id}:{sha256(root.encode()).hexdigest()[:16]}:0:E01"

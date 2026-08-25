@@ -32,7 +32,7 @@ registra por separado decisión y efecto.
 - E08 atesta cada decisión contra task/run/acción/input/candidato; E06 verifica
   esa atestación y vuelve a verificar la capability antes del efecto.
 - El reloj lo inyecta el host, no la petición, y se vuelve a consultar en E08
-  y justo antes del commit E06 para cerrar expiración durante el pipeline.
+  y dentro de la transacción, después de adquirir el lock de escritura.
 - Las claves de fixture de CI no son claves operativas ni de producción.
 
 ## Estado y recuperación
@@ -41,8 +41,8 @@ registra por separado decisión y efecto.
   archivo.
 - `run_id` es único en el store. Reuso exacto devuelve el terminal anterior;
   reuso materialmente diferente es `IdentityCollision`.
-- E06 tiene unicidad por run, versionado atómico por task y cadena hash
-  verificable contra alteración accidental o directa del registro.
+- E06 tiene unicidad por run, versionado atómico por task y cadena HMAC
+  verificable con una clave de integridad separada de SQLite.
 - Efecto y terminal se confirman en la misma transacción. Un fallo inyectado
   entre ambos revierte los dos; un retry o restart comienza sin efecto parcial.
 - El replay de un terminal queda marcado como histórico y no se presenta como
@@ -51,11 +51,14 @@ registra por separado decisión y efecto.
   `EFFECT_AND_TERMINAL_COMMITTED`.
 - Memoria y journal tienen capacidades independientes configurables. Al
   agotarse, fallan cerrado; no se expulsa silenciosamente identidad contractual.
-- SQLite schema v5 rechaza versiones futuras/anteriores y tablas operacionales
+- SQLite schema v6 rechaza versiones futuras/anteriores y tablas operacionales
   sin versión; no promueve esquemas desconocidos implícitamente.
 - Los terminales `COMMITTED` son únicos por run y deben corresponder a su fila
   de memoria. Los `NOT_EXECUTED` son terminales durables por fingerprint de
   intento, por lo que se pueden reproducir sin bloquear un intento autorizado nuevo.
+- E07 observa capacidad pero no la reserva. Si otro writer consume el último
+  cupo, se registra un terminal `NOT_EXECUTED` con la razón del cambio, sin
+  presentar el intento como efecto ejecutado.
 - Semántica: at-least-once delivery con efectos idempotentes; exactly-once no
   se reclama.
 

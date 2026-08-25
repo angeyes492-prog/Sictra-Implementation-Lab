@@ -30,13 +30,15 @@ def _decoded_envelope(raw: str) -> Envelope:
 
 
 class OperationalStore:
-    def __init__(self, path: str | Path = ":memory:", max_records: int = 100_000,
+    def __init__(self, path: str | Path = ":memory:", *, integrity_key: bytes,
+                 max_records: int = 100_000,
                  max_attempts: int | None = None) -> None:
         effective_attempts = max_records if max_attempts is None else max_attempts
-        if max_records < 1 or effective_attempts < 1:
-            raise ContractViolation("storage capacities must be positive")
+        if max_records < 1 or effective_attempts < 1 or len(integrity_key) < 32:
+            raise ContractViolation("storage capacities and 32-byte integrity key are required")
         self.path, self.max_records = str(path), max_records
         self.max_attempts = effective_attempts
+        self._integrity_key = bytes(integrity_key)
         self.failure_injector: Callable[[str], None] | None = None
         self._lock = RLock()
         self._db = sqlite3.connect(self.path, check_same_thread=False, isolation_level=None)
@@ -56,7 +58,7 @@ class OperationalStore:
             if existing & protected:
                 self._db.close()
                 raise ContractViolation("unversioned operational tables cannot be promoted implicitly")
-        elif version != 5:
+        elif version != 6:
             self._db.close()
             raise ContractViolation(f"unsupported SQLite schema version: {version}")
         self._db.executescript("""
@@ -87,7 +89,7 @@ class OperationalStore:
                 reason TEXT NOT NULL,
                 updated_at INTEGER NOT NULL
             );
-            PRAGMA user_version = 5;
+            PRAGMA user_version = 6;
         """)
         expected_columns = {
             "memory_candidates": (
@@ -134,6 +136,26 @@ class OperationalStore:
         if not required_indexes.issubset(index_signatures):
             self._db.close()
             raise ContractViolation("operational schema indexes are incomplete")
+        normalize = lambda value: "".join(value.lower().split()) if value else ""
+        terminal_sql = self._db.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='terminal_runs'"
+        ).fetchone()["sql"]
+        index_sql = self._db.execute(
+            "SELECT sql FROM sqlite_master WHERE type='index' AND name='one_committed_effect_per_run'"
+        ).fetchone()["sql"]
+        if "check(effect_committedin(0,1))" not in normalize(terminal_sql):
+            self._db.close()
+            raise ContractViolation("terminal effect constraint is missing")
+        expected_index = (
+            "createuniqueindexone_committed_effect_per_run"
+            "onterminal_runs(run_id)whereeffect_committed=1"
+        )
+        if normalize(index_sql) != expected_index:
+            self._db.close()
+            raise ContractViolation("committed-effect index predicate is invalid")
+
+    def _mac(self, material: str) -> str:
+        return hmac.new(self._integrity_key, material.encode(), sha256).hexdigest()
 
     def healthcheck(self, *, write_required: bool = False) -> bool:
         try:
@@ -186,10 +208,10 @@ class OperationalStore:
 
     def _validated_terminal(self, row: sqlite3.Row, run_id: str) -> tuple[str, Envelope]:
         envelope = _decoded_envelope(row["envelope_json"])
-        expected_hash = sha256((
+        expected_hash = self._mac(
             row["request_fingerprint"] + row["result_fingerprint"]
             + str(row["effect_committed"]) + row["envelope_json"]
-        ).encode()).hexdigest()
+        )
         enforcement = envelope.payload.get("enforcement")
         expected_status = "COMMITTED" if row["effect_committed"] else "NOT_EXECUTED"
         if (envelope.run_id != run_id or envelope.fingerprint != row["result_fingerprint"]
@@ -199,12 +221,21 @@ class OperationalStore:
             raise ContractViolation("terminal integrity verification failed")
         if row["effect_committed"]:
             memory = self._db.execute(
-                """SELECT version, record_hash FROM memory_candidates
+                """SELECT version, record_hash, candidate_fingerprint, record_json
+                   FROM memory_candidates
                    WHERE run_id = ?""", (run_id,)
             ).fetchone()
             if (memory is None or memory["version"] != enforcement.get("record_version")
-                    or memory["record_hash"] != enforcement.get("record_hash")):
+                    or memory["record_hash"] != enforcement.get("record_hash")
+                    or memory["candidate_fingerprint"] != enforcement.get("candidate_fingerprint")):
                 raise ContractViolation("terminal effect coherence verification failed")
+            stored = json.loads(memory["record_json"])
+            candidate = {
+                key: value for key, value in stored.items()
+                if key not in {"version", "previous_hash", "record_hash"}
+            }
+            if sha256(_encoded(candidate).encode()).hexdigest() != memory["candidate_fingerprint"]:
+                raise ContractViolation("durable candidate binding verification failed")
         return row["request_fingerprint"], envelope
 
     def get_terminal(self, run_id: str,
@@ -262,7 +293,7 @@ class OperationalStore:
     def commit_effect_and_terminal(self, *, request_fingerprint: str,
                                    decision_envelope: Envelope,
                                    candidate_fingerprint: str,
-                                   record: Mapping[str, Any],
+                                   authorize_effect: Callable[[], tuple[Mapping[str, Any], int]],
                                    action: str) -> Envelope:
         if action != "store_candidate":
             raise ContractViolation("unsupported action has no operational effect handler")
@@ -286,6 +317,13 @@ class OperationalStore:
                 if committed:
                     raise IdentityCollision("run identity reused with different committed request")
 
+                record, commit_time = authorize_effect()
+                if (not isinstance(commit_time, int) or isinstance(commit_time, bool)
+                        or commit_time < 0):
+                    raise ContractViolation("commit authorization time is invalid")
+                if sha256(_encoded(record).encode()).hexdigest() != candidate_fingerprint:
+                    raise ContractViolation("authorized candidate fingerprint does not match record")
+
                 existing = self._db.execute(
                     """SELECT candidate_fingerprint, record_json, record_hash
                        FROM memory_candidates WHERE run_id = ?""",
@@ -307,7 +345,7 @@ class OperationalStore:
                     version = 1 if latest is None else latest["version"] + 1
                     previous_hash = "GENESIS" if latest is None else latest["record_hash"]
                     stored = {**plain_copy(record), "version": version, "previous_hash": previous_hash}
-                    record_hash = sha256((previous_hash + _encoded(stored)).encode()).hexdigest()
+                    record_hash = self._mac(previous_hash + _encoded(stored))
                     stored["record_hash"] = record_hash
                     self._db.execute(
                         """INSERT INTO memory_candidates(
@@ -324,6 +362,7 @@ class OperationalStore:
                 enforcement = {
                     "action": action, "status": "COMMITTED", "effect_engine": "E06",
                     "record_version": stored["version"], "record_hash": stored["record_hash"],
+                    "candidate_fingerprint": candidate_fingerprint,
                     "runtime_effect_observed": True,
                 }
                 final = decision_envelope.handoff(
@@ -338,17 +377,20 @@ class OperationalStore:
                        ) VALUES (?, ?, ?, ?, 1, ?)""",
                     (
                         request_fingerprint, final.run_id, final.fingerprint,
-                        sha256((
+                        self._mac(
                             request_fingerprint + final.fingerprint + "1"
                             + _encoded(final.to_dict())
-                        ).encode()).hexdigest(),
+                        ),
                         _encoded(final.to_dict()),
                     ),
                 )
                 self._db.execute(
-                    """UPDATE execution_journal SET state = ?, reason = ?
+                    """UPDATE execution_journal SET state = ?, reason = ?, updated_at = ?
                        WHERE attempt_fingerprint = ?""",
-                    ("EFFECT_AND_TERMINAL_COMMITTED", "COMMITTED", request_fingerprint),
+                    (
+                        "EFFECT_AND_TERMINAL_COMMITTED", "COMMITTED",
+                        commit_time, request_fingerprint,
+                    ),
                 )
                 self._db.execute("COMMIT")
                 return final
@@ -359,9 +401,9 @@ class OperationalStore:
     def commit_no_effect_terminal(self, *, request_fingerprint: str,
                                   envelope: Envelope) -> Envelope:
         encoded = _encoded(envelope.to_dict())
-        terminal_hash = sha256((
+        terminal_hash = self._mac(
             request_fingerprint + envelope.fingerprint + "0" + encoded
-        ).encode()).hexdigest()
+        )
         with self._lock:
             self._db.execute("BEGIN IMMEDIATE")
             try:
@@ -410,7 +452,7 @@ class OperationalStore:
             except (TypeError, ValueError) as error:
                 raise ContractViolation("memory history record is malformed") from error
             claimed_hash = record.pop("record_hash", None)
-            calculated = sha256((expected_previous + _encoded(record)).encode()).hexdigest()
+            calculated = self._mac(expected_previous + _encoded(record))
             if (
                 row["version"] != expected_version
                 or record.get("task_id") != row["task_id"]

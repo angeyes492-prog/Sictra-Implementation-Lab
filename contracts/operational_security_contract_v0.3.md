@@ -24,7 +24,8 @@ La capability autoriza una acción acotada; no prueba que el runtime la haya
 ejecutado. El efecto se registra después mediante un objeto de enforcement.
 La decisión E08 lleva una atestación interna ligada al fingerprint del input y
 del candidato. E06 exige esa atestación y revalida la capability con una nueva
-lectura del reloj; una etiqueta `producer=E08` no constituye autoridad.
+lectura del reloj dentro del lock transaccional; una etiqueta `producer=E08`
+no constituye autoridad.
 
 ## Integridad de ejecución
 
@@ -39,11 +40,13 @@ outcome como la evidencia; una sustitución posterior queda `INSUFFICIENT`.
 - Todas las consultas SQLite usan parámetros.
 - Efecto, asignación de versión y terminal ocurren en una única transacción
   `BEGIN IMMEDIATE`; cualquier excepción revierte la unidad completa.
-- Los registros forman una cadena hash comprobada en cada lectura.
+- Los registros forman una cadena HMAC comprobada en cada lectura; la clave de
+  integridad no reside en SQLite.
 - El terminal vincula request fingerprint, result fingerprint y envelope en un
-  hash de integridad verificado al leer.
+  HMAC de integridad verificado al leer.
 - Memoria y journal tienen capacidades configuradas y fallan cerrado al agotarse.
-- Solo schema SQLite v5 exacto es admitido, incluidas restricciones e índices;
+- Solo schema SQLite v6 exacto es admitido, incluidas restricciones, CHECK e
+  índice parcial exacto;
   una base sin versión que ya contiene tablas protegidas se rechaza sin mutación.
 - Un terminal `COMMITTED` se invalida si falta o difiere su efecto durable.
 - Lecturas devuelven snapshots profundamente inmutables.

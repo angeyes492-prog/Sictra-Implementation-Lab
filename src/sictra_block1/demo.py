@@ -17,6 +17,7 @@ def main() -> int:
     evidence_key = b"ci-evidence-fixture-key--32bytes!"
     decision_key = b"ci-decision-fixture-key--32bytes!"
     execution_key = b"ci-execution-fixture-key-32bytes!"
+    storage_key = b"ci-storage-integrity-key--32bytes!"
     authority_issuer = AuthorityIssuer("ci-governance", authority_key, "block1-runtime", 3)
     evidence_issuer = EvidenceIssuer("ci-acquisition", evidence_key)
     source = evidence_issuer.attest({
@@ -38,6 +39,7 @@ def main() -> int:
             evidence_keys={"ci-acquisition": evidence_key}, evidence_scope="intelligence",
             evidence_max_age=100, evidence_claims=frozenset({"fixture-claim"}),
             execution_key=execution_key, decision_key=decision_key,
+            storage_integrity_key=storage_key,
             clock=lambda: now,
         )
         result = runtime.run(

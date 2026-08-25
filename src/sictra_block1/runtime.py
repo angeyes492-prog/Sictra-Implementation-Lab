@@ -8,7 +8,7 @@ import time
 from typing import Any, Callable, Iterable, Mapping
 
 from .common import (
-    AuthorityContext, AuthorityVerifier, ContractViolation, Envelope,
+    AuthorityContext, AuthorityVerifier, CapacityExceeded, ContractViolation, Envelope,
     IdentityCollision, plain_copy,
 )
 from .evidence import EvidenceVerifier
@@ -39,11 +39,12 @@ class IntelligenceRuntime:
                     authority_epoch: int, evidence_keys: Mapping[str, bytes],
                     evidence_scope: str, evidence_max_age: int,
                     evidence_claims: frozenset[str], execution_key: bytes,
-                    decision_key: bytes,
+                    decision_key: bytes, storage_integrity_key: bytes,
                     max_records: int = 100_000, max_attempts: int | None = None,
                     clock: Callable[[], int] | None = None) -> "IntelligenceRuntime":
         store = OperationalStore(
-            store_path, max_records=max_records, max_attempts=max_attempts
+            store_path, integrity_key=storage_integrity_key,
+            max_records=max_records, max_attempts=max_attempts
         )
         authority_verifier = AuthorityVerifier(authority_keys, authority_audience, authority_epoch)
         evidence_verifier = EvidenceVerifier(
@@ -125,17 +126,38 @@ class IntelligenceRuntime:
             self._route(current, "RUNTIME")
 
             if decision.disposition == "ALLOW_BOUNDED_ACTION":
-                commit_now = self._trusted_now()
-                candidate = self.memory.authorize_commit(
-                    current, action=action, now=commit_now
-                )
-                final = self.store.commit_effect_and_terminal(
-                    request_fingerprint=request_fingerprint,
-                    decision_envelope=current,
-                    candidate_fingerprint=current.fingerprint,
-                    record=candidate,
-                    action=action,
-                )
+                def authorize_effect() -> tuple[Mapping[str, Any], int]:
+                    commit_now = self._trusted_now()
+                    candidate = self.memory.authorize_commit(
+                        current, action=action, now=commit_now
+                    )
+                    return candidate, commit_now
+                try:
+                    final = self.store.commit_effect_and_terminal(
+                        request_fingerprint=request_fingerprint,
+                        decision_envelope=current,
+                        candidate_fingerprint=current.payload["governance"]["candidate_fingerprint"],
+                        authorize_effect=authorize_effect,
+                        action=action,
+                    )
+                except CapacityExceeded:
+                    enforcement = {
+                        "action": action, "status": "NOT_EXECUTED",
+                        "effect_engine": None, "record_version": None,
+                        "runtime_effect_observed": False,
+                        "reason": "CAPACITY_CHANGED_AFTER_STABILITY_OBSERVATION",
+                    }
+                    final = current.handoff(
+                        "RUNTIME", "CALLER",
+                        {**current.payload, "enforcement": enforcement},
+                        restrictions=current.restrictions + (
+                            "NO_EFFECT_EXECUTED", "CAPACITY_NOT_RESERVED_BY_E07",
+                        ),
+                    )
+                    self._route(final, "CALLER")
+                    return self.store.commit_no_effect_terminal(
+                        request_fingerprint=request_fingerprint, envelope=final,
+                    )
                 self._route(final, "CALLER")
                 return final
             enforcement = {

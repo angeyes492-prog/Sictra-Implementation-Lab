@@ -1,5 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+from hashlib import sha256
+import json
 import tempfile
 from pathlib import Path
 import sqlite3
@@ -16,6 +18,7 @@ AUTHORITY_KEY = b"a" * 32
 EVIDENCE_KEY = b"e" * 32
 DECISION_KEY = b"d" * 32
 EXECUTION_KEY = b"x" * 32
+STORAGE_KEY = b"s" * 32
 _DEFAULT_AUTHORITY = object()
 
 
@@ -39,6 +42,7 @@ class Block1OperationalTests(unittest.TestCase):
             "evidence_keys": {"acquisition": EVIDENCE_KEY}, "evidence_scope": "intelligence",
             "evidence_max_age": 100, "evidence_claims": frozenset({"claim-1"}),
             "execution_key": EXECUTION_KEY, "decision_key": DECISION_KEY,
+            "storage_integrity_key": STORAGE_KEY,
             "clock": lambda: self.current_time,
         }
         options.update(overrides)
@@ -347,6 +351,26 @@ class Block1OperationalTests(unittest.TestCase):
             outcomes = list(pool.map(route, (original, altered)))
         self.assertEqual(sorted(outcomes), ["COLLISION", "ROUTED"])
 
+    def test_structured_request_identity_prevents_delimiter_aliases(self):
+        left_authority = self.authority_issuer.issue(
+            task_id="alpha:beta", run_id="gamma", actions=("store_candidate",),
+            now=NOW, ttl=50, nonce="shared-nonce",
+        )
+        right_authority = self.authority_issuer.issue(
+            task_id="alpha", run_id="beta:gamma", actions=("store_candidate",),
+            now=NOW, ttl=50, nonce="shared-nonce",
+        )
+        left = self.runtime.agent.request(
+            task_id="alpha:beta", run_id="gamma", objective="x",
+            sources=[self.source()], authority=left_authority,
+        )
+        right = self.runtime.agent.request(
+            task_id="alpha", run_id="beta:gamma", objective="x",
+            sources=[self.source()], authority=right_authority,
+        )
+        self.assertNotEqual(left.root_provenance, right.root_provenance)
+        self.assertNotEqual(left.message_id, right.message_id)
+
     def test_e04_rejects_unknown_topology_and_mismatched_duplicate(self):
         envelope = self.runtime.agent.request(
             task_id="tt", run_id="rr", objective="x", sources=[self.source()],
@@ -471,6 +495,38 @@ class Block1OperationalTests(unittest.TestCase):
         with self.assertRaises(ContractViolation):
             self.runtime.memory.history("t1")
 
+    def test_database_writer_cannot_recalculate_keyed_memory_integrity(self):
+        self.execute()
+        row = self.runtime.store._db.execute(
+            "SELECT previous_hash, record_json FROM memory_candidates WHERE run_id = ?",
+            ("r1",),
+        ).fetchone()
+        record = json.loads(row["record_json"])
+        record["promoted"] = True
+        record.pop("record_hash")
+        encoded = json.dumps(record, sort_keys=True, separators=(",", ":"))
+        attacker_hash = sha256((row["previous_hash"] + encoded).encode()).hexdigest()
+        record["record_hash"] = attacker_hash
+        self.runtime.store._db.execute(
+            "UPDATE memory_candidates SET record_hash = ?, record_json = ? WHERE run_id = ?",
+            (
+                attacker_hash,
+                json.dumps(record, sort_keys=True, separators=(",", ":")),
+                "r1",
+            ),
+        )
+        with self.assertRaises(ContractViolation):
+            self.runtime.memory.history("t1")
+
+    def test_authorized_candidate_fingerprint_is_persisted_exactly(self):
+        result = self.execute()
+        stored = self.runtime.store._db.execute(
+            "SELECT candidate_fingerprint FROM memory_candidates WHERE run_id = ?",
+            ("r1",),
+        ).fetchone()[0]
+        self.assertEqual(stored, result.payload["governance"]["candidate_fingerprint"])
+        self.assertEqual(stored, result.payload["enforcement"]["candidate_fingerprint"])
+
     def test_terminal_detects_durable_tampering(self):
         self.execute()
         self.runtime.store._db.execute(
@@ -529,8 +585,12 @@ class Block1OperationalTests(unittest.TestCase):
 
     def test_journal_capacity_is_bounded_across_connections(self):
         self.runtime.close()
-        first = OperationalStore(self.db, max_records=10, max_attempts=1)
-        second = OperationalStore(self.db, max_records=10, max_attempts=1)
+        first = OperationalStore(
+            self.db, integrity_key=STORAGE_KEY, max_records=10, max_attempts=1
+        )
+        second = OperationalStore(
+            self.db, integrity_key=STORAGE_KEY, max_records=10, max_attempts=1
+        )
         def write(item):
             store, fingerprint = item
             try:
@@ -561,11 +621,11 @@ class Block1OperationalTests(unittest.TestCase):
             CREATE TABLE execution_journal(
                 attempt_fingerprint TEXT, run_id TEXT, state TEXT, reason TEXT, updated_at INTEGER
             );
-            PRAGMA user_version = 5;
+            PRAGMA user_version = 6;
         """)
         connection.close()
         with self.assertRaises(ContractViolation):
-            OperationalStore(malformed)
+            OperationalStore(malformed, integrity_key=STORAGE_KEY)
 
     def test_post_commit_delivery_failure_preserves_committed_journal(self):
         original = self.runtime.integration.route
@@ -628,6 +688,41 @@ class Block1OperationalTests(unittest.TestCase):
         self.assertFalse(result.payload["stability"]["store_available"])
         self.assertEqual(result.payload["enforcement"]["status"], "NOT_EXECUTED")
 
+    def test_concurrent_last_capacity_is_a_terminal_no_effect_not_failure(self):
+        self.runtime.close()
+        first_runtime = self.make_runtime(max_records=1, max_attempts=10)
+        second_runtime = self.make_runtime(max_records=1, max_attempts=10)
+        def run(item):
+            runtime, task_id, run_id = item
+            return runtime.run(
+                task_id=task_id, run_id=run_id, objective="x",
+                sources=[self.source(source_id=run_id)],
+                authority=self.authority(task_id, run_id),
+            )
+        try:
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                outputs = list(pool.map(run, (
+                    (first_runtime, "capacity-a", "capacity-a"),
+                    (second_runtime, "capacity-b", "capacity-b"),
+                )))
+            self.assertEqual(
+                sorted(item.payload["enforcement"]["status"] for item in outputs),
+                ["COMMITTED", "NOT_EXECUTED"],
+            )
+            denied = next(
+                item for item in outputs
+                if item.payload["enforcement"]["status"] == "NOT_EXECUTED"
+            )
+            reason = denied.payload["enforcement"].get("reason")
+            self.assertTrue(
+                reason == "CAPACITY_CHANGED_AFTER_STABILITY_OBSERVATION"
+                or denied.payload["stability"]["store_available"] is False
+            )
+        finally:
+            first_runtime.close()
+            second_runtime.close()
+        self.runtime = self.make_runtime(store_path=Path(self.temp.name) / "replacement.sqlite3")
+
     def test_post_e08_context_mutation_invalidates_decision_binding(self):
         task_id, run_id = "t-e08-bind", "r-e08-bind"
         request = self.runtime.agent.request(
@@ -652,6 +747,48 @@ class Block1OperationalTests(unittest.TestCase):
             self.runtime.memory.authorize_commit(
                 tampered, action="store_candidate", now=NOW
             )
+
+    def test_commit_reauthorization_occurs_inside_lock_and_rejects_expiry(self):
+        task_id, run_id = "t-lock-time", "r-lock-time"
+        token = self.authority_issuer.issue(
+            task_id=task_id, run_id=run_id, actions=("store_candidate",),
+            now=NOW, ttl=50,
+        )
+        request = self.runtime.agent.request(
+            task_id=task_id, run_id=run_id, objective="x",
+            sources=[self.source()], authority=token,
+        )
+        request_fingerprint = request.fingerprint
+        self.runtime.store.record_state(
+            request_fingerprint, run_id, "STARTED", "test", NOW
+        )
+        current = self.runtime.acquisition.acquire(
+            request.handoff("E01", "E02", request.payload), now=NOW
+        ).envelope
+        current = self.runtime.experiment.execute(current).envelope
+        current = self.runtime.evaluation.evaluate(current).envelope
+        current = self.runtime.memory.prepare_candidate(current).envelope
+        current = self.runtime.stability.assess(current, store_available=True).envelope
+        decision = self.runtime.governance.decide(
+            current, action="store_candidate", now=NOW
+        ).envelope
+        observed = {"inside_transaction": False}
+        def expired_authorization():
+            observed["inside_transaction"] = self.runtime.store._db.in_transaction
+            candidate = self.runtime.memory.authorize_commit(
+                decision, action="store_candidate", now=NOW + 60
+            )
+            return candidate, NOW + 60
+        with self.assertRaises(ContractViolation):
+            self.runtime.store.commit_effect_and_terminal(
+                request_fingerprint=request_fingerprint,
+                decision_envelope=decision,
+                candidate_fingerprint=decision.payload["governance"]["candidate_fingerprint"],
+                authorize_effect=expired_authorization,
+                action="store_candidate",
+            )
+        self.assertTrue(observed["inside_transaction"])
+        self.assertEqual(self.runtime.memory.history(task_id), ())
 
     def test_execution_attestation_cannot_move_to_another_task_run(self):
         request = self.runtime.agent.request(
