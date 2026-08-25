@@ -5,7 +5,12 @@ EXTERNAL_SOURCE_CLASSES = frozenset(
 )
 
 
-def expected_observation_state(observation, required_conditions, require_external=True):
+def expected_observation_state(
+    observation,
+    required_conditions,
+    require_external=True,
+    authorized_observer_ids=frozenset(),
+):
     structural = bool(observation.observation_id and observation.claim_id)
     structural = structural and bool(observation.provenance)
     structural = structural and not bool(observation.contamination_flags)
@@ -19,6 +24,7 @@ def expected_observation_state(observation, required_conditions, require_externa
         observation.externally_observed
         and observation.source_class in EXTERNAL_SOURCE_CLASSES
         and independent_observer
+        and observation.observer_id in authorized_observer_ids
     )
     accepted = structural and (external_authority or not require_external)
     return structural, accepted
