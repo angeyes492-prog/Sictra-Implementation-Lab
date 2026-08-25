@@ -15,6 +15,8 @@ def specimen(**changes):
         observed_conditions=REQUIRED,
         contamination_flags=frozenset(),
         externally_observed=True,
+        observer_id="reviewer-2",
+        evidence_author_id="author-1",
     )
     values.update(changes)
     return Observation(**values)
@@ -32,6 +34,8 @@ def test_any_single_required_gate_failure_blocks_acceptance():
         dict(contamination_flags=frozenset({"leak"})),
         dict(observed_conditions=frozenset({"identity"})),
         dict(externally_observed=False),
+        dict(observer_id=""),
+        dict(observer_id="author-1", evidence_author_id="author-1"),
     )
     for mutation in mutations:
         result = assess_observation(specimen(**mutation), required_conditions=REQUIRED)
@@ -49,12 +53,22 @@ def test_external_flag_cannot_promote_synthetic_or_internal_source():
         assert "EXTERNAL_SOURCE_CLASS_REQUIRED" in result.reasons
 
 
+def test_same_identity_cannot_self_attest():
+    result = assess_observation(
+        specimen(observer_id="author-1", evidence_author_id="author-1"),
+        required_conditions=REQUIRED,
+    )
+    assert result.accepted is False
+    assert "INDEPENDENT_OBSERVER_REQUIRED" in result.reasons
+
+
 def test_multiple_simultaneous_failures_never_restore_acceptance():
     failures = (
         ("provenance", ""),
         ("contamination_flags", frozenset({"same-author"})),
         ("observed_conditions", frozenset({"identity"})),
         ("externally_observed", False),
+        ("observer_id", ""),
     )
     for size in range(2, len(failures) + 1):
         for combo in combinations(failures, size):
