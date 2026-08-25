@@ -1,5 +1,8 @@
 # Bloque 1 Intelligence — Runtime de Referencia v0.2
 
+> **SUPERSEDED:** el perfil operacional acotado v0.3 reemplaza esta baseline
+> de referencia. Este documento permanece como historial.
+
 ## Decisión acotada
 
 Se construye un runtime de referencia ejecutable para los ocho motores de
@@ -53,3 +56,4 @@ contrato común.
 
 `CANDIDATE / REFERENCE RUNTIME`. La aceptación exige ejecución, CI externa,
 revisión independiente y evidencia real para cualquier claim de producción.
+

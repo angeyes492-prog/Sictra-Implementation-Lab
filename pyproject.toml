@@ -1,7 +1,7 @@
 [project]
 name = "sictra-block1"
-version = "0.1.0"
-description = "Bounded Context-to-Reassessment execution slice for SICTrA Block 1"
+version = "0.3.0"
+description = "Bounded operational runtime for Telecare OS Block 1 Intelligence"
 requires-python = ">=3.11"
 
 [tool.unittest]

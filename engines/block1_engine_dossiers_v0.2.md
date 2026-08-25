@@ -1,5 +1,8 @@
 # Dossiers ejecutables E01–E08 v0.2
 
+> **HISTÓRICO / SUPERSEDED:** la matriz operacional v0.3 y sus contratos
+> reemplazan estos dossiers. Se conserva únicamente como evidencia histórica.
+
 Estado común: `IMPLEMENTED IN REFERENCE RUNTIME`; aceptación global no reclamada.
 
 ## E01 — Agent Engine
@@ -58,3 +61,4 @@ lineage; reintento usa nueva identidad o duplicate idempotente. El rollback del
 runtime de referencia consiste en retirar el commit/branch sin migración de
 datos; E06 actual es deliberadamente in-memory y no pretende persistencia de
 producción.
+

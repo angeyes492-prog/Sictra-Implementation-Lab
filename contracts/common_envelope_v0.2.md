@@ -1,5 +1,8 @@
 # Common Envelope v0.2
 
+> **SUPERSEDED:** v0.3 operational contracts replace this reference-only
+> baseline. Retained for historical evidence.
+
 ## Obligaciones
 
 Todo handoff material contiene identidad (`message_id`, `task_id`, `run_id`),
@@ -31,3 +34,4 @@ preservarse. Compatibilidad sintáctica no demuestra compatibilidad semántica.
 
 Conformidad del sobre no prueba ejecución, validez, promoción, enforcement ni
 aceptación global.
+
