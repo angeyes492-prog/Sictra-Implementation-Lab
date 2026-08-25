@@ -80,7 +80,7 @@ class IntelligenceRuntime:
             sources=sources, authority=authority,
         )
         request_fingerprint = request.fingerprint
-        terminal = self.store.get_terminal(run_id, request_fingerprint)
+        terminal = self.store.resolve_request_terminal(run_id, request_fingerprint)
         if terminal:
             prior_request_fingerprint, prior_result = terminal
             if prior_request_fingerprint != request_fingerprint:
@@ -102,10 +102,6 @@ class IntelligenceRuntime:
             replay["lineage"] = list(prior_result.lineage) + [prior_result.message_id]
             replay["trace"] = list(prior_result.trace) + ["CALLER->CALLER:HISTORICAL_REPLAY"]
             return Envelope.from_dict(replay)
-        committed_terminal = self.store.get_committed_terminal(run_id)
-        if committed_terminal is not None:
-            raise IdentityCollision("run identity reused with different committed request")
-
         self.store.record_state(request_fingerprint, run_id, "STARTED", "VALIDATED_REQUEST", now)
         try:
             self._route(request, "E01")

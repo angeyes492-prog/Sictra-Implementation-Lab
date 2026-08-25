@@ -239,6 +239,26 @@ class OperationalStore:
             ).fetchone()
             return None if row is None else self._validated_terminal(row, run_id)
 
+    def resolve_request_terminal(self, run_id: str,
+                                 request_fingerprint: str) -> tuple[str, Envelope] | None:
+        """Resolve exact replay or a conflicting committed run in one DB snapshot."""
+        with self._lock:
+            row = self._db.execute(
+                """SELECT request_fingerprint, result_fingerprint, terminal_hash,
+                          effect_committed, envelope_json
+                   FROM terminal_runs
+                   WHERE run_id = ? AND (request_fingerprint = ? OR effect_committed = 1)
+                   ORDER BY CASE WHEN request_fingerprint = ? THEN 0 ELSE 1 END
+                   LIMIT 1""",
+                (run_id, request_fingerprint, request_fingerprint),
+            ).fetchone()
+            if row is None:
+                return None
+            result = self._validated_terminal(row, run_id)
+            if row["request_fingerprint"] != request_fingerprint:
+                raise IdentityCollision("run identity reused with different committed request")
+            return result
+
     def commit_effect_and_terminal(self, *, request_fingerprint: str,
                                    decision_envelope: Envelope,
                                    candidate_fingerprint: str,

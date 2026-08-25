@@ -157,6 +157,16 @@ class Block1OperationalTests(unittest.TestCase):
         self.assertEqual(set(versions), {1})
         self.assertEqual(len(self.runtime.memory.history("t1")), 1)
 
+    def test_repeated_concurrent_exact_replays_never_become_collisions(self):
+        for batch in range(10):
+            task_id, run_id = f"race-task-{batch}", f"race-run-{batch}"
+            def execute(_):
+                return self.execute(task_id, run_id).payload["enforcement"]["status"]
+            with ThreadPoolExecutor(max_workers=10) as pool:
+                outcomes = list(pool.map(execute, range(20)))
+            self.assertEqual(set(outcomes), {"COMMITTED"})
+            self.assertEqual(len(self.runtime.memory.history(task_id)), 1)
+
     def test_concurrent_distinct_runs_get_unique_versions(self):
         def execute(index):
             return self.execute("shared", f"run-{index}").payload["enforcement"]["record_version"]
