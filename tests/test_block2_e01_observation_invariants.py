@@ -5,6 +5,7 @@ from sictra.block2_e01_observation import Observation, assess_observation
 
 
 REQUIRED = frozenset({"identity", "visibility"})
+AUTHORIZED = frozenset({"reviewer-2"})
 
 
 def specimen(**changes):
@@ -24,8 +25,15 @@ def specimen(**changes):
 
 
 class ObservationInvariantTests(unittest.TestCase):
+    def assess(self, obs):
+        return assess_observation(
+            obs,
+            required_conditions=REQUIRED,
+            authorized_observer_ids=AUTHORIZED,
+        )
+
     def test_acceptance_implies_admissibility(self):
-        result = assess_observation(specimen(), required_conditions=REQUIRED)
+        result = self.assess(specimen())
         self.assertTrue(result.accepted)
         self.assertTrue(result.admissible)
 
@@ -37,30 +45,34 @@ class ObservationInvariantTests(unittest.TestCase):
             dict(externally_observed=False),
             dict(observer_id=""),
             dict(observer_id="author-1", evidence_author_id="author-1"),
+            dict(observer_id="reviewer-unknown"),
         )
         for mutation in mutations:
             with self.subTest(mutation=mutation):
-                result = assess_observation(specimen(**mutation), required_conditions=REQUIRED)
+                result = self.assess(specimen(**mutation))
                 self.assertFalse(result.accepted)
 
     def test_external_flag_cannot_promote_synthetic_or_internal_source(self):
         for source_class in ("synthetic", "internal-agent", "simulation"):
             with self.subTest(source_class=source_class):
-                result = assess_observation(
-                    specimen(source_class=source_class, externally_observed=True),
-                    required_conditions=REQUIRED,
+                result = self.assess(
+                    specimen(source_class=source_class, externally_observed=True)
                 )
                 self.assertTrue(result.admissible)
                 self.assertFalse(result.accepted)
                 self.assertIn("EXTERNAL_SOURCE_CLASS_REQUIRED", result.reasons)
 
     def test_same_identity_cannot_self_attest(self):
-        result = assess_observation(
-            specimen(observer_id="author-1", evidence_author_id="author-1"),
-            required_conditions=REQUIRED,
+        result = self.assess(
+            specimen(observer_id="author-1", evidence_author_id="author-1")
         )
         self.assertFalse(result.accepted)
         self.assertIn("INDEPENDENT_OBSERVER_REQUIRED", result.reasons)
+
+    def test_unauthorized_identity_cannot_self_grant_authority(self):
+        result = self.assess(specimen(observer_id="reviewer-unknown"))
+        self.assertFalse(result.accepted)
+        self.assertIn("OBSERVER_AUTHORITY_REQUIRED", result.reasons)
 
     def test_multiple_simultaneous_failures_never_restore_acceptance(self):
         failures = (
@@ -73,18 +85,15 @@ class ObservationInvariantTests(unittest.TestCase):
         for size in range(2, len(failures) + 1):
             for combo in combinations(failures, size):
                 with self.subTest(combo=combo):
-                    result = assess_observation(
-                        specimen(**dict(combo)), required_conditions=REQUIRED
-                    )
+                    result = self.assess(specimen(**dict(combo)))
                     self.assertFalse(result.accepted)
 
     def test_extra_observed_conditions_do_not_bypass_required_gates(self):
-        result = assess_observation(
+        result = self.assess(
             specimen(
                 observed_conditions=REQUIRED | {"salience", "contrast"},
                 externally_observed=False,
-            ),
-            required_conditions=REQUIRED,
+            )
         )
         self.assertTrue(result.admissible)
         self.assertFalse(result.accepted)
