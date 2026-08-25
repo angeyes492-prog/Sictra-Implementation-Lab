@@ -10,6 +10,8 @@ def specimen(**changes):
         observed_conditions=frozenset({"identity", "visibility"}),
         contamination_flags=frozenset(),
         externally_observed=False,
+        observer_id="reviewer-2",
+        evidence_author_id="author-1",
     )
     values.update(changes)
     return Observation(**values)
@@ -32,6 +34,30 @@ def test_external_observation_can_close_bounded_acceptance():
     assert result.admissible is True
     assert result.accepted is True
     assert result.reasons == ()
+
+
+def test_same_author_cannot_self_attest_external_observation():
+    result = assess_observation(
+        specimen(
+            externally_observed=True,
+            observer_id="author-1",
+            evidence_author_id="author-1",
+        ),
+        required_conditions=frozenset({"identity", "visibility"}),
+    )
+    assert result.admissible is True
+    assert result.accepted is False
+    assert "INDEPENDENT_OBSERVER_REQUIRED" in result.reasons
+
+
+def test_missing_observer_identity_cannot_close_acceptance():
+    result = assess_observation(
+        specimen(externally_observed=True, observer_id=""),
+        required_conditions=frozenset({"identity", "visibility"}),
+    )
+    assert result.admissible is True
+    assert result.accepted is False
+    assert "OBSERVER_IDENTITY_REQUIRED" in result.reasons
 
 
 def test_missing_provenance_is_rejected_even_if_external_flag_is_true():
