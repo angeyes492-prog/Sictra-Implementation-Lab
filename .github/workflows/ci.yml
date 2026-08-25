@@ -21,3 +21,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m sictra_block1 tests/fixtures/notion_exp05_context_matrix.json --agent Precision
+      - name: Execute eight-engine reference runtime
+        env:
+          PYTHONPATH: src
+        run: python -m sictra_block1.demo

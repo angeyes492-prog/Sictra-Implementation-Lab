@@ -6,6 +6,8 @@ or evidence of an external production runtime.
 
 from .context import ContextPack, ContextRecord, build_context_pack
 from .reassessment import ReassessmentResult, reassess
+from .common import AuthorityContext, ContractViolation, Envelope, IdentityCollision
+from .runtime import IntelligenceRuntime
 
 __all__ = [
     "ContextPack",
@@ -13,4 +15,9 @@ __all__ = [
     "ReassessmentResult",
     "build_context_pack",
     "reassess",
+    "AuthorityContext",
+    "ContractViolation",
+    "Envelope",
+    "IdentityCollision",
+    "IntelligenceRuntime",
 ]
