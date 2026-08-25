@@ -6,14 +6,18 @@ from sictra.block2_e01_observation_oracle import expected_observation_state
 
 def test_observation_evaluator_matches_independent_oracle_across_mutations():
     required = frozenset({"identity", "visibility"})
-    for provenance, contaminated, complete, external in product(
-        ("p1", ""), (False, True), (False, True), (False, True)
+    for provenance, contaminated, complete, external, source_class in product(
+        ("p1", ""),
+        (False, True),
+        (False, True),
+        (False, True),
+        ("human-perception", "synthetic", "internal-agent"),
     ):
         observed = required if complete else frozenset({"identity"})
         obs = Observation(
             observation_id="obs-1",
             claim_id="claim-1",
-            source_class="human-perception",
+            source_class=source_class,
             provenance=provenance,
             observed_conditions=observed,
             contamination_flags=frozenset({"leak"}) if contaminated else frozenset(),
