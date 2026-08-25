@@ -1,0 +1,38 @@
+{
+  "closure_id": "BLOCK2-E01-VALIDITY-LEDGER-ORACLE-1.2",
+  "scope": "Block 2 E01 claim validity envelope and residual evidence reuse boundary",
+  "head_sha": "4313a9d4e9f6a2421aeaa3c943ebc63361774ff5",
+  "github_actions_run_id": 32820547858,
+  "github_actions_conclusion": "success",
+  "runner": "Ubuntu 24.04 / Python 3.12.14",
+  "tests_total": 111,
+  "tests_passed": 111,
+  "validity_and_residual_tests": 8,
+  "independent_validity_oracle_tests": 8,
+  "oracle_independence": "separate declarative expected-validity/reuse implementation; production functions are not called by oracle",
+  "verified_behaviors": [
+    "missing required conditions block claim promotion",
+    "failed required conditions block claim promotion",
+    "narrow residual evidence can survive broader claim failure",
+    "residual reuse requires explicit claim allowance",
+    "excluded claims cannot reuse residual evidence",
+    "reuse outside recorded boundary is blocked",
+    "contaminated conditions block residual reuse"
+  ],
+  "epistemic_state": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "executed": true,
+    "observed": true,
+    "validated": "bounded_external_ci_plus_independent_oracle",
+    "accepted": false
+  },
+  "non_claims": [
+    "No global Block 2 E01 acceptance",
+    "No external human-perception evidence",
+    "No production side-effect enforcement",
+    "No Block 1 authority imported"
+  ],
+  "next": "continue next executable Block 2 E01 boundary from canonical construction record; human review remains required for acceptance"
+}

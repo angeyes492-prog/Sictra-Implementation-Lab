@@ -1,0 +1,48 @@
+{
+  "closure_id": "BLOCK2-E01-OBSERVATION-INDEPENDENCE-1.4",
+  "pr": 3,
+  "branch": "feat/block2-e01-claim-boundary",
+  "head_sha": "edb19896b5acbd8a9f70babf1ee87a25adfc5988",
+  "workflow_run_id": 32835522702,
+  "workflow": "SICTrA CI",
+  "runner": "GitHub-hosted Ubuntu 24.04 / Python 3.12.14",
+  "command": "python -m unittest discover -s tests -v",
+  "result": "success",
+  "tests_ran": 141,
+  "tests_failed": 0,
+  "material_repairs": [
+    "external observation boolean alone no longer grants acceptance",
+    "synthetic/internal source classes cannot acquire external authority",
+    "observer and evidence author identities must be present and distinct",
+    "observation tests converted from pytest-style functions to unittest.TestCase so hosted CI actually executes them"
+  ],
+  "adversarial_coverage": [
+    "synthetic source with externally_observed=true",
+    "internal source with externally_observed=true",
+    "missing observer identity",
+    "self-attestation by same observer/evidence author",
+    "single-gate failures",
+    "multi-gate interaction failures",
+    "independent declarative oracle mutation matrix"
+  ],
+  "reopened_evidence": {
+    "run_id": 32835408981,
+    "status": "success but insufficient for Observation tranche",
+    "reason": "hosted CI remained at 127 tests because newly added function-style tests were not discoverable by unittest"
+  },
+  "epistemic_state": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "executed": true,
+    "observed": true,
+    "external_ci_validated": true,
+    "independent_oracle_agreement": true,
+    "accepted": false
+  },
+  "non_claims": [
+    "does not prove a real independent human observation occurred",
+    "does not prove production side-effect enforcement",
+    "does not confer global E01 or system acceptance"
+  ]
+}

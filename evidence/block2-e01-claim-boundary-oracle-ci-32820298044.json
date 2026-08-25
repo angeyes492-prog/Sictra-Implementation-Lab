@@ -1,0 +1,39 @@
+{
+  "closure_id": "BLOCK2-E01-CLAIM-COMPOSITION-ORACLE-1.1",
+  "scope": "Block 2 E01 claim composition boundary with independent oracle",
+  "head_sha": "a570b513cbc1e074475e6f2403b352d9db3e7e3c",
+  "github_actions_run_id": 32820298044,
+  "github_actions_conclusion": "success",
+  "runner": "Ubuntu 24.04 / Python 3.12.14",
+  "tests_total": 95,
+  "tests_passed": 95,
+  "claim_boundary_tests": 8,
+  "independent_oracle_differential_tests": 8,
+  "oracle_independence": "declarative implementation does not call production evaluator or reuse its helpers",
+  "differential_attack_cases": [
+    "unsupported-relationship",
+    "supported-relationship",
+    "failed-condition-mutation",
+    "scope-mutation",
+    "observation-mutation",
+    "admissibility-mutation",
+    "identity-mutation",
+    "multi-evidence-partial-survival"
+  ],
+  "epistemic_state": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "executed": true,
+    "observed": true,
+    "validated": "bounded_external_ci_plus_independent_oracle",
+    "accepted": false
+  },
+  "non_claims": [
+    "No global Block 2 E01 acceptance",
+    "No human-perception external trial evidence",
+    "No production side-effect enforcement",
+    "No Block 1 authority imported"
+  ],
+  "next": "reassess bounded mechanism and attack next Block 2 E01 boundary from canonical construction record"
+}

@@ -1,0 +1,48 @@
+{
+  "closure_id": "BLOCK2-E01-OBSERVER-AUTHORITY-1.5",
+  "pr": 3,
+  "branch": "feat/block2-e01-claim-boundary",
+  "head_sha": "bc937a2dd92c53c51629708d28fceab977419e90",
+  "workflow_run_id": 32835781067,
+  "workflow": "SICTrA CI",
+  "runner": "GitHub-hosted Ubuntu 24.04 / Python 3.12.14",
+  "command": "python -m unittest discover -s tests -v",
+  "result": "success",
+  "tests_ran": 143,
+  "tests_failed": 0,
+  "material_boundary": "external observation acceptance requires explicit authorized observer identity",
+  "requirements": [
+    "source class must be external-authority eligible",
+    "externally_observed must be true",
+    "observer_id and evidence_author_id must be present",
+    "observer_id must differ from evidence_author_id",
+    "observer_id must be present in the explicitly supplied authorized observer registry",
+    "provenance and required conditions must remain intact",
+    "contamination must be absent"
+  ],
+  "adversarial_coverage": [
+    "unknown observer identity",
+    "self-attestation",
+    "missing observer identity",
+    "synthetic/internal source class",
+    "provenance loss",
+    "contamination",
+    "missing required conditions",
+    "authorized/unauthorized observer mutation matrix against independent oracle"
+  ],
+  "epistemic_state": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "executed": true,
+    "observed": true,
+    "external_ci_validated": true,
+    "independent_oracle_agreement": true,
+    "accepted": false
+  },
+  "non_claims": [
+    "authorized registry enforcement does not prove a real human review occurred",
+    "does not prove production side-effect enforcement",
+    "does not confer global E01 acceptance"
+  ]
+}
