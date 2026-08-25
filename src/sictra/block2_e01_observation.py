@@ -1,11 +1,16 @@
 """Block 2 E01 observation admissibility boundary.
 
-This module keeps observed evidence separate from acceptance authority.  An
-observation may be structurally admissible while still requiring an external
-human/production authority before a claim can be accepted.
+This module keeps observed evidence separate from acceptance authority. An
+observation may be structurally admissible while still requiring a genuinely
+external observation class before a claim can be accepted.
 """
 from dataclasses import dataclass
 from typing import FrozenSet
+
+
+EXTERNAL_SOURCE_CLASSES = frozenset(
+    {"human-perception", "external-review", "production-observation"}
+)
 
 
 @dataclass(frozen=True)
@@ -44,9 +49,16 @@ def assess_observation(
         reasons.append("REQUIRED_CONDITIONS_MISSING")
 
     admissible = not reasons
-    accepted = admissible and (
-        observation.externally_observed or not require_external_observation
+    external_authority = (
+        observation.externally_observed
+        and observation.source_class in EXTERNAL_SOURCE_CLASSES
     )
-    if admissible and require_external_observation and not observation.externally_observed:
-        reasons.append("EXTERNAL_OBSERVATION_REQUIRED")
+    accepted = admissible and (
+        external_authority or not require_external_observation
+    )
+    if admissible and require_external_observation:
+        if not observation.externally_observed:
+            reasons.append("EXTERNAL_OBSERVATION_REQUIRED")
+        elif observation.source_class not in EXTERNAL_SOURCE_CLASSES:
+            reasons.append("EXTERNAL_SOURCE_CLASS_REQUIRED")
     return ObservationAssessment(admissible, accepted, tuple(reasons))
