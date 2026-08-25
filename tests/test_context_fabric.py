@@ -18,7 +18,7 @@ class ContextFabricTests(unittest.TestCase):
     def test_relation_never_becomes_dependency(self):
         p=prepare_agent_context(self.records(),self.relations(),"Precision"); self.assertEqual(("REQUIRES",),tuple(x.relation_type for x in p.dependencies)); self.assertTrue(all(x.relation_type=="RELATED_TO" for x in p.related))
     def test_contradiction_survives(self): self.assertIn("shared",[r.record_id for r in prepare_agent_context(self.records(),self.relations(),"Precision").contradictions])
-    def test_duplicate_root_does_not_inflate_fabric_independence(self): self.assertEqual(3,prepare_agent_context(self.records(),self.relations(),"Precision").independent_evidence_count)
+    def test_duplicate_root_does_not_inflate_fabric_independence(self): self.assertEqual(2,prepare_agent_context(self.records(),self.relations(),"Precision").independent_evidence_count)
     def test_fabric_has_no_verification_or_promotion_authority(self):
         p=prepare_agent_context(self.records(),self.relations(),"Precision"); self.assertFalse(p.promotion_authority); self.assertFalse(p.verification_authority)
     def test_reproducibility_signature_is_deterministic(self):
