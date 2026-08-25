@@ -8,17 +8,19 @@ from sictra.block2_e01_observation_oracle import expected_observation_state
 class ObservationOracleDifferentialTests(unittest.TestCase):
     def test_observation_evaluator_matches_independent_oracle_across_mutations(self):
         required = frozenset({"identity", "visibility"})
-        for provenance, contaminated, complete, external, source_class, independent in product(
+        for provenance, contaminated, complete, external, source_class, independent, authorized in product(
             ("p1", ""),
             (False, True),
             (False, True),
             (False, True),
             ("human-perception", "synthetic", "internal-agent"),
             (False, True),
+            (False, True),
         ):
             observed = required if complete else frozenset({"identity"})
             observer_id = "reviewer-2" if independent else "author-1"
             evidence_author_id = "author-1"
+            authorized_ids = frozenset({"reviewer-2"}) if authorized else frozenset()
             obs = Observation(
                 observation_id="obs-1",
                 claim_id="claim-1",
@@ -30,8 +32,16 @@ class ObservationOracleDifferentialTests(unittest.TestCase):
                 observer_id=observer_id,
                 evidence_author_id=evidence_author_id,
             )
-            actual = assess_observation(obs, required_conditions=required)
-            expected = expected_observation_state(obs, required)
+            actual = assess_observation(
+                obs,
+                required_conditions=required,
+                authorized_observer_ids=authorized_ids,
+            )
+            expected = expected_observation_state(
+                obs,
+                required,
+                authorized_observer_ids=authorized_ids,
+            )
             with self.subTest(
                 provenance=provenance,
                 contaminated=contaminated,
@@ -39,6 +49,7 @@ class ObservationOracleDifferentialTests(unittest.TestCase):
                 external=external,
                 source_class=source_class,
                 independent=independent,
+                authorized=authorized,
             ):
                 self.assertEqual((actual.admissible, actual.accepted), expected)
 
