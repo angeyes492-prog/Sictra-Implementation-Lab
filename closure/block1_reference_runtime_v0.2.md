@@ -7,7 +7,7 @@
 | E01–E08 implementados | VERIFIED / local | runtime Python de referencia | B |
 | Ejecución integrada | VERIFIED / local | suite + manifest determinista | B |
 | Red team | VERIFIED / bounded | stale/future/expired authority, replay collision, contradiction, missing evidence, correlated roots | B |
-| CI externa | PENDING | requiere ejecución GitHub Actions en SHA nuevo | D |
+| CI externa | VERIFIED / bounded | run 32800588551: 93 tests + dos manifests, todos GREEN | A |
 | Runtime real | INSUFFICIENT EVIDENCE | no existe adapter/efecto externo observado | E |
 | Aceptación global | YELLOW / NOT CLAIMED | falta revisión independiente y autoridad humana | D |
 
@@ -30,5 +30,17 @@ Bloque 2 y queda excluido de la semántica de Intelligence.
 
 ## Próximo gate
 
-Ejecutar CI externa en el commit exacto, revisar sus logs, corregir fallos y
-obtener revisión independiente antes de considerar el PR listo para merge.
+Obtener revisión independiente y una decisión humana de aceptación antes de
+considerar el PR listo para merge. Un adapter de runtime real sigue siendo un
+gate posterior y separado.
+
+## Evidencia externa
+
+- Commit ejecutado: `649c58f7f8d763620e1d3b83fd16cc926a791100`.
+- GitHub Actions run: `32800588551`.
+- Job: `97660481280`, conclusión `success`.
+- Suite externa: `Ran 93 tests ... OK`.
+- Manifest de ocho motores: fingerprint
+  `54116aa569180cf790aa9c69a2237e00310e625f5daaf273d6cf0bb07589bd48`.
+- La manifestación declara `decision_is_enforcement=false` y
+  `runtime_effect_observed=false`; por tanto no se eleva el gate de runtime real.
