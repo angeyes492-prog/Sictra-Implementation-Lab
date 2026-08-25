@@ -2,8 +2,8 @@
 
 This module keeps observed evidence separate from acceptance authority. An
 observation may be structurally admissible while still requiring a genuinely
-external and independently attributable observation before a claim can be
-accepted.
+external, independently attributable, explicitly authorized observer before a
+claim can be accepted.
 """
 from dataclasses import dataclass
 from typing import FrozenSet
@@ -39,6 +39,7 @@ def assess_observation(
     *,
     required_conditions: FrozenSet[str],
     require_external_observation: bool = True,
+    authorized_observer_ids: FrozenSet[str] = frozenset(),
 ) -> ObservationAssessment:
     reasons: list[str] = []
     if not observation.observation_id or not observation.claim_id:
@@ -57,10 +58,12 @@ def assess_observation(
         and observation.evidence_author_id
         and observation.observer_id != observation.evidence_author_id
     )
+    observer_authorized = observation.observer_id in authorized_observer_ids
     external_authority = (
         observation.externally_observed
         and observation.source_class in EXTERNAL_SOURCE_CLASSES
         and independent_observer
+        and observer_authorized
     )
     accepted = admissible and (
         external_authority or not require_external_observation
@@ -74,4 +77,6 @@ def assess_observation(
             reasons.append("OBSERVER_IDENTITY_REQUIRED")
         elif observation.observer_id == observation.evidence_author_id:
             reasons.append("INDEPENDENT_OBSERVER_REQUIRED")
+        elif not observer_authorized:
+            reasons.append("OBSERVER_AUTHORITY_REQUIRED")
     return ObservationAssessment(admissible, accepted, tuple(reasons))
