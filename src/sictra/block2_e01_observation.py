@@ -2,7 +2,8 @@
 
 This module keeps observed evidence separate from acceptance authority. An
 observation may be structurally admissible while still requiring a genuinely
-external observation class before a claim can be accepted.
+external and independently attributable observation before a claim can be
+accepted.
 """
 from dataclasses import dataclass
 from typing import FrozenSet
@@ -22,6 +23,8 @@ class Observation:
     observed_conditions: FrozenSet[str]
     contamination_flags: FrozenSet[str] = frozenset()
     externally_observed: bool = False
+    observer_id: str = ""
+    evidence_author_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -49,9 +52,15 @@ def assess_observation(
         reasons.append("REQUIRED_CONDITIONS_MISSING")
 
     admissible = not reasons
+    independent_observer = bool(
+        observation.observer_id
+        and observation.evidence_author_id
+        and observation.observer_id != observation.evidence_author_id
+    )
     external_authority = (
         observation.externally_observed
         and observation.source_class in EXTERNAL_SOURCE_CLASSES
+        and independent_observer
     )
     accepted = admissible and (
         external_authority or not require_external_observation
@@ -61,4 +70,8 @@ def assess_observation(
             reasons.append("EXTERNAL_OBSERVATION_REQUIRED")
         elif observation.source_class not in EXTERNAL_SOURCE_CLASSES:
             reasons.append("EXTERNAL_SOURCE_CLASS_REQUIRED")
+        elif not observation.observer_id or not observation.evidence_author_id:
+            reasons.append("OBSERVER_IDENTITY_REQUIRED")
+        elif observation.observer_id == observation.evidence_author_id:
+            reasons.append("INDEPENDENT_OBSERVER_REQUIRED")
     return ObservationAssessment(admissible, accepted, tuple(reasons))
