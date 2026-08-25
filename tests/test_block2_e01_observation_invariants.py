@@ -38,6 +38,17 @@ def test_any_single_required_gate_failure_blocks_acceptance():
         assert result.accepted is False
 
 
+def test_external_flag_cannot_promote_synthetic_or_internal_source():
+    for source_class in ("synthetic", "internal-agent", "simulation"):
+        result = assess_observation(
+            specimen(source_class=source_class, externally_observed=True),
+            required_conditions=REQUIRED,
+        )
+        assert result.admissible is True
+        assert result.accepted is False
+        assert "EXTERNAL_SOURCE_CLASS_REQUIRED" in result.reasons
+
+
 def test_multiple_simultaneous_failures_never_restore_acceptance():
     failures = (
         ("provenance", ""),
