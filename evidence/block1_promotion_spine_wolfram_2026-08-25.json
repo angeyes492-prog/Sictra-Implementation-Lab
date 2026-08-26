@@ -1,0 +1,42 @@
+{
+  "artifact": "block1_promotion_spine_wolfram_2026-08-25",
+  "scope": "Telecare OS / Bloque 1 / promotion spine model",
+  "classification": "FORMAL_MODEL_EVIDENCE",
+  "certainty": "VERIFIED",
+  "confidence": "B",
+  "executed_at": "2026-08-25T21:26:41.6309735-06:00",
+  "producer": "Wolfram Language evaluator",
+  "model": {
+    "states": ["LOCAL", "INTEGRATED", "ADMISSIBLE", "REASSESSED", "PROMOTABLE", "PROMOTED"],
+    "allowed_edges": [
+      ["LOCAL", "INTEGRATED"],
+      ["INTEGRATED", "ADMISSIBLE"],
+      ["ADMISSIBLE", "REASSESSED"],
+      ["REASSESSED", "PROMOTABLE"],
+      ["PROMOTABLE", "PROMOTED"]
+    ]
+  },
+  "checks": {
+    "reference": {
+      "acyclic": true,
+      "only_expected_edges": true,
+      "unique_terminal": true,
+      "single_complete_path": true,
+      "valid": true
+    },
+    "mutation_shortcut_local_to_promoted": {
+      "detected": true,
+      "valid": false
+    },
+    "mutation_cycle_promoted_to_local": {
+      "detected": true,
+      "valid": false
+    }
+  },
+  "limitations": [
+    "This is a model of the promotion spine only, not an E01-E08 runtime execution.",
+    "It does not establish contract conformance, CI status, independent review, or gate acceptance.",
+    "The state and edge vocabulary is bound to the Slack-derived candidate and remains subject to canonical architecture acceptance."
+  ]
+}
+
