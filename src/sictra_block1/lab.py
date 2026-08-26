@@ -1,8 +1,3 @@
-Use '--' to separate paths from revisions, like this:
-'git <command> [<revision>...] -- [<file>...]'
-e07a88cd5091c5c5c7ad89aee4f6c6d72e42002e
--encodedCommand
-dAByAGUAZQA=
 """Interactive, local-only laboratory for the Block 1 bounded runtime.
 
 This is deliberately a test harness.  Its fixture keys, generated observations
