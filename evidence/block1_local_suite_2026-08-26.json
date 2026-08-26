@@ -1,0 +1,33 @@
+{
+  "artifact": "block1_local_suite_2026-08-26",
+  "scope": "Telecare OS / Bloque 1 bounded runtime",
+  "classification": "LOCAL_RUNTIME_EVIDENCE",
+  "certainty": "VERIFIED",
+  "confidence": "B",
+  "executed_at": "2026-08-26T01:01:53.015Z",
+  "command": "python -m unittest tests.test_block1_runtime -q",
+  "environment": {
+    "runtime": "Python",
+    "workspace": "C:\\Users\\angel\\OneDrive\\Documents\\ChatGPT\\Intelligence"
+  },
+  "result": {
+    "tests_run": 67,
+    "failures": 0,
+    "errors": 0,
+    "duration_seconds": 19.12,
+    "status": "OK"
+  },
+  "covers": [
+    "E01-E08 bounded integration",
+    "authority and evidence rejection",
+    "replay and concurrency",
+    "rollback and recovery",
+    "SQLite schema, HMAC, journal and capacity integrity"
+  ],
+  "limitations": [
+    "No Git commit SHA identifies this workspace state.",
+    "No external CI run validates this exact source state.",
+    "This evidence cannot promote the bounded-operational gate."
+  ]
+}
+

@@ -888,6 +888,132 @@ class Block1OperationalTests(unittest.TestCase):
             with self.assertRaises(ContractViolation):
                 replace(token, **mutation)
 
+    def test_foreign_unversioned_sqlite_is_not_modified_or_left_open(self):
+        self.runtime.close()
+        foreign = Path(self.temp.name) / "foreign.sqlite3"
+        connection = sqlite3.connect(foreign)
+        connection.execute("CREATE TABLE user_data(value TEXT)")
+        connection.commit()
+        connection.close()
+        with self.assertRaises(ContractViolation):
+            OperationalStore(foreign, integrity_key=STORAGE_KEY)
+        connection = sqlite3.connect(foreign)
+        self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 0)
+        self.assertEqual(
+            connection.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+            ).fetchall(),
+            [("user_data",)],
+        )
+        connection.close()
+        foreign.unlink()
+        self.runtime = self.make_runtime(store_path=Path(self.temp.name) / "replacement.sqlite3")
+
+    def test_cold_start_is_atomic_across_concurrent_openers(self):
+        self.runtime.close()
+        cold = Path(self.temp.name) / "cold.sqlite3"
+        def open_store(_: int):
+            store = OperationalStore(cold, integrity_key=STORAGE_KEY, max_records=10)
+            try:
+                return store._db.execute("PRAGMA user_version").fetchone()[0]
+            finally:
+                store.close()
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            self.assertEqual(list(pool.map(open_store, range(4))), [8, 8, 8, 8])
+        self.runtime = self.make_runtime(store_path=Path(self.temp.name) / "replacement.sqlite3")
+
+    def test_schema_with_extra_check_is_rejected_exactly(self):
+        self.runtime.close()
+        altered = Path(self.temp.name) / "extra-check.sqlite3"
+        probe = OperationalStore(":memory:", integrity_key=STORAGE_KEY)
+        key_check = probe._metadata_mac()
+        probe.close()
+        connection = sqlite3.connect(altered)
+        definitions = OperationalStore._SCHEMA_SQL
+        connection.execute(definitions["memory_candidates"])
+        connection.execute(definitions["terminal_runs"].replace(
+            "envelope_json TEXT NOT NULL", "envelope_json TEXT NOT NULL CHECK(length(envelope_json) > 0)"
+        ))
+        connection.execute(definitions["execution_journal"])
+        connection.execute(definitions["store_metadata"])
+        connection.execute(definitions["one_committed_effect_per_run"])
+        connection.execute(
+            "INSERT INTO store_metadata VALUES (1, 100000, 100000, ?)", (key_check,)
+        )
+        connection.execute("PRAGMA user_version = 8")
+        connection.commit()
+        connection.close()
+        with self.assertRaises(ContractViolation):
+            OperationalStore(altered, integrity_key=STORAGE_KEY)
+        self.runtime = self.make_runtime(store_path=Path(self.temp.name) / "replacement.sqlite3")
+
+    def test_corrupt_predecessor_cannot_be_extended(self):
+        self.execute("chain", "chain-1")
+        self.runtime.store._db.execute(
+            "UPDATE memory_candidates SET record_hash = ? WHERE run_id = ?", ("x" * 64, "chain-1")
+        )
+        result = self.execute("chain", "chain-2")
+        self.assertEqual(result.payload["enforcement"]["status"], "NOT_EXECUTED")
+        self.assertEqual(
+            self.runtime.store._db.execute(
+                "SELECT COUNT(*) FROM memory_candidates WHERE task_id = ?", ("chain",)
+            ).fetchone()[0], 1,
+        )
+
+    def test_active_connection_rejects_metadata_tampering_before_write(self):
+        self.runtime.store._db.execute("UPDATE store_metadata SET max_records = 9")
+        with self.assertRaises(ContractViolation):
+            self.execute("metadata", "metadata-1")
+        self.assertFalse(self.runtime.store.healthcheck())
+
+    def test_effect_transaction_requires_authenticated_started_journal(self):
+        request = self.runtime.agent.request(
+            task_id="journal", run_id="journal-1", objective="x", sources=[self.source()],
+            authority=self.authority("journal", "journal-1"),
+        )
+        self.runtime.store.record_state(request.fingerprint, "journal-1", "STARTED", "test", NOW)
+        current = self.runtime.acquisition.acquire(request.handoff("E01", "E02", request.payload), now=NOW).envelope
+        current = self.runtime.experiment.execute(current).envelope
+        current = self.runtime.evaluation.evaluate(current).envelope
+        current = self.runtime.memory.prepare_candidate(current).envelope
+        current = self.runtime.stability.assess(current, store_available=True).envelope
+        decision = self.runtime.governance.decide(current, action="store_candidate", now=NOW).envelope
+        def remove_journal(_: str):
+            self.runtime.store._db.execute("DELETE FROM execution_journal WHERE attempt_fingerprint = ?", (request.fingerprint,))
+        self.runtime.store.failure_injector = remove_journal
+        with self.assertRaises(ContractViolation):
+            self.runtime.store.commit_effect_and_terminal(
+                request_fingerprint=request.fingerprint, decision_envelope=decision,
+                candidate_fingerprint=decision.payload["governance"]["candidate_fingerprint"],
+                authorize_effect=lambda: (self.runtime.memory.authorize_commit(decision, action="store_candidate", now=NOW), NOW),
+                action="store_candidate",
+            )
+        self.assertIsNone(self.runtime.store.get_terminal("journal-1"))
+
+    def test_failed_journal_cannot_transition_backwards_or_commit_effect(self):
+        self.runtime.store.record_state("attempt", "failed-run", "STARTED", "test", 200)
+        self.runtime.store.record_state("attempt", "failed-run", "FAILED", "failure", 200)
+        with self.assertRaises(ContractViolation):
+            self.runtime.store.record_state("attempt", "failed-run", "STARTED", "late", 50)
+        self.assertEqual(self.runtime.store.journal("failed-run")[-1]["state"], "FAILED")
+
+    def test_healthcheck_fails_closed_on_authenticated_row_corruption(self):
+        self.execute("health", "health-1")
+        original_hash = self.runtime.store._db.execute(
+            "SELECT record_hash FROM memory_candidates WHERE run_id = ?", ("health-1",)
+        ).fetchone()[0]
+        self.runtime.store._db.execute(
+            "UPDATE memory_candidates SET record_hash = ? WHERE run_id = ?", ("x" * 64, "health-1")
+        )
+        self.assertFalse(self.runtime.store.healthcheck(write_required=True))
+        self.runtime.store._db.execute(
+            "UPDATE memory_candidates SET record_hash = ? WHERE run_id = ?", (original_hash, "health-1")
+        )
+        self.runtime.store._db.execute(
+            "UPDATE execution_journal SET journal_hash = ? WHERE run_id = ?", ("x" * 64, "health-1")
+        )
+        self.assertFalse(self.runtime.store.healthcheck(write_required=True))
+
 
 if __name__ == "__main__":
     unittest.main()

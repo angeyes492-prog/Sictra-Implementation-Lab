@@ -103,7 +103,9 @@ class IntelligenceRuntime:
             replay["lineage"] = list(prior_result.lineage) + [prior_result.message_id]
             replay["trace"] = list(prior_result.trace) + ["CALLER->CALLER:HISTORICAL_REPLAY"]
             return Envelope.from_dict(replay)
-        self.store.record_state(request_fingerprint, run_id, "STARTED", "VALIDATED_REQUEST", now)
+        journal_fingerprint = self.store.record_state(
+            request_fingerprint, run_id, "STARTED", "VALIDATED_REQUEST", now
+        )
         try:
             self._route(request, "E01")
             current = request.handoff("E01", "E02", request.payload)
@@ -138,7 +140,7 @@ class IntelligenceRuntime:
                         decision_envelope=current,
                         candidate_fingerprint=current.payload["governance"]["candidate_fingerprint"],
                         authorize_effect=authorize_effect,
-                        action=action,
+                        action=action, journal_fingerprint=journal_fingerprint,
                     )
                 except CapacityExceeded:
                     enforcement = {
@@ -157,6 +159,7 @@ class IntelligenceRuntime:
                     self._route(final, "CALLER")
                     return self.store.commit_no_effect_terminal(
                         request_fingerprint=request_fingerprint, envelope=final,
+                        journal_fingerprint=journal_fingerprint,
                     )
                 self._route(final, "CALLER")
                 return final
@@ -170,13 +173,14 @@ class IntelligenceRuntime:
             self._route(final, "CALLER")
             return self.store.commit_no_effect_terminal(
                 request_fingerprint=request_fingerprint, envelope=final,
+                journal_fingerprint=journal_fingerprint,
             )
         except Exception as exc:
             terminal_after_failure = self.store.get_terminal(run_id, request_fingerprint)
             if (terminal_after_failure is None
                     or terminal_after_failure[0] != request_fingerprint):
                 self.store.record_state(
-                    request_fingerprint, run_id, "FAILED",
+                    journal_fingerprint, run_id, "FAILED",
                     f"{type(exc).__name__}:{exc}", now,
                 )
             raise

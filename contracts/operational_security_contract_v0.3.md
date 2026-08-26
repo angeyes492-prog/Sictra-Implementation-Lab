@@ -40,17 +40,19 @@ outcome como la evidencia; una sustitución posterior queda `INSUFFICIENT`.
 - Todas las consultas SQLite usan parámetros.
 - Efecto, asignación de versión y terminal ocurren en una única transacción
   `BEGIN IMMEDIATE`; cualquier excepción revierte la unidad completa.
-- Los registros forman una cadena HMAC comprobada en cada lectura; la clave de
-  integridad no reside en SQLite.
+- Los registros forman una cadena HMAC comprobada en cada lectura y antes de
+  extenderla; la clave de integridad no reside en SQLite.
 - El terminal vincula request fingerprint, result fingerprint y envelope en un
   HMAC de integridad verificado al leer.
 - Memoria y journal tienen capacidades configuradas y fallan cerrado al agotarse.
-- Solo schema SQLite v7 exacto es admitido, incluidas restricciones, CHECK e
-  índice parcial exacto;
-  una base sin versión que ya contiene tablas protegidas se rechaza sin mutación.
+- Cada fila del journal posee HMAC y un efecto/terminal requiere un intento
+  `STARTED` autenticado que transiciona de forma monotónica.
+- Solo schema SQLite v8 exacto es admitido, incluidas restricciones, CHECK e
+  índice parcial exacto; una SQLite sin versión solo se inicializa si está vacía;
+  cualquier otra se rechaza sin mutación.
 - Un terminal `COMMITTED` se invalida si falta o difiere su efecto durable.
 - La metadata HMAC fija identidad de clave y capacidades globales; una conexión
-  con configuración divergente no puede abrir el store.
+  con configuración divergente no puede abrir ni escribir en el store.
 - Tablas, índices, vistas o triggers no autorizados hacen fallar la apertura o
   la transacción; la coherencia durable se valida nuevamente antes del commit.
 - Lecturas devuelven snapshots profundamente inmutables.

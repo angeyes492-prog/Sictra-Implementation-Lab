@@ -51,12 +51,17 @@ registra por separado decisión y efecto.
   `EFFECT_AND_TERMINAL_COMMITTED`.
 - Memoria y journal tienen capacidades independientes configurables. Al
   agotarse, fallan cerrado; no se expulsa silenciosamente identidad contractual.
-- SQLite schema v7 rechaza versiones futuras/anteriores y tablas operacionales
-  sin versión; no promueve esquemas desconocidos implícitamente.
-- La clave de integridad y las capacidades se vinculan mediante metadata HMAC;
-  restart con clave o límites divergentes falla cerrado antes de escribir.
+- SQLite schema v8 se inicializa atómicamente solo sobre un archivo vacío; rechaza
+  versiones futuras/anteriores y cualquier SQLite ajena sin mutarla.
+- El DDL de cada tabla e índice se compara de forma exacta, por lo que un `CHECK`,
+  default, collation o restricción adicional también falla cerrado.
+- La clave de integridad y las capacidades se vinculan mediante metadata HMAC y se
+  verifican antes de cada escritura; restart o conexión activa con deriva falla
+  cerrado antes de escribir.
 - Objetos SQLite adicionales (incluidos triggers) están prohibidos y la
   coherencia efecto-terminal se vuelve a comprobar antes de `COMMIT`.
+- El journal es HMAC autenticado y obligatorio: un terminal no puede confirmarse
+  sin su intento `STARTED` correspondiente ni sin transición durable autenticada.
 - Los terminales `COMMITTED` son únicos por run y deben corresponder a su fila
   de memoria. Los `NOT_EXECUTED` son terminales durables por fingerprint de
   intento, por lo que se pueden reproducir sin bloquear un intento autorizado nuevo.
