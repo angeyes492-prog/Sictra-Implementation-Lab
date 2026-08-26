@@ -4,8 +4,10 @@
 
 - **Código:** `5f4075711eb4cafddc9f46f5fd36ba37cf0cc47f`.
 - **CI externa:** workflow `32924202885`, job `98043644393`, `success`.
-- **Reejecución limpia:** `python -m unittest tests.test_block1_runtime -q`,
-  67/67, 0 fallos, 0 errores, 25.449 s, worktree detenido en el SHA auditado.
+- **Reejecución exacta de la receta CI:** `PYTHONPATH=src python -m unittest
+  discover -s tests -v` → 151/151, 0 fallos, 0 errores, 15.656 s; seguida de
+  los manifiestos `sictra_block1` y `sictra_block1.demo`, en un worktree
+  detenido en el SHA auditado.
 - **Límite:** perfil `BOUNDED OPERATIONAL` en un host y SQLite local; no es
   producción ni aceptación G01–G12.
 
@@ -19,7 +21,7 @@
 | 4. Replay/concurrencia no duplican ni pierden estado | Pruebas de replay, colisión, concurrencia y capacidad: `test_exact_replay_returns_terminal_without_second_effect`, `test_concurrent_exact_replays_have_one_effect`, `test_concurrent_distinct_runs_get_unique_versions`, `test_concurrent_last_capacity_is_a_terminal_no_effect_not_failure`. | `VERIFIED / B` para el perfil ejecutado |
 | 5. Restart recupera terminal y memoria | `test_restart_recovers_terminal_and_memory`, `test_failed_transaction_recovers_after_restart_and_clock_advance`, `test_exact_no_effect_replay_is_historical_and_restart_safe`. | `VERIFIED / B` para el perfil ejecutado |
 | 6. Fallo entre efecto y terminal revierte ambos | `test_atomic_rollback_and_retry_after_injected_commit_failure`, `test_effect_transaction_requires_authenticated_started_journal`, `test_committed_terminal_requires_matching_durable_effect`. | `VERIFIED / B` para el perfil ejecutado |
-| 7. CI externa sobre SHA exacto | Workflow `32924202885` sobre `5f407571…`; pasos de pruebas, manifiesto y ejecución E01–E08 exitosos. | `VERIFIED / A` |
+| 7. CI externa sobre SHA exacto | Workflow `32924202885` sobre `5f407571…`; pruebas por discovery, manifiesto y ejecución E01–E08 exitosos. La receta fue reproducida localmente con 151/151. | `VERIFIED / A` |
 | 8. Cierre no reclama y conserva decisión humana de merge | Ledger v0.3, PR #1 abierto y sin merge. | `VERIFIED / A` |
 
 ## Red team complementario
