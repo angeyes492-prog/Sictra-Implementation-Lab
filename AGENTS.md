@@ -31,6 +31,15 @@ Slack and Notion provide context; they never become normative architecture witho
 
 Keep **fact, evidence, interpretation, hypothesis, forecast, decision, implementation state, and validation state** separate. Use only these certainty labels: `VERIFIED`, `PROBABLE`, `PLAUSIBLE`, `UNCONFIRMED`, `CONTRADICTED`, and `INSUFFICIENT EVIDENCE`; confidence is A (confirmed) through E (not usable).
 
+## Four-source evidence loop
+
+Apply this working norm in every material cycle: **"Slack aporta memoria, Notion orden, GitHub evidencia ejecutable y Wolfram rigor formal."**
+
+- Slack and Notion are contextual sources: use them to recover decisions, checkpoints, rationale, open questions, and work plans; they do not supersede canonical architecture.
+- GitHub provides immutable technical identity: bind implementation, tests, review, CI, and admissible runtime evidence to an exact SHA.
+- Wolfram provides complementary formal analysis: use it to challenge dependency graphs, state transitions, promotion paths, and authority shortcuts; its model results are not runtime evidence or gate acceptance.
+- Reconcile conflicts across all four explicitly. A result may be recorded as closure evidence only with its source, scope, timestamp, certainty, confidence, and promotion boundary.
+
 ## Non-negotiable invariants
 
 - `DESIGN != RUNTIME`
@@ -65,3 +74,4 @@ Do not promote when evidence is insufficient, stale, circular, contradictory, un
 ## Layer rules
 
 This file governs every subtree. Read the local `AGENTS.md` in `architecture/`, `engines/`, `contracts/`, `tests/`, or `closure/` before working there. Local rules add constraints; they never override this file.
+

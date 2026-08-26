@@ -1,0 +1,38 @@
+{
+  "artifact": "block1_canonical_ci_recipe_reproduction_2026-08-25",
+  "scope": "Telecare OS / Bloque 1 bounded operational runtime",
+  "classification": "LOCAL_CANONICAL_REPRODUCTION",
+  "certainty": "VERIFIED",
+  "confidence": "B",
+  "executed_at": "2026-08-25T21:37:08.4795240-06:00",
+  "baseline": {
+    "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+    "commit_sha": "5f4075711eb4cafddc9f46f5fd36ba37cf0cc47f",
+    "worktree": "detached canonical worktree"
+  },
+  "github_ci": {
+    "workflow_run": 32924202885,
+    "job": 98043644393,
+    "conclusion": "success"
+  },
+  "commands": [
+    {
+      "command": "PYTHONPATH=src python -m unittest discover -s tests -v",
+      "result": {"tests_run": 151, "failures": 0, "errors": 0, "duration_seconds": 15.656, "status": "OK"}
+    },
+    {
+      "command": "PYTHONPATH=src python -m sictra_block1 tests/fixtures/notion_exp05_context_matrix.json --agent Precision",
+      "result": {"scope": "LOCAL_BOUNDED_CONTEXT_TO_REASSESSMENT", "reassessment_status": "LOCAL_ONLY", "runtime_evidence_admissible": false}
+    },
+    {
+      "command": "PYTHONPATH=src python -m sictra_block1.demo",
+      "result": {"scope": "BLOCK1_BOUNDED_OPERATIONAL_RUNTIME", "enforcement_status": "COMMITTED", "runtime_effect_observed": true, "replay_new_effect": false}
+    }
+  ],
+  "limitations": [
+    "Local reproduction is not independent review.",
+    "The manifests make only bounded-local runtime claims.",
+    "This evidence does not promote global G01-G12 acceptance."
+  ]
+}
+
