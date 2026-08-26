@@ -1,11 +1,9 @@
-[build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "sictra-implementation-lab"
-version = "1.1.0"
+name = "sictra-block1"
+version = "0.3.0"
+description = "Bounded operational runtime for Telecare OS Block 1 Intelligence"
 requires-python = ">=3.11"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
+[tool.unittest]
+start-directory = "tests"
+
