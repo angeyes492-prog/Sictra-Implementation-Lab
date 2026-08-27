@@ -1,0 +1,79 @@
+{
+  "evidence_id": "BLOCK3-M01-M05-LOCAL-SUITE-2026-08-27",
+  "scope": "Telecare OS Precision Intelligence M01-M05 local bounded SUT",
+  "started_utc": "2026-08-27T02:39:33.3059831Z",
+  "ended_utc": "2026-08-27T02:39:59.3036637Z",
+  "duration_seconds": 25.998,
+  "environment": {
+    "python": "3.12.10",
+    "platform": "Microsoft Windows NT 10.0.26200.0",
+    "command": "PYTHONPATH=src python -m unittest discover -s tests -q"
+  },
+  "tests": {
+    "executed": 133,
+    "passed": 133,
+    "failed": 0,
+    "errors": 0,
+    "block3_vectors": 37
+  },
+  "formal_checks": {
+    "provider": "Wolfram Language evaluator",
+    "dependency_graph_acyclic": true,
+    "cycles": [],
+    "unique_semantic_output_owners": true,
+    "pipeline_disposition_vectors_exhausted": 1024,
+    "return_upstream_dominates": true,
+    "contradiction_dominates_without_return": true,
+    "partial_dominates_without_higher_failure": true,
+    "accepted_only_when_all_accepted": true,
+    "evidence_class": "FORMAL_COMPLEMENTARY_NOT_RUNTIME"
+  },
+  "repair_history": [
+    {
+      "initial_result": "33 tests; 32 passed; 1 fixture error",
+      "failure": "synthetic dormancy timestamp became negative",
+      "repair": "moved the synthetic reference clock forward without changing the assertion"
+    },
+    {
+      "red_team_finding": "opportunity state used set membership instead of latest transition",
+      "repair": "latest timestamp now controls; simultaneous ACTIVE/CLOSED is CONTRADICTED",
+      "regression_vectors_added": 2
+    },
+    {
+      "red_team_finding": "DecisionSignal accepted an ungoverned source identity",
+      "repair": "source engine vocabulary is now fail-closed",
+      "regression_vectors_added": 1
+    },
+    {
+      "red_team_finding": "independent-root non-inflation lacked a direct M02 vector",
+      "repair": "added same-root repetition test",
+      "regression_vectors_added": 1
+    }
+  ],
+  "identity": {
+    "local_git_commit": null,
+    "local_identity_status": "UNCOMMITTED_WORKSPACE_NO_CANONICAL_SHA",
+    "canonical_remote_baseline": "051d5088c95fd2610b3a3a386241ef820c1c2c85",
+    "canonical_remote_contains_block3_m01_m05": false
+  },
+  "artifacts": [
+    {"path":"architecture/block3_precision_intelligence_engine_model_v1.md","sha256":"7275fd6e7d545fa479fae42c4b3d6ebf3abe658a9fee62ff4fdac7e4aff98772","bytes":11515},
+    {"path":"contracts/block3_precision_foundation_contract_v0.1.md","sha256":"040eb3a932d5d28be068acbffbdbe869dcbfa551b14b50647617a14f55de6e67","bytes":5525},
+    {"path":"engines/block3_m01_m05_dossiers_v0.1.md","sha256":"bc91bd1b98e5e95b6299c42620419bd060edadaeb1c50fc1141999be15d2b617","bytes":3504},
+    {"path":"src/sictra_block3_precision/contracts.py","sha256":"3094a8ed869605c4cad3286a7402ca0425fbfdb8a7d2c7a5abfba1cbd90e56a9","bytes":5063},
+    {"path":"src/sictra_block3_precision/person.py","sha256":"5d89908830332b49504e33666f742cbf3ec5c3d3ed0d13a51fc81df9528c4d7a","bytes":8112},
+    {"path":"src/sictra_block3_precision/decision.py","sha256":"3a94a168c55b728bcbc6634c0eefffe9b12e0f8574a85dce0efd09af8bc93dbf","bytes":10274},
+    {"path":"src/sictra_block3_precision/behavioral.py","sha256":"25104b6c55d941813103fc7d50478d02d33fce3f8a06b8958deb5c71ac36bd5a","bytes":7465},
+    {"path":"src/sictra_block3_precision/relationship.py","sha256":"0ce65f5be4a7892d65c496e1dbf6160cea461b567b11a72a22dc1c7341eedc2f","bytes":8098},
+    {"path":"src/sictra_block3_precision/context.py","sha256":"af41ed6c644ab46b8a44d9fd5885ef84f5e02f340a38b40746a2aed06cab8170","bytes":7786},
+    {"path":"src/sictra_block3_precision/pipeline.py","sha256":"712cdee5d815e64b88330664be48dc6635bd1f38e103acb8088303c7c3c99171","bytes":4591},
+    {"path":"tests/test_block3_precision_foundation.py","sha256":"e9790ce0d61537c302faa0d281b168847170713b9113d9eaf3dc4938846f4d40","bytes":22523}
+  ],
+  "classification": {
+    "implementation": "VERIFIED / LOCAL BOUNDED SUT / B",
+    "external_ci": "INSUFFICIENT EVIDENCE / E",
+    "independent_review": "INSUFFICIENT EVIDENCE / E",
+    "integration_with_real_block1_block2_crm": "INSUFFICIENT EVIDENCE / E",
+    "global_acceptance": false
+  }
+}
