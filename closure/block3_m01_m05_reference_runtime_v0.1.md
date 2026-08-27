@@ -2,7 +2,7 @@
 
 | GATE | STATUS | EVIDENCE | TEST | DATE | VERSION | DEPENDENCIES | CONTRADICTIONS | CONFIDENCE | REVIEWER / VALIDATOR | NEXT REASSESSMENT |
 |---|---|---|---|---|---|---|---|---|---|---|
-| M01–M05 local bounded reference runtime | `YELLOW` | `evidence/block3_m01_m05_local_suite_2026-08-27.json` | 37 Block 3 vectors; regresión 133/133 | 2026-08-27T02:39:59Z | 0.1 | diseño v1.0; contrato local; Python 3.12 | orden Precision↔Design y Account Intelligence siguen abiertos | `PROBABLE / B` | implementación local + Wolfram formal; sin reviewer independiente | CI externa sobre SHA exacto y revisión independiente posterior |
+| M01–M05 bounded reference runtime | `YELLOW` | local suite; external CI run `33034171469` sobre `491f0754…` | 37 Block 3; local 133/133; externa 116/116 | 2026-08-27T02:43:49Z | 0.1 | diseño v1.0; contrato local; Python 3.12 | orden Precision↔Design y Account Intelligence siguen abiertos | `PROBABLE / A` para runtime acotado | CI externa + Wolfram formal; sin reviewer independiente | revisión independiente sobre SHA post-evidencia |
 
 ## Claims soportados
 
@@ -13,6 +13,8 @@
 - `VERIFIED / B`: el caso de buzón funcional produce perfil con proximidad
   `UNKNOWN`, relación `COLD`, decisión candidata y estado global `PARTIAL`; no
   produce SEND ni delivery authority.
+- `VERIFIED / A`: GitHub Actions run `33034171469`, job `98393142134`, ejecutó
+  116/116 pruebas sobre el commit exacto `491f07545046b938906d95666c25acf943c0c38c`.
 
 ## Estado por frontera
 
@@ -23,20 +25,22 @@
 - Integración interna fundacional: `VERIFIED / LOCAL / B`.
 - Integración real con Bloques 1/2, Account Intelligence y CRM: `INSUFFICIENT
   EVIDENCE / E`.
-- CI externa y revisión independiente: `INSUFFICIENT EVIDENCE / E`.
+- CI externa: `VERIFIED / A` para el SHA y suite ejecutados.
+- Revisión independiente: `INSUFFICIENT EVIDENCE / E`.
 - Aceptación global/producción: `NO`.
 
 ## Bloqueadores
 
-1. El workspace local no tiene commit; no existe identidad Git inmutable para
-   esta implementación.
-2. El `main` remoto canónico `051d5088…` no contiene M01–M05.
+1. El workspace local no tiene commit; su identidad sigue separada del SHA
+   remoto ejecutado.
+2. M01–M05 viven en PR draft #7; `main` todavía no los contiene.
 3. Faltan contrato autorizado de Account Intelligence y adapters de datos.
 4. Faltan Relevance Gate, M06–M08 y authority/enforcement de delivery.
-5. Falta revisión independiente después de las reparaciones finales.
+5. Falta revisión independiente sobre el estado post-evidencia.
 
 ## Non-claims
 
 `TEST PASS != SYSTEM VALIDATION`. Este ledger no reclama eficacia comercial,
 NLP, CRM, consentimiento, entrega, producción, SLOs, integración transversal o
 gate global.
+
