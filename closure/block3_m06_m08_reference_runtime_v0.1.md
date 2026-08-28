@@ -4,9 +4,9 @@
 |---|---|
 | Gate | `YELLOW` |
 | Capability | `IMPLEMENTED / LOCAL BOUNDED SUT` |
-| Execution | `173/173 PASS` |
+| Local execution | `173/173 PASS` |
 | Formal | DAG + 2,400 adaptive cases verified |
-| Hosted CI | `INSUFFICIENT EVIDENCE` |
+| Hosted CI | `156/156 PASS` on `6ffa871057e950369dc27e32684b2513981d0732` |
 | Integration | `FOUNDATION ONLY` |
 | Delivery | `NOT IMPLEMENTED` |
 | Independent review | `PENDING` |
@@ -25,8 +25,10 @@
 
 ## Límite
 
-Este cierre no autoriza merge, producción, contacto, aprendizaje promovido ni
-integración global. El siguiente gate exige hosted CI sobre SHA exacto y review
-independiente, seguido de contratos reales interbloque.
+Los 17 vectores que diferencian la ejecución local de la alojada se conservan
+como alcance local y no se presentan como evidencia del SHA alojado.
 
+Este cierre no autoriza merge, producción, contacto, aprendizaje promovido ni
+integración global. El siguiente gate exige review independiente y contratos
+reales interbloque.
 
