@@ -70,6 +70,7 @@ class ContextStage:
     hypothesis_statements: tuple[str, ...]
     tags: tuple[str, ...]
     evidence_ids: tuple[str, ...]
+    root_provenance_ids: tuple[str, ...]
     independent_root_count: int
     confidence: str
 
@@ -158,6 +159,9 @@ class ContextIntelligenceEngine:
                 })),
                 tags=tuple(sorted({tag for item in scoped for tag in item.tags})),
                 evidence_ids=tuple(sorted({item.evidence.evidence_id for item in scoped})),
+                root_provenance_ids=tuple(sorted({
+                    item.evidence.root_provenance for item in scoped
+                })),
                 independent_root_count=len({item.evidence.root_provenance for item in scoped}),
                 confidence=weakest_confidence(tuple(item.evidence.confidence for item in scoped)),
             ))
@@ -193,3 +197,4 @@ class ContextIntelligenceEngine:
             ),
             relevance_map,
         )
+
