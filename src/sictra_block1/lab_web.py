@@ -1,4 +1,4 @@
-"""Local-only web interface for the bounded Block 1 test laboratory."""
+"""Local-only product workspace for bounded Block 1 field tests."""
 
 from __future__ import annotations
 
@@ -6,18 +6,28 @@ import argparse
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlsplit
 import webbrowser
 from typing import Any
 
 from .lab import LAB_SCOPE, SCENARIOS, execute_scenario
+from .logistics import (
+    FIXTURE_CLASS,
+    WORKSPACE_SCOPE,
+    LogisticsContractViolation,
+    compare_investigation_strategies,
+    get_investigation,
+    workspace_catalog,
+)
 
-UI_SCOPE = "BLOCK1_LOCAL_INTERACTIVE_LAB_UI"
-
-_PAGE = """<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Telecare OS · Laboratorio interno</title><style>
-:root{--ink:#173042;--muted:#607381;--paper:#f3f7f8;--panel:#fff;--line:#d3e0e4;--safe:#1c7754;--block:#a85520;--alert:#ad3333;--blue:#0f607b}*{box-sizing:border-box}body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink)}main{max-width:880px;margin:0 auto;padding:42px 22px 72px}h1{font-size:clamp(1.7rem,4vw,2.6rem);margin:0 0 4px}h2{margin-top:0;font-size:1.15rem}.eyebrow{color:var(--blue);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.75rem}.notice,.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;margin-top:20px}.notice{border-left:5px solid var(--blue)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}button{font:inherit;text-align:left;border:1px solid #9fb7c0;border-radius:8px;background:#fff;color:var(--ink);cursor:pointer;padding:15px;min-height:70px}button:hover{border-color:var(--blue);background:#f5fbfd}button:focus-visible{outline:3px solid #64b8d7;outline-offset:2px}button:disabled{opacity:.6;cursor:wait}.label{display:block;color:var(--muted);font-size:.82rem;margin-top:3px}#result[hidden]{display:none}.status{border-left:5px solid var(--blue)}.status.good{border-color:var(--safe)}.status.blocked{border-color:var(--block)}.status.unexpected{border-color:var(--alert)}.status p{margin-bottom:0}details{margin-top:16px}pre{overflow:auto;white-space:pre-wrap;font-size:.8rem;background:#edf3f5;padding:14px;border-radius:6px}.actions{margin-top:16px}.actions button{min-height:auto;padding:9px 13px}@media(max-width:600px){.grid{grid-template-columns:1fr}main{padding-top:26px}}
-</style></head><body><main><div class="eyebrow">Entorno local de pruebas</div><h1>Telecare OS · Laboratorio interno</h1><p>Bloque 1 · Intelligence</p><aside class="notice"><strong>Sin datos reales ni acciones externas.</strong> Esta pantalla ejecuta casos de prueba locales; no envía mensajes, no consulta fuentes externas y no cambia ningún gate.</aside><section class="card"><h2>Elige una prueba</h2><div class="grid"><button data-scenario="valid">Ejecutar prueba válida<span class="label">Debe registrar un efecto controlado.</span></button><button data-scenario="stale-evidence">Probar evidencia vencida<span class="label">Debe bloquearse sin registrar efecto.</span></button><button data-scenario="missing-authority">Probar falta de autorización<span class="label">Debe bloquearse sin registrar efecto.</span></button><button data-scenario="wrong-scope">Probar alcance incorrecto<span class="label">Debe bloquearse sin registrar efecto.</span></button></div></section><section id="result" class="card status" aria-live="polite" hidden><h2 id="result-title">Resultado</h2><p id="result-message"></p><details><summary>Ver detalle técnico</summary><pre id="detail"></pre></details><div class="actions"><button id="clear" type="button">Limpiar resultado</button></div></section></main><script>
-const buttons=[...document.querySelectorAll('[data-scenario]')],result=document.querySelector('#result'),title=document.querySelector('#result-title'),message=document.querySelector('#result-message'),detail=document.querySelector('#detail');function show(kind,heading,text,data){result.hidden=false;result.className='card status '+kind;title.textContent=heading;message.textContent=text;detail.textContent=JSON.stringify(data,null,2);result.scrollIntoView({behavior:'smooth',block:'nearest'})}buttons.forEach(button=>button.addEventListener('click',async()=>{buttons.forEach(item=>item.disabled=true);try{const response=await fetch('/api/scenarios/'+button.dataset.scenario,{method:'POST'});const data=await response.json();if(!response.ok)throw new Error(data.error||'No se pudo ejecutar la prueba.');const summary=data.summary;const kind=summary.status==='COMMITTED'?'good':summary.status==='BLOCKED_CORRECTLY'?'blocked':'unexpected';show(kind,summary.title,summary.message,data)}catch(error){show('unexpected','Resultado inesperado','La prueba no pudo completarse. Revisa el detalle técnico.',{error:String(error)})}finally{buttons.forEach(item=>item.disabled=false)}}));document.querySelector('#clear').addEventListener('click',()=>{result.hidden=true;detail.textContent=''})
-</script></body></html>"""
+UI_SCOPE = "BLOCK1_LOCAL_INTELLIGENCE_PRODUCT_UI"
+_WEB_ROOT = Path(__file__).with_name("web")
+_STATIC_FILES = {
+    "/": ("index.html", "text/html; charset=utf-8"),
+    "/app.css": ("app.css", "text/css; charset=utf-8"),
+    "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+}
 
 
 def _summary(report: dict[str, Any]) -> dict[str, str]:
@@ -32,66 +42,163 @@ def _summary(report: dict[str, Any]) -> dict[str, str]:
 
 
 class LabWebHandler(BaseHTTPRequestHandler):
-    server_version = "SICTrALabWeb/0.1"
+    server_version = "SICTrAIntelligenceWorkspace/0.2"
 
     def log_message(self, format: str, *args: object) -> None:
         return
 
+    def _base_headers(self) -> None:
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Cross-Origin-Resource-Policy", "same-origin")
+        self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+
     def _send_json(self, status: HTTPStatus, payload: dict[str, Any]) -> None:
-        encoded = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        encoded = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(encoded)))
-        self.send_header("Cache-Control", "no-store")
+        self._base_headers()
         self.end_headers()
         self.wfile.write(encoded)
+
+    def _guard_local_request(self) -> bool:
+        port = self.server.server_port
+        allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+        host = self.headers.get("Host")
+        origin = self.headers.get("Origin")
+        fetch_site = self.headers.get("Sec-Fetch-Site")
+        allowed_origins = {f"http://127.0.0.1:{port}", f"http://localhost:{port}"}
+        if host not in allowed_hosts:
+            self._send_json(HTTPStatus.FORBIDDEN, {"error": "Host local no autorizado."})
+            return False
+        if origin is not None and origin not in allowed_origins:
+            self._send_json(HTTPStatus.FORBIDDEN, {"error": "Origen no autorizado."})
+            return False
+        if fetch_site == "cross-site":
+            self._send_json(HTTPStatus.FORBIDDEN, {"error": "Solicitud cross-site rechazada."})
+            return False
+        return True
+
+    def _send_static(self, path: str) -> bool:
+        target = _STATIC_FILES.get(path)
+        if target is None:
+            return False
+        filename, content_type = target
+        encoded = (_WEB_ROOT / filename).read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(encoded)))
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'self'; connect-src 'self'; style-src 'self'; "
+            "script-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; "
+            "frame-ancestors 'none'; form-action 'none'",
+        )
+        self._base_headers()
+        self.end_headers()
+        self.wfile.write(encoded)
+        return True
 
     def do_GET(self) -> None:
-        if self.path == "/health":
-            self._send_json(HTTPStatus.OK, {"status": "ok", "scope": UI_SCOPE})
+        if not self._guard_local_request():
             return
-        if self.path != "/":
-            self._send_json(HTTPStatus.NOT_FOUND, {"error": "Ruta no disponible."})
+        parsed = urlsplit(self.path)
+        if parsed.path == "/health":
+            self._send_json(HTTPStatus.OK, {
+                "status": "ok", "scope": UI_SCOPE,
+                "workspace_scope": WORKSPACE_SCOPE, "fixture_class": FIXTURE_CLASS,
+            })
             return
-        encoded = _PAGE.encode("utf-8")
-        self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(encoded)))
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'")
-        self.end_headers()
-        self.wfile.write(encoded)
+        if parsed.path == "/api/workspace":
+            self._send_json(HTTPStatus.OK, workspace_catalog())
+            return
+        comparison_prefix = "/api/comparisons/"
+        if parsed.path.startswith(comparison_prefix):
+            investigation_id = unquote(parsed.path[len(comparison_prefix):])
+            query = parse_qs(parsed.query, strict_parsing=False)
+            left, right = query.get("left", []), query.get("right", [])
+            if set(query) != {"left", "right"} or len(left) != 1 or len(right) != 1:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Se requieren left y right una sola vez."})
+                return
+            if get_investigation(investigation_id) is None:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Investigación no disponible."})
+                return
+            try:
+                result = compare_investigation_strategies(investigation_id, left[0], right[0])
+            except LogisticsContractViolation as error:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            else:
+                self._send_json(HTTPStatus.OK, result)
+            return
+        prefix = "/api/investigations/"
+        if parsed.path.startswith(prefix):
+            suffix = unquote(parsed.path[len(prefix):])
+            if not suffix or "/" in suffix:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Investigación no disponible."})
+                return
+            investigation = get_investigation(suffix)
+            if investigation is None:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Investigación no disponible."})
+            else:
+                self._send_json(HTTPStatus.OK, investigation)
+            return
+        if self._send_static(parsed.path):
+            return
+        self._send_json(HTTPStatus.NOT_FOUND, {"error": "Ruta no disponible."})
 
     def do_POST(self) -> None:
+        if not self._guard_local_request():
+            return
+        parsed = urlsplit(self.path)
         prefix = "/api/scenarios/"
-        if not self.path.startswith(prefix):
+        if not parsed.path.startswith(prefix):
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "Ruta no disponible."})
             return
-        scenario = self.path[len(prefix):]
+        scenario = parsed.path[len(prefix):]
         if scenario not in SCENARIOS or "/" in scenario:
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "Escenario no disponible."})
             return
+        if self.headers.get("Content-Length") not in {None, "0"}:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta payload."})
+            return
         try:
             report = dict(execute_scenario(scenario, store_path=":memory:"))
-            self._send_json(HTTPStatus.OK, {"scope": UI_SCOPE, "lab_scope": LAB_SCOPE, "scenario": scenario, "summary": _summary(report), "report": report})
+            self._send_json(HTTPStatus.OK, {
+                "scope": UI_SCOPE, "lab_scope": LAB_SCOPE, "scenario": scenario,
+                "summary": _summary(report), "report": report,
+            })
         except Exception as error:
-            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"Error local del laboratorio: {type(error).__name__}"})
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {
+                "error": f"Error local del laboratorio: {type(error).__name__}"
+            })
+
+    def _method_not_allowed(self) -> None:
+        if not self._guard_local_request():
+            return
+        self._send_json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "Método no disponible."})
+
+    do_DELETE = _method_not_allowed
+    do_OPTIONS = _method_not_allowed
+    do_PATCH = _method_not_allowed
+    do_PUT = _method_not_allowed
 
 
 def create_server(*, host: str = "127.0.0.1", port: int = 8765) -> ThreadingHTTPServer:
     if host != "127.0.0.1":
-        raise ValueError("the internal lab UI may only bind to 127.0.0.1")
+        raise ValueError("the product workspace may only bind to 127.0.0.1")
     return ThreadingHTTPServer((host, port), LabWebHandler)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--open", action="store_true", help="Open the local page in the default browser.")
+    parser.add_argument("--open", action="store_true", help="Open the local workspace.")
     args = parser.parse_args()
     server = create_server(port=args.port)
     address = f"http://127.0.0.1:{server.server_port}/"
-    print(f"Laboratorio interno disponible en {address}")
+    print(f"Intelligence Workspace disponible en {address}")
     if args.open:
         webbrowser.open(address)
     try:

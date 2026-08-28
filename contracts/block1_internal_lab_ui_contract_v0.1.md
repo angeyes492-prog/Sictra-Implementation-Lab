@@ -1,5 +1,9 @@
 # Bloque 1 — Contrato de UI de laboratorio interno v0.1
 
+> **SUPERSEDED:** `block1_logistics_workspace_contract_v0.1.md` reemplaza la
+> superficie visual y conserva los cuatro escenarios como Validation Deck.
+> Este archivo permanece como evidencia histórica del laboratorio aislado.
+
 ## Identidad y alcance
 
 - Productor: servidor local `sictra_block1.lab_web`.

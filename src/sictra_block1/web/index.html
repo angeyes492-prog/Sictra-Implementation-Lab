@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Intelligence Workspace · Telecare OS</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Saltar al contenido</a>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Navegación principal">
+      <div class="identity">
+        <span class="identity-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div><strong>Telecare OS</strong><span>Intelligence / 01</span></div>
+      </div>
+      <nav class="rail-nav">
+        <button class="nav-item active" data-view="overview"><span>⌁</span> Panorama</button>
+        <button class="nav-item" data-view="investigations"><span>◎</span> Investigaciones</button>
+        <button class="nav-item" data-view="strategy"><span>⇄</span> Strategy Lab</button>
+        <button class="nav-item" data-view="evidence"><span>⌇</span> Evidencia</button>
+        <button class="nav-item" data-view="watchlists"><span>◌</span> Watchlists</button>
+        <button class="nav-item" data-view="validation"><span>✓</span> Validación</button>
+      </nav>
+      <div class="rail-foot">
+        <span class="local-dot"></span>
+        <div><strong>Runtime local</strong><span id="runtime-status">Comprobando…</span></div>
+      </div>
+    </aside>
+
+    <main id="workspace" class="workspace" tabindex="-1">
+      <header class="command-bar">
+        <div><span class="crumb">Bloque 1 / <strong id="view-name">Panorama</strong></span><h1>Intelligence Workspace</h1></div>
+        <div class="command-actions"><span class="fixture-badge">Campo sintético</span><button id="refresh" class="icon-button" type="button" aria-label="Actualizar workspace">↻</button></div>
+      </header>
+      <section class="boundary-strip" aria-label="Límite del entorno"><strong>Entorno de pruebas trazable</strong><span>No consulta internet, no contiene empresas reales y no cambia gates.</span></section>
+      <div id="loading" class="loading-state"><span></span>Cargando el tejido de inteligencia…</div>
+      <div id="error" class="error-state" role="alert" hidden></div>
+
+      <section class="view active" data-view-panel="overview">
+        <div class="scope-lens">
+          <div class="lens-copy"><span class="section-kicker">Scope lens</span><h2>Una pregunta. Tres escalas. Evidencia que conserva sus límites.</h2><p>Explora cómo cambia una investigación logística entre el plano global, regional y local sin mezclar observaciones incompatibles.</p><div id="scope-controls" class="segmented" aria-label="Filtrar por escala"></div></div>
+          <div class="scope-orbit" aria-hidden="true"><span class="orbit orbit-global">Global</span><span class="orbit orbit-regional">Regional</span><span class="orbit orbit-local">Local</span><i class="orbit-core">I</i></div>
+        </div>
+        <div class="metrics-row" id="metrics-row"></div>
+        <div class="overview-grid">
+          <section class="panel signal-board"><div class="panel-head"><div><span class="section-kicker">Radar activo</span><h2>Investigaciones</h2></div><button class="text-button" data-jump="investigations">Ver todas →</button></div><div id="investigation-list" class="investigation-list"></div></section>
+          <section class="panel pulse-panel"><div class="panel-head"><div><span class="section-kicker">Pulso epistémico</span><h2>Estado del conocimiento</h2></div></div><div id="epistemic-pulse"></div></section>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="investigations">
+        <div class="view-intro"><div><span class="section-kicker">Research desk</span><h2>Investigaciones acotadas</h2><p>Selecciona un expediente para recorrer su trazabilidad completa.</p></div><select id="investigation-select" aria-label="Seleccionar investigación"></select></div>
+        <div id="investigation-detail"></div>
+      </section>
+
+      <section class="view" data-view-panel="strategy">
+        <div class="view-intro"><div><span class="section-kicker">E03 · Experimentación</span><h2>Strategy Lab</h2><p>Compara métodos observados sin convertir métricas heterogéneas en un puntaje artificial.</p></div></div>
+        <div class="strategy-controls panel"><label>Investigación<select id="strategy-investigation"></select></label><label>Estrategia izquierda<select id="strategy-left"></select></label><label>Estrategia derecha<select id="strategy-right"></select></label><button id="compare" class="primary-button" type="button">Comparar estrategias</button></div>
+        <div id="strategy-result" aria-live="polite"></div>
+      </section>
+
+      <section class="view" data-view-panel="evidence">
+        <div class="view-intro"><div><span class="section-kicker">E02 + E04 + E05</span><h2>Evidence Spine</h2><p>La firma visual del Bloque 1: cada conclusión conserva su camino de evidencia.</p></div><select id="evidence-select" aria-label="Seleccionar investigación para evidencia"></select></div>
+        <div id="evidence-spine"></div>
+      </section>
+
+      <section class="view" data-view-panel="watchlists">
+        <div class="view-intro"><div><span class="section-kicker">7 / 30 / 90</span><h2>Watchlists de revalidación</h2><p>Observables futuros, no predicciones automáticas.</p></div></div>
+        <div id="watchlist-grid" class="watchlist-grid"></div>
+      </section>
+
+      <section class="view" data-view-panel="validation">
+        <div class="view-intro"><div><span class="section-kicker">Pruebas del runtime</span><h2>Validation Deck</h2><p>Ejecuta los límites adversariales del Bloque 1 sin salir de la herramienta.</p></div></div>
+        <div class="validation-layout">
+          <div class="scenario-grid"><button data-scenario="valid"><strong>Flujo válido</strong><span>Debe registrar un único efecto controlado.</span></button><button data-scenario="stale-evidence"><strong>Evidencia vencida</strong><span>Debe bloquearse sin escribir.</span></button><button data-scenario="missing-authority"><strong>Autoridad ausente</strong><span>Debe bloquearse sin escribir.</span></button><button data-scenario="wrong-scope"><strong>Alcance incorrecto</strong><span>Debe bloquearse sin escribir.</span></button></div>
+          <div id="validation-result" class="panel validation-result" aria-live="polite"><span class="section-kicker">Resultado</span><h3>Sin ejecución reciente</h3><p>Selecciona un vector para comprobar el límite correspondiente.</p></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
