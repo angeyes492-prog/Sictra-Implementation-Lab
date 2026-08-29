@@ -6,7 +6,7 @@
 | Capability | `IMPLEMENTED / EXECUTED / LOCAL BOUNDED SUT` |
 | Local execution | `16/16 PASS`; regresión `229/229 PASS` |
 | Formal | topología web/memoria y fronteras verificadas |
-| Hosted CI | `PENDING` |
+| Hosted CI | `172/172 PASS` on `c3a1c6dd7ec527afcab6e7b3d338e547079adecb` |
 | Integration | `M05 HYPOTHESIS ADAPTER ONLY` |
 | CRM / Excel adapter | `NOT IMPLEMENTED` |
 | Delivery | `NOT IMPLEMENTED` |
@@ -30,4 +30,7 @@ No existe aún importador Excel, autenticación de operador, cifrado de producci
 gestión de claves, borrado físico, crawling JavaScript, adapter HubSpot ni shadow
 run sobre dominios reales autorizados. El siguiente gate es CI hospedada sobre
 SHA exacto, review independiente y un importador Excel estrictamente read-only.
+
+Los 57 vectores que diferencian el workspace local de la ejecución alojada se
+preservan como alcance local y no se atribuyen al SHA alojado.
 
