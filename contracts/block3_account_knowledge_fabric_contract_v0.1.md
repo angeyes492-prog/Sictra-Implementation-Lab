@@ -17,7 +17,8 @@ destinatario, consentimiento ni acción de contacto.
 ## Reglas de aceptación
 
 - El host debe ser el dominio oficial o un subdominio permitido.
-- El fetcher debe rechazar destinos no públicos y redirecciones no aprobadas.
+- El fetcher debe configurarse con el host oficial aprobado, rechazar destinos no
+  públicos y detener la cadena de redirect antes de solicitar un host no aprobado.
 - `robots.txt` vigente se cumple; excepción `404` equivale a ausencia de regla.
 - Una observación website es una declaración de fuente y sólo puede convertirse
   en hipótesis M05 ACCOUNT; no en `FACT`.

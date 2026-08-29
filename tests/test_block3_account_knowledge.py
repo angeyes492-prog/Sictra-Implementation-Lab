@@ -123,6 +123,12 @@ class OfficialWebsiteEnrichmentTests(unittest.TestCase):
         with self.assertRaises(PrecisionContractViolation):
             SafeUrllibWebsiteFetcher._assert_public_target("http://127.0.0.1/")
 
+    def test_network_fetcher_refuses_to_follow_redirects_beyond_approved_domain(self):
+        fetcher = SafeUrllibWebsiteFetcher(now=NOW, approved_host="example.test")
+        with self.assertRaises(PrecisionContractViolation):
+            fetcher._assert_approved_target("https://evil.test/landing")
+        fetcher._assert_approved_target("https://support.example.test/help")
+
     def test_cross_tenant_evidence_cannot_be_injected_into_dossier(self):
         base = dossier()
         foreign = replace(base.observations[0], tenant_id="tenant-b")

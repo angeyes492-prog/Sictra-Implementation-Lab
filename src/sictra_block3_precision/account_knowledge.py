@@ -170,12 +170,31 @@ class _NoRedirect(HTTPRedirectHandler):
 class SafeUrllibWebsiteFetcher:
     """Minimal public-web fetcher with SSRF checks and manually checked redirects."""
 
-    def __init__(self, *, now: int, max_redirects: int = 3) -> None:
+    def __init__(
+        self,
+        *,
+        now: int,
+        approved_host: str,
+        allow_subdomains: bool = True,
+        max_redirects: int = 3,
+    ) -> None:
         if not isinstance(now, int) or now < 0 or max_redirects < 0:
             raise PrecisionContractViolation("safe fetcher requires logical time and valid redirect bound")
+        normalized_host = approved_host.strip().casefold().rstrip(".")
+        if not normalized_host or any(token in normalized_host for token in ("://", "/", "@", ":")):
+            raise PrecisionContractViolation("safe fetcher requires one approved DNS host")
         self._now = now
         self._max_redirects = max_redirects
+        self._approved_host = normalized_host
+        self._allow_subdomains = allow_subdomains
         self._opener = build_opener(_NoRedirect())
+
+    def _assert_approved_target(self, url: str) -> None:
+        host = (urlsplit(url).hostname or "").casefold().rstrip(".")
+        if host != self._approved_host and not (
+            self._allow_subdomains and host.endswith("." + self._approved_host)
+        ):
+            raise PrecisionContractViolation("web redirect leaves the approved official domain")
 
     @staticmethod
     def _assert_public_target(url: str) -> None:
@@ -204,6 +223,7 @@ class SafeUrllibWebsiteFetcher:
             raise PrecisionContractViolation("fetch limits must be positive")
         current = _canonical_url(url)
         for _ in range(self._max_redirects + 1):
+            self._assert_approved_target(current)
             self._assert_public_target(current)
             request = Request(current, headers={"User-Agent": "TeleCareOS-AccountResearch/0.1"})
             try:

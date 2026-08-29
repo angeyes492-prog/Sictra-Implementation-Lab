@@ -66,7 +66,8 @@ usuarios son prerequisitos para producción.
 ## Seguridad, fallos y observabilidad
 
 - IPs privadas, loopback, enlaces con credenciales, puertos no estándar y
-  redirects fuera del dominio se rechazan.
+  redirects fuera del dominio se rechazan. El fetcher seguro se configura con el
+  host oficial y verifica cada salto antes de abrir la conexión siguiente.
 - Páginas no HTML, rutas disallow, enlaces externos, respuesta excesiva y
   robots no disponible aparecen como razones de exclusión, no como ausencia
   silenciosa.
@@ -82,7 +83,7 @@ integridad fallida, aislamiento tenant y cobertura de campos de Excel.
 
 ## Validación local realizada
 
-La suite local ejecutó 16 vectores nuevos y 229 pruebas de regresión. Cubre
+La suite local ejecutó 17 vectores nuevos y 231 pruebas de regresión. Cubre
 robots, límites de dominio, SSRF de loopback, redirects de robots, enlaces
 malformados, cuarentena de inyección, hipótesis en vez de facts, aislamiento de
 tenant, expiración, tombstones, alteración de contenido, borrado de cola y
