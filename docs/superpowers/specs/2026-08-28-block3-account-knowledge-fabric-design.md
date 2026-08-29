@@ -8,8 +8,9 @@
 ## Decisión y propósito
 
 Se implementa la arquitectura aprobada **Knowledge Fabric de cuentas**. Parte
-de una fila de Excel que identifica tenant, cuenta, URL oficial y propósito
-autorizado. Explora de forma acotada el dominio oficial y sus subdominios,
+de una fila Excel que identifica cuenta y URL oficial; el tenant y propósito
+autorizado se ligan fuera del archivo. Explora de forma acotada el dominio
+oficial y sus subdominios,
 crea un dossier revisable y guarda evidencia con retención base de doce meses.
 
 El resultado ofrece contexto amplio para Bloque 3 sin elevar la autoridad de
@@ -46,8 +47,10 @@ Invariantes:
 
 ## Interfaces v0.1
 
+- `ExcelAccountSeedImporter` admite sólo una hoja `Accounts` `.xlsx`, emite
+  semillas con hash/fila/proveniencia `UNCONFIRMED` y no ejecuta crawl.
 - `AccountSeed(tenant_id, account_id, official_url, authorized_purpose)` es la
-  entrada que un adaptador Excel podrá emitir.
+  entrada posterior; tenant y propósito no proceden del workbook.
 - `OfficialWebsitePolicy` controla esquema, subdominios, user-agent,
   profundidad, páginas, bytes, observaciones y retención.
 - `AccountKnowledgeEngine.enrich(...)` produce `AccountKnowledgeDossier` con
@@ -83,7 +86,8 @@ integridad fallida, aislamiento tenant y cobertura de campos de Excel.
 
 ## Validación local realizada
 
-La suite local ejecutó 17 vectores nuevos y 231 pruebas de regresión. Cubre
+La suite local ejecutó 17 vectores de Knowledge Fabric y 10 de importación
+Excel, con 241 pruebas de regresión. Cubre
 robots, límites de dominio, SSRF de loopback, redirects de robots, enlaces
 malformados, cuarentena de inyección, hipótesis en vez de facts, aislamiento de
 tenant, expiración, tombstones, alteración de contenido, borrado de cola y
@@ -96,8 +100,9 @@ estado expirado/tombstoned no puede reactivarse. No sustituye pruebas runtime.
 ## Promoción y no-claims
 
 Esta versión corresponde a `G1 LOCAL RUNTIME` cuando sus pruebas sean
-ejecutadas. El próximo tramo es un importador Excel en shadow mode y luego un
-adapter CRM de lectura con scopes mínimos. Ningún resultado local demuestra
+ejecutadas. El importador Excel shadow/read-only es una frontera separada; el
+próximo tramo es su validación y luego un adapter CRM de lectura con scopes
+mínimos. Ningún resultado local demuestra
 autorización web de un sitio concreto, valor comercial, cumplimiento legal,
 seguridad de infraestructura, delivery ni autonomía colectiva.
 

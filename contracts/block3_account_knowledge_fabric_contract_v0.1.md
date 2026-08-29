@@ -5,9 +5,10 @@
 ## Entrada y salida
 
 `AccountSeed` requiere `tenant_id`, `account_id`, `official_url` y propósito
-autorizado. `official_url` no puede contener credenciales y se normaliza sin
-query ni fragment. La política limita HTTP(S), páginas, profundidad, bytes y
-retención.
+autorizado. Puede provenir de un lote Excel read-only, pero tenant y propósito
+deben estar ligados fuera del workbook. `official_url` no puede contener
+credenciales y se normaliza sin query ni fragment. La política limita HTTP(S),
+páginas, profundidad, bytes y retención.
 
 `AccountKnowledgeDossier` contiene sólo observaciones atribuibles: URL,
 extracto limitado, tipo de página, hash del contenido, timestamp, expiración,
@@ -29,8 +30,9 @@ destinatario, consentimiento ni acción de contacto.
 
 ## No-claims
 
-No hay adapter Excel, CRM, autenticación de usuario, cifrado, borrado físico,
+No hay escritura Excel, CRM, autenticación de usuario, cifrado, borrado físico,
 renderizado JavaScript, OCR, crawling de terceros, entrega, consentimiento ni
-aceptación de gate global. La detección de inyección es una defensa adicional,
-no una prueba completa de contenido inocuo.
+aceptación de gate global. El adapter Excel read-only es una frontera separada;
+la detección de inyección es una defensa adicional, no una prueba completa de
+contenido inocuo.
 
