@@ -6,7 +6,7 @@
 | Capability | `IMPLEMENTED / EXECUTED / LOCAL BOUNDED SUT` |
 | Local execution | `17/17 PASS`; regresión `231/231 PASS` |
 | Formal | topología web/memoria y fronteras verificadas, incluido redirect preconexión |
-| Hosted CI | `172/172 PASS` on `c3a1c6dd7ec527afcab6e7b3d338e547079adecb` |
+| Hosted CI | `172/172 PASS` on `c3a1c6dd7ec527afcab6e7b3d338e547079adecb`; redirect hardening `success` on `0c9a30238a80e5570e4cfb66de42377bbeae5008` |
 | Integration | `M05 HYPOTHESIS ADAPTER ONLY` |
 | CRM / Excel adapter | `NOT IMPLEMENTED` |
 | Delivery | `NOT IMPLEMENTED` |
