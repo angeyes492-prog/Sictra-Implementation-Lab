@@ -1,5 +1,16 @@
 """Bounded reference runtime for Precision Intelligence engines M01-M08."""
 
+from .account_knowledge import (
+    AccountKnowledgeDossier,
+    AccountKnowledgeEngine,
+    AccountSeed,
+    OfficialWebsiteCrawler,
+    OfficialWebsitePolicy,
+    SafeUrllibWebsiteFetcher,
+    WebObservation,
+    WebsiteFetchResponse,
+)
+from .account_memory import AccountKnowledgeStore
 from .adaptive import AdaptiveFrontierController
 from .adaptive_pipeline import PrecisionAdaptivePipeline
 from .behavioral import BehavioralIntelligenceEngine
@@ -13,6 +24,15 @@ from .relevance import RelevanceGate
 from .relationship import RelationshipIntelligenceEngine
 
 __all__ = [
+    "AccountKnowledgeDossier",
+    "AccountKnowledgeEngine",
+    "AccountKnowledgeStore",
+    "AccountSeed",
+    "OfficialWebsiteCrawler",
+    "OfficialWebsitePolicy",
+    "SafeUrllibWebsiteFetcher",
+    "WebObservation",
+    "WebsiteFetchResponse",
     "PersonIntelligenceEngine",
     "DecisionIntelligenceEngine",
     "BehavioralIntelligenceEngine",
