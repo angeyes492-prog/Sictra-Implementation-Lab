@@ -22,7 +22,8 @@
     "web_cannot_reach_delivery": true,
     "quarantine_cannot_reach_m05": true,
     "expired_cannot_reactivate": true,
-    "tombstone_cannot_reactivate": true
+    "tombstone_cannot_reactivate": true,
+    "external_redirect_cannot_be_requested": true
   },
   "certainty": "VERIFIED",
   "confidence": "A",
