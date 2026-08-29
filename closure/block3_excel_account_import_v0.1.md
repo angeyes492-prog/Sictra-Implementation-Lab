@@ -6,6 +6,7 @@
 | Capability | `IMPLEMENTED / EXECUTED / LOCAL BOUNDED SUT` |
 | Local execution | `10/10 PASS`; regresión `241/241 PASS` |
 | Formal | frontera de tenant, fórmula, URL y estado epistémico modelada |
+| Hosted CI | `success` on `7419c11d1ee09616c1175de5554f84a0c6b87bc4` |
 | Integration | `NO`; sólo emite semillas revisables |
 | CRM / persistence / crawl | `NOT EXECUTED` |
 | Independent review | `PENDING` |
@@ -32,5 +33,4 @@ cifrado del archivo, `.xls`/OCR, persistencia de lote, scheduler, crawling
 automático, CRM ni shadow run con datos reales. El siguiente gate requiere CI
 hospedada en SHA exacto, revisión independiente y una prueba shadow con una
 plantilla aprobada y datos sintéticos o explícitamente autorizados.
-
 
