@@ -46,6 +46,8 @@ _SOURCES = (
 
 
 def source_readiness(*, region: str, domain: str) -> dict[str, object]:
+    if not isinstance(region, str) or not isinstance(domain, str):
+        raise ContractViolation("source readiness region and domain must be text")
     region, domain = region.upper(), domain.upper()
     if region not in REGIONS or domain not in DOMAINS:
         raise ContractViolation("source readiness region or domain is unsupported")

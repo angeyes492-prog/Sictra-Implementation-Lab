@@ -16,6 +16,8 @@ class SourcePortfolioTests(unittest.TestCase):
             source_readiness(region="MOON", domain="TRADE")
         with self.assertRaises(ContractViolation):
             source_readiness(region="EUROPE", domain="UNKNOWN")
+        with self.assertRaises(ContractViolation):
+            source_readiness(region=None, domain="TRADE")
 
 
 if __name__ == "__main__":
