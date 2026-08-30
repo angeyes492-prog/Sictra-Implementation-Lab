@@ -20,6 +20,7 @@
         <button class="nav-item" data-view="investigations"><span>◎</span> Investigaciones</button>
         <button class="nav-item" data-view="strategy"><span>⇄</span> Strategy Lab</button>
         <button class="nav-item" data-view="evidence"><span>⌇</span> Evidencia</button>
+        <button class="nav-item" data-view="sources"><span>⌘</span> Fuentes</button>
         <button class="nav-item" data-view="watchlists"><span>◌</span> Watchlists</button>
         <button class="nav-item" data-view="validation"><span>✓</span> Validación</button>
       </nav>
@@ -64,6 +65,12 @@
       <section class="view" data-view-panel="evidence">
         <div class="view-intro"><div><span class="section-kicker">E02 + E04 + E05</span><h2>Evidence Spine</h2><p>La firma visual del Bloque 1: cada conclusión conserva su camino de evidencia.</p></div><select id="evidence-select" aria-label="Seleccionar investigación para evidencia"></select></div>
         <div id="evidence-spine"></div>
+      </section>
+
+      <section class="view" data-view-panel="sources">
+        <div class="view-intro"><div><span class="section-kicker">E02 · Source Gateway</span><h2>Readiness de fuentes</h2><p>Candidatos de investigación; ninguno ingresa evidencia hasta completar revisión y binding.</p></div></div>
+        <div class="strategy-controls panel"><label>Región<select id="source-region"><option>AMERICAS</option><option>EUROPE</option><option>ASIA_PACIFIC</option><option>OCEANIA</option></select></label><label>Dominio<select id="source-domain"><option>TRADE</option><option>MARITIME</option><option>AIR</option><option>PORTS</option><option>CUSTOMS</option><option>INFRASTRUCTURE</option><option>MACRO</option></select></label><button id="source-refresh" class="primary-button" type="button">Consultar candidatos</button></div>
+        <div id="source-readiness-result" aria-live="polite"></div>
       </section>
 
       <section class="view" data-view-panel="watchlists">
