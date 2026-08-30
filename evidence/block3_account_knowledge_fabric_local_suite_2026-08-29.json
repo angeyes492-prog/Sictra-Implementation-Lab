@@ -1,0 +1,33 @@
+{
+  "artifact": "block3-account-knowledge-fabric-local-suite",
+  "timestamp_utc": "2026-08-29T03:02:44Z",
+  "environment": {
+    "python": "3.12.10",
+    "os": "Microsoft Windows NT 10.0.26200.0"
+  },
+  "execution": {
+    "new_suite": "tests/test_block3_account_knowledge.py",
+    "new_vectors_passed": 17,
+    "full_suite_command": "py -m unittest discover -s tests",
+    "full_suite_passed": 231,
+    "failures": 0,
+    "errors": 0,
+    "result": "PASS"
+  },
+  "formal_analysis": {
+    "tool": "Wolfram Language",
+    "crawl_acyclic": true,
+    "memory_acyclic": true,
+    "web_cannot_reach_fact": true,
+    "web_cannot_reach_delivery": true,
+    "quarantine_cannot_reach_m05": true,
+    "expired_cannot_reactivate": true,
+    "tombstone_cannot_reactivate": true,
+    "external_redirect_cannot_be_requested": true
+  },
+  "certainty": "VERIFIED",
+  "confidence": "A",
+  "scope": "local bounded SUT with fake HTTP fetcher and SQLite durable store",
+  "promotion_boundary": "not an authorization to crawl a real account, process personal data, connect Excel/CRM, deliver messages, or accept a global gate"
+}
+
