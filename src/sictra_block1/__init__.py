@@ -14,7 +14,7 @@ from .evidence import EvidenceIssuer, EvidenceVerifier
 from .runtime import IntelligenceRuntime
 from .storage import OperationalStore
 from .source_portfolio import SourceCandidate, source_readiness
-from .source_gateway import SourceBindingIssuer, SourceGateway, SourceRegistration
+from .source_gateway import SourceApprovalRecord, SourceBindingIssuer, SourceGateway, SourceRegistration
 
 __all__ = [
     "ContextPack",
@@ -35,6 +35,7 @@ __all__ = [
     "SourceCandidate",
     "source_readiness",
     "SourceBindingIssuer",
+    "SourceApprovalRecord",
     "SourceGateway",
     "SourceRegistration",
 ]

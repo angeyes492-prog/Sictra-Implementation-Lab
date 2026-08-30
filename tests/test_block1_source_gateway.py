@@ -1,7 +1,7 @@
 from dataclasses import replace
 import unittest
 
-from sictra_block1 import ContractViolation, EvidenceIssuer, SourceBindingIssuer, SourceGateway, SourceRegistration
+from sictra_block1 import ContractViolation, EvidenceIssuer, SourceApprovalRecord, SourceBindingIssuer, SourceGateway, SourceRegistration
 
 
 NOW = 10_000
@@ -14,9 +14,14 @@ def registration(**changes):
     return replace(value, **changes) if changes else value
 
 
+def approval(**changes):
+    value = SourceApprovalRecord("unctad", "reviewer-01", NOW - 1, "review://terms/unctad", ("unctad.org",), frozenset(("logistics-connectivity",)), 512, "APPROVED")
+    return replace(value, **changes) if changes else value
+
+
 def gateway(*, binding=None, now=NOW):
     value = registration()
-    token = SourceBindingIssuer("review-control", KEY).issue(value, now=NOW, ttl=100) if binding is None else binding
+    token = SourceBindingIssuer("review-control", KEY).issue(value, approval(), now=NOW, ttl=100) if binding is None else binding
     return SourceGateway(registrations=(value,), issuer=EvidenceIssuer("gateway", EVIDENCE_KEY), binding_keys={"review-control": KEY}, bindings={"unctad": token}, now=now)
 
 
@@ -35,13 +40,20 @@ class SourceGatewayTests(unittest.TestCase):
         value = registration()
         with self.assertRaises(ContractViolation):
             SourceGateway(registrations=(value,), issuer=EvidenceIssuer("gateway", EVIDENCE_KEY), binding_keys={"review-control": KEY}, bindings={}, now=NOW)
-        token = SourceBindingIssuer("review-control", KEY).issue(value, now=NOW, ttl=1)
+        token = SourceBindingIssuer("review-control", KEY).issue(value, approval(), now=NOW, ttl=1)
         with self.assertRaises(ContractViolation):
             gateway(binding=token, now=NOW + 2)
-        altered = dict(SourceBindingIssuer("review-control", KEY).issue(value, now=NOW, ttl=10))
+        altered = dict(SourceBindingIssuer("review-control", KEY).issue(value, approval(), now=NOW, ttl=10))
         altered["max_content_bytes"] = 513
         with self.assertRaises(ContractViolation):
             gateway(binding=altered)
+
+    def test_rejected_stale_or_mismatched_approval_cannot_issue_binding(self):
+        issuer = SourceBindingIssuer("review-control", KEY)
+        for record in (approval(decision="REJECTED"), approval(reviewed_at=NOW + 1), approval(allowed_hosts=("other.example",))):
+            with self.subTest(record=record):
+                with self.assertRaises(ContractViolation):
+                    issuer.issue(registration(), record, now=NOW, ttl=10)
 
     def test_url_escape_bundle_mutation_and_network_are_rejected(self):
         guarded = gateway()

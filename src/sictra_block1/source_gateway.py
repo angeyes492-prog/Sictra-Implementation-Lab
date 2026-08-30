@@ -72,15 +72,39 @@ class SourceRegistration:
         object.__setattr__(self, "claim_keys", claims)
 
 
+@dataclass(frozen=True, slots=True)
+class SourceApprovalRecord:
+    source_id: str
+    reviewer_id: str
+    reviewed_at: int
+    terms_evidence_ref: str
+    allowed_hosts: tuple[str, ...]
+    claim_keys: frozenset[str]
+    max_content_bytes: int
+    decision: str
+
+    def __post_init__(self) -> None:
+        for name in ("source_id", "reviewer_id", "terms_evidence_ref"):
+            object.__setattr__(self, name, _text(name, getattr(self, name)))
+        hosts = tuple(sorted({_host(host) for host in self.allowed_hosts}))
+        claims = frozenset(_text("claim_key", claim) for claim in self.claim_keys)
+        if not hosts or not claims or self.decision not in {"APPROVED", "REJECTED"} or not isinstance(self.reviewed_at, int) or isinstance(self.reviewed_at, bool) or self.reviewed_at < 0 or not isinstance(self.max_content_bytes, int) or isinstance(self.max_content_bytes, bool) or self.max_content_bytes < 1:
+            raise ContractViolation("source approval record is invalid")
+        object.__setattr__(self, "allowed_hosts", hosts)
+        object.__setattr__(self, "claim_keys", claims)
+
+
 class SourceBindingIssuer:
     def __init__(self, issuer: str, secret: bytes) -> None:
         self.issuer, self._secret = _text("issuer", issuer), bytes(secret)
         if len(self._secret) < 32:
             raise ContractViolation("binding issuer requires a 32-byte key")
 
-    def issue(self, registration: SourceRegistration, *, now: int, ttl: int) -> dict[str, Any]:
+    def issue(self, registration: SourceRegistration, approval: SourceApprovalRecord, *, now: int, ttl: int) -> dict[str, Any]:
         if registration.status != "BOUND" or not isinstance(now, int) or isinstance(now, bool) or now < 0 or not isinstance(ttl, int) or ttl < 1:
             raise ContractViolation("binding requires BOUND registration, time, and ttl")
+        if approval.decision != "APPROVED" or approval.reviewed_at > now or approval.source_id != registration.source_id or approval.allowed_hosts != registration.allowed_hosts or approval.claim_keys != registration.claim_keys or approval.max_content_bytes != registration.max_content_bytes:
+            raise ContractViolation("binding requires a current matching approved source record")
         payload = {"issuer": self.issuer, "source_id": registration.source_id, "scope": registration.scope, "allowed_hosts": list(registration.allowed_hosts), "claim_keys": sorted(registration.claim_keys), "max_content_bytes": registration.max_content_bytes, "issued_at": now, "expires_at": now + ttl}
         payload["signature"] = hmac.new(self._secret, _material(payload), sha256).hexdigest()
         return payload

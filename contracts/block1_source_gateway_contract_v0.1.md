@@ -2,6 +2,9 @@
 
 E02 accepts only manual bundles from a `BOUND` registration whose signed HMAC
 binding is current and matches identity, scope, hosts, claims and byte limit.
+Binding emission requires an `APPROVED` record with reviewer identity, date,
+terms reference, source identity, hosts, claims and byte limit exactly matching
+the registration. A rejected, future or mismatched review fails closed.
 The output is an `OBSERVED` source attested by the existing evidence issuer.
 The same registered source always has one provenance root.
 
