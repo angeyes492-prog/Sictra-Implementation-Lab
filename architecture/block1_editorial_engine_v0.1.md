@@ -14,13 +14,14 @@ governed candidates
   → research priority | editorial readiness
   → Pareto frontier
   → diversity-aware shortlist
-  → human flagship selection
-  → bounded Block 2 handoff candidate
+  → human reasoned selection | explicit abstention
+  → bounded Block 2 handoff candidate | no handoff
 ```
 
 El Workspace expone radar, candidatos bloqueados, lista corta, perfil
 multidimensional, interpretación, pregunta ejecutiva, linaje y handoff. Los
-fixtures son sintéticos y la decisión es efímera.
+fixtures son sintéticos y la decisión es efímera. Toda decisión exige un
+racional acotado; el operador puede declarar que ninguna pieza debe avanzar.
 
 ## Invariantes
 
@@ -45,6 +46,6 @@ inmutables; ningún estado de selección local necesita restauración en v0.1.
 
 Pruebas unitarias, adversariales, contractuales y HTTP ejercen doble ruta,
 correlación, Pareto, diversidad, mínimos, cuarentena, selección y handoff. La
-regresión local completa reporta 197 pruebas verdes el 2026-08-30. CI en SHA
+regresión local completa reporta 198 pruebas verdes el 2026-08-30. CI en SHA
 exacto y revisión independiente siguen pendientes, por lo que no cambia el
 gate global.

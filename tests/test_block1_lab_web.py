@@ -48,6 +48,7 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertIn(b"renderSourceReadiness", body)
         self.assertIn(b"renderEditorialDesk", body)
         self.assertIn(b"selectEditorialFlagship", body)
+        self.assertIn(b"abstainEditorialFlagship", body)
         status, _, body = self.request("GET", "/health")
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)["scope"], UI_SCOPE)
@@ -101,11 +102,27 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(detail["assessment"]["editorial_readiness"], "READY")
 
-        status, _, body = self.request("POST", f"/api/editorial/selections/{selected}")
+        rationale = json.dumps({
+            "rationale": "La evidencia y el valor interpretativo justifican revisión de diseño."
+        })
+        status, _, body = self.request(
+            "POST", f"/api/editorial/selections/{selected}", body=rationale,
+            headers={"Content-Type": "application/json"},
+        )
         dossier = json.loads(body)
         self.assertEqual(status, 200)
         self.assertEqual(dossier["selected_candidate_id"], selected)
         self.assertEqual(dossier["handoff"]["authority"], "BOUNDED_REVIEW_ONLY")
+
+        abstention = json.dumps({
+            "rationale": "Ninguna pieza alcanza todavía la combinación editorial deseada."
+        })
+        status, _, body = self.request(
+            "POST", "/api/editorial/abstentions", body=abstention,
+            headers={"Content-Type": "application/json"},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["decision"], "NO_FLAGSHIP_SELECTED")
 
     def test_editorial_routes_fail_closed_on_unknown_or_uncontracted_input(self):
         status, _, _ = self.request("GET", "/api/editorial?extra=1")
@@ -120,7 +137,7 @@ class Block1LabWebTests(unittest.TestCase):
             "POST", f"/api/editorial/selections/{selected}", body=b"{}"
         )
         self.assertEqual(status, 400)
-        self.assertIn("payload", json.loads(body)["error"])
+        self.assertIn("JSON", json.loads(body)["error"])
 
     def test_comparison_rejects_missing_or_arbitrary_strategy(self):
         status, _, _ = self.request("GET", "/api/comparisons/global-components-001")

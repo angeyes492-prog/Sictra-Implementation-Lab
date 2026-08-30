@@ -55,7 +55,10 @@ strength, timeliness, interpretive value and identity are visible tie-breakers.
 If fewer than the configured minimum survive, no shortlist is emitted.
 
 Only a human-labelled selection from the shortlist can create a bounded Block
-2 handoff candidate. Selection does not change evidence, readiness or gate.
+2 handoff candidate. It requires a rationale of 20–1000 characters. A human may
+instead record `NO_FLAGSHIP_SELECTED` with the same rationale requirement; that
+decision emits no handoff. Both decisions are ephemeral in v0.1. Selection does
+not change evidence, readiness or gate.
 
 ## Compatibility, recovery and non-claims
 

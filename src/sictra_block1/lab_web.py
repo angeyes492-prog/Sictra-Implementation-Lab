@@ -13,6 +13,7 @@ from typing import Any
 
 from .editorial import (
     EditorialContractViolation,
+    abstain_from_flagship,
     editorial_fixture_cycle,
     select_flagship,
 )
@@ -35,6 +36,7 @@ _STATIC_FILES = {
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
 }
 _MAX_REJECTED_PAYLOAD_BYTES = 65_536
+_MAX_EDITORIAL_PAYLOAD_BYTES = 4_096
 
 
 def _summary(report: dict[str, Any]) -> dict[str, str]:
@@ -132,6 +134,34 @@ class LabWebHandler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta payload."})
         return True
 
+    def _read_editorial_decision(self) -> dict[str, Any] | None:
+        if self.headers.get("Transfer-Encoding") is not None:
+            self.close_connection = True
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Se requiere JSON acotado."})
+            return None
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if length < 1 or length > _MAX_EDITORIAL_PAYLOAD_BYTES:
+            self.close_connection = length > _MAX_EDITORIAL_PAYLOAD_BYTES
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "El payload JSON está vacío o excede el límite."})
+            return None
+        content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+        if content_type != "application/json":
+            self.rfile.read(length)
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Se requiere Content-Type JSON."})
+            return None
+        try:
+            payload = json.loads(self.rfile.read(length))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "El payload JSON no es válido."})
+            return None
+        if not isinstance(payload, dict) or set(payload) != {"rationale"}:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "El JSON requiere únicamente rationale."})
+            return None
+        return payload
+
     def do_GET(self) -> None:
         if not self._guard_local_request():
             return
@@ -226,6 +256,24 @@ class LabWebHandler(BaseHTTPRequestHandler):
         if not self._guard_local_request():
             return
         parsed = urlsplit(self.path)
+        if parsed.path == "/api/editorial/abstentions":
+            if parsed.query:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Ruta no disponible."})
+                return
+            payload = self._read_editorial_decision()
+            if payload is None:
+                return
+            try:
+                result = abstain_from_flagship(
+                    editorial_fixture_cycle(),
+                    selected_by="LOCAL_HUMAN_OPERATOR",
+                    rationale=payload["rationale"],
+                )
+            except EditorialContractViolation as error:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            else:
+                self._send_json(HTTPStatus.OK, result)
+            return
         editorial_prefix = "/api/editorial/selections/"
         if parsed.path.startswith(editorial_prefix):
             candidate_id = unquote(parsed.path[len(editorial_prefix):])
@@ -236,14 +284,16 @@ class LabWebHandler(BaseHTTPRequestHandler):
             if candidate_id not in {item["candidate_id"] for item in cycle["candidates"]}:
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "Candidato editorial no disponible."})
                 return
-            if self._has_forbidden_payload():
+            payload = self._read_editorial_decision()
+            if payload is None:
                 return
             try:
                 result = select_flagship(
-                    cycle, candidate_id, selected_by="LOCAL_HUMAN_OPERATOR"
+                    cycle, candidate_id, selected_by="LOCAL_HUMAN_OPERATOR",
+                    rationale=payload["rationale"],
                 )
             except EditorialContractViolation as error:
-                self._send_json(HTTPStatus.CONFLICT, {"error": str(error)})
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
             else:
                 self._send_json(HTTPStatus.OK, result)
             return

@@ -398,15 +398,9 @@ def editorial_cycle(
     }
 
 
-def select_flagship(
-    cycle: Mapping[str, Any], candidate_id: str, *, selected_by: str,
-) -> dict[str, Any]:
-    """Create a bounded Block 2 handoff for a human-selected shortlisted item."""
-
+def _verify_cycle(cycle: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(cycle, Mapping) or cycle.get("scope") != EDITORIAL_SCOPE:
         raise EditorialContractViolation("invalid editorial cycle")
-    candidate_id = _text(candidate_id, "candidate_id")
-    selected_by = _text(selected_by, "selected_by")
     candidates = cycle.get("candidates")
     if not isinstance(candidates, list):
         raise EditorialContractViolation("cycle candidates are unavailable")
@@ -426,6 +420,27 @@ def select_flagship(
         or cycle.get("assessments") != verified_cycle["assessments"]
     ):
         raise EditorialContractViolation("editorial cycle integrity mismatch")
+    return verified_cycle
+
+
+def _rationale(value: Any) -> str:
+    normalized = _text(value, "rationale")
+    if len(normalized) < 20 or len(normalized) > 1000:
+        raise EditorialContractViolation("rationale must contain 20 to 1000 characters")
+    return normalized
+
+
+def select_flagship(
+    cycle: Mapping[str, Any], candidate_id: str, *, selected_by: str,
+    rationale: str,
+) -> dict[str, Any]:
+    """Create a bounded Block 2 handoff for a human-selected shortlisted item."""
+
+    candidate_id = _text(candidate_id, "candidate_id")
+    selected_by = _text(selected_by, "selected_by")
+    rationale = _rationale(rationale)
+    verified_cycle = _verify_cycle(cycle)
+    candidates = verified_cycle["candidates"]
     shortlist = verified_cycle["shortlist_ids"]
     if candidate_id not in shortlist:
         raise EditorialContractViolation("flagship must be selected from the shortlist")
@@ -444,7 +459,8 @@ def select_flagship(
         "selection": {
             "authority": "HUMAN_EDITORIAL_CHOICE",
             "selected_by": selected_by,
-            "rationale_required_for_persistence": True,
+            "rationale": rationale,
+            "persistence": "EPHEMERAL",
         },
         "dossier": {
             "title": candidate["title"],
@@ -465,6 +481,34 @@ def select_flagship(
                 "Not global gate acceptance.",
             ],
         },
+    }
+
+
+def abstain_from_flagship(
+    cycle: Mapping[str, Any], *, selected_by: str, rationale: str,
+) -> dict[str, Any]:
+    """Record a bounded human decision that no weekly flagship should advance."""
+
+    selected_by = _text(selected_by, "selected_by")
+    rationale = _rationale(rationale)
+    verified_cycle = _verify_cycle(cycle)
+    return {
+        "scope": EDITORIAL_SCOPE,
+        "decision": "NO_FLAGSHIP_SELECTED",
+        "selected_candidate_id": None,
+        "selection": {
+            "authority": "HUMAN_EDITORIAL_CHOICE",
+            "selected_by": selected_by,
+            "rationale": rationale,
+            "persistence": "EPHEMERAL",
+        },
+        "considered_shortlist_ids": deepcopy(verified_cycle["shortlist_ids"]),
+        "handoff": None,
+        "non_claims": [
+            "No candidate was promoted.",
+            "No publication or distribution action occurred.",
+            "No global gate changed.",
+        ],
     }
 
 

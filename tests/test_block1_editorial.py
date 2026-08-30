@@ -7,6 +7,7 @@ import unittest
 
 from sictra_block1.editorial import (
     EditorialContractViolation,
+    abstain_from_flagship,
     assess_editorial_candidate,
     editorial_cycle,
     editorial_fixture_cycle,
@@ -156,13 +157,20 @@ class EditorialEngineTests(unittest.TestCase):
     def test_human_selection_is_bounded_to_shortlist_and_never_publishes(self):
         cycle = editorial_fixture_cycle()
         selected_id = cycle["shortlist_ids"][0]
-        dossier = select_flagship(cycle, selected_id, selected_by="LOCAL_HUMAN_OPERATOR")
+        dossier = select_flagship(
+            cycle, selected_id, selected_by="LOCAL_HUMAN_OPERATOR",
+            rationale="La evidencia y el valor interpretativo justifican revisión de diseño.",
+        )
         self.assertEqual(dossier["selected_candidate_id"], selected_id)
         self.assertEqual(dossier["selection"]["authority"], "HUMAN_EDITORIAL_CHOICE")
+        self.assertIn("evidencia", dossier["selection"]["rationale"].lower())
         self.assertNotIn("publish", str(dossier).lower())
         self.assertIn("BLOCK2_DESIGN_HANDOFF", dossier["handoff"]["type"])
         with self.assertRaises(EditorialContractViolation):
-            select_flagship(cycle, "ED-NOT-SHORTLISTED", selected_by="LOCAL_HUMAN_OPERATOR")
+            select_flagship(
+                cycle, "ED-NOT-SHORTLISTED", selected_by="LOCAL_HUMAN_OPERATOR",
+                rationale="Este candidato no pertenece a la lista corta gobernada.",
+            )
 
     def test_forged_cycle_cannot_promote_a_blocked_candidate(self):
         cycle = editorial_fixture_cycle()
@@ -175,7 +183,25 @@ class EditorialEngineTests(unittest.TestCase):
             item for item in cycle["assessments"] if item["candidate_id"] == blocked
         )["editorial_readiness"] = "READY"
         with self.assertRaises(EditorialContractViolation):
-            select_flagship(cycle, blocked, selected_by="LOCAL_HUMAN_OPERATOR")
+            select_flagship(
+                cycle, blocked, selected_by="LOCAL_HUMAN_OPERATOR",
+                rationale="Intento adversarial de elevar un candidato bloqueado.",
+            )
+
+    def test_human_can_abstain_with_a_bounded_auditable_rationale(self):
+        cycle = editorial_fixture_cycle()
+        result = abstain_from_flagship(
+            cycle,
+            selected_by="LOCAL_HUMAN_OPERATOR",
+            rationale="Ninguna pieza alcanza todavía la combinación editorial deseada.",
+        )
+        self.assertEqual(result["decision"], "NO_FLAGSHIP_SELECTED")
+        self.assertIsNone(result["selected_candidate_id"])
+        self.assertIsNone(result["handoff"])
+        with self.assertRaises(EditorialContractViolation):
+            abstain_from_flagship(
+                cycle, selected_by="LOCAL_HUMAN_OPERATOR", rationale="Muy corto"
+            )
 
     def test_cycle_rejects_unbounded_candidate_input(self):
         with self.assertRaises(EditorialContractViolation):
