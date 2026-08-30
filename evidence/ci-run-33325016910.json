@@ -1,0 +1,28 @@
+{
+  "artifact_type": "external_ci_evidence",
+  "scope": "BLOCK1_SOURCE_GOVERNANCE_LOCAL_SLICE",
+  "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+  "branch": "codex/block1-source-governance",
+  "commit_sha": "829f5a3e4a096da16dcb53af47fcbe6ae81a5563",
+  "workflow_run_id": 33325016910,
+  "job_id": 99293497116,
+  "workflow_name": "Block 1 bounded-slice validation",
+  "workflow_conclusion": "success",
+  "steps": {
+    "unit_and_contract_tests": "success",
+    "local_scope_execution_manifest": "success",
+    "eight_engine_reference_runtime": "success"
+  },
+  "evidence_class": "EXTERNAL_CI_OBSERVED",
+  "claims_supported": [
+    "the exact commit executed successfully in GitHub Actions",
+    "the repository validation workflow completed its three declared steps",
+    "the source access-method binding change is present in the executed commit"
+  ],
+  "claims_not_supported": [
+    "real-source truth, licensing, or terms compliance",
+    "a real source binding or network acquisition",
+    "independent human architectural acceptance",
+    "global Telecare OS closure or production readiness"
+  ]
+}
