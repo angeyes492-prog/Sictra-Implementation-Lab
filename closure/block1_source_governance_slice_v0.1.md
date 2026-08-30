@@ -11,13 +11,16 @@ promovible a fuente real ni a cierre global.
 
 ## Evidence
 
-- SHA canónico de implementación: `829f5a3e4a096da16dcb53af47fcbe6ae81a5563`.
-- `evidence/ci-run-33325016910.json`: GitHub Actions run `33325016910`
-  (`#197`), terminado en `success` sobre ese SHA exacto.
+- SHA canónico de implementación actual: `a35c372668b53308e1d5a3a7b0b0e42eec2748bc`.
+- `evidence/ci-run-33325180999.json`: GitHub Actions run `33325180999`
+  (`#201`), terminado en `success` sobre ese SHA exacto.
+- `evidence/ci-run-33325016910.json`: antecedente verificable de la
+  vinculación del método de acceso, CI #197 sobre `829f5a3`.
 - Ejecución local del mismo estado: 181 pruebas, 0 fallos, 0 errores.
 - El binding HMAC exige coincidencia exacta de identidad, scope, hosts,
   claims, límite de bytes y `MANUAL_SOURCE_BUNDLE`; la aprobación rechazada,
-  futura o incongruente falla cerrada.
+  futura o incongruente falla cerrada. Los campos temporales booleanos se
+  rechazan aunque vengan firmados.
 
 ## Test
 
@@ -27,7 +30,8 @@ promovible a fuente real ni a cierre global.
   referencia de ocho motores, todos `success`.
 - Red-team contractual: binding ausente, vencido o alterado; aprobación
   rechazada/futura/incongruente; host/IP/puerto/claim/tiempo inválidos; y
-  adquisición de red rechazada.
+  adquisición de red rechazada. Incluye la mutación de un `issued_at=True`
+  con HMAC recalculado.
 
 ## Date
 
