@@ -11,4 +11,5 @@ returns only `PROPOSED` candidates, explicit promotion blockers and
 configuration. Invalid queries fail closed.
 
 Before any candidate becomes usable, a separately reviewed approval, allowlist,
-claim authorization, access method and bounded source gateway are required.
+claim authorization, a matching `MANUAL_SOURCE_BUNDLE` access method and
+bounded source gateway are required. No other acquisition method is accepted.

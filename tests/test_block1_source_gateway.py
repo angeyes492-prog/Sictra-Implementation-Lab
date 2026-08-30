@@ -10,12 +10,12 @@ EVIDENCE_KEY = b"e" * 32
 
 
 def registration(**changes):
-    value = SourceRegistration("unctad", "UN Trade and Development", "intelligence", ("unctad.org",), frozenset(("logistics-connectivity",)), 512, "BOUND")
+    value = SourceRegistration("unctad", "UN Trade and Development", "intelligence", ("unctad.org",), frozenset(("logistics-connectivity",)), "MANUAL_SOURCE_BUNDLE", 512, "BOUND")
     return replace(value, **changes) if changes else value
 
 
 def approval(**changes):
-    value = SourceApprovalRecord("unctad", "reviewer-01", NOW - 1, "review://terms/unctad", ("unctad.org",), frozenset(("logistics-connectivity",)), 512, "APPROVED")
+    value = SourceApprovalRecord("unctad", "reviewer-01", NOW - 1, "review://terms/unctad", ("unctad.org",), frozenset(("logistics-connectivity",)), "MANUAL_SOURCE_BUNDLE", 512, "APPROVED")
     return replace(value, **changes) if changes else value
 
 
@@ -44,7 +44,7 @@ class SourceGatewayTests(unittest.TestCase):
         with self.assertRaises(ContractViolation):
             gateway(binding=token, now=NOW + 2)
         altered = dict(SourceBindingIssuer("review-control", KEY).issue(value, approval(), now=NOW, ttl=10))
-        altered["max_content_bytes"] = 513
+        altered["access_method"] = "NETWORK_FETCH"
         with self.assertRaises(ContractViolation):
             gateway(binding=altered)
 
@@ -54,6 +54,8 @@ class SourceGatewayTests(unittest.TestCase):
             with self.subTest(record=record):
                 with self.assertRaises(ContractViolation):
                     issuer.issue(registration(), record, now=NOW, ttl=10)
+        with self.assertRaises(ContractViolation):
+            approval(access_method="NETWORK_FETCH")
 
     def test_url_escape_bundle_mutation_and_network_are_rejected(self):
         guarded = gateway()

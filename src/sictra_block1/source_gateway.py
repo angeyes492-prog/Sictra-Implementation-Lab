@@ -16,6 +16,7 @@ from .evidence import EvidenceIssuer
 
 MAX_REGISTERED_SOURCES = 50
 _FIELDS = frozenset(("source_id", "source_url", "content", "observed_at", "claim_key", "polarity", "correlation_id"))
+_ACCESS_METHOD = "MANUAL_SOURCE_BUNDLE"
 
 
 def _text(name: str, value: object) -> str:
@@ -56,6 +57,7 @@ class SourceRegistration:
     scope: str
     allowed_hosts: tuple[str, ...]
     claim_keys: frozenset[str]
+    access_method: str = _ACCESS_METHOD
     max_content_bytes: int = 1_000_000
     status: str = "PROPOSED"
 
@@ -64,7 +66,7 @@ class SourceRegistration:
             object.__setattr__(self, name, _text(name, getattr(self, name)))
         hosts = tuple(sorted({_host(host) for host in self.allowed_hosts}))
         claims = frozenset(_text("claim_key", claim) for claim in self.claim_keys)
-        if not hosts or not claims or self.status not in {"PROPOSED", "BOUND", "SUSPENDED", "RETIRED"}:
+        if not hosts or not claims or self.access_method != _ACCESS_METHOD or self.status not in {"PROPOSED", "BOUND", "SUSPENDED", "RETIRED"}:
             raise ContractViolation("source registration is invalid")
         if not isinstance(self.max_content_bytes, int) or isinstance(self.max_content_bytes, bool) or self.max_content_bytes < 1:
             raise ContractViolation("source content limit is invalid")
@@ -80,6 +82,7 @@ class SourceApprovalRecord:
     terms_evidence_ref: str
     allowed_hosts: tuple[str, ...]
     claim_keys: frozenset[str]
+    access_method: str
     max_content_bytes: int
     decision: str
 
@@ -88,7 +91,7 @@ class SourceApprovalRecord:
             object.__setattr__(self, name, _text(name, getattr(self, name)))
         hosts = tuple(sorted({_host(host) for host in self.allowed_hosts}))
         claims = frozenset(_text("claim_key", claim) for claim in self.claim_keys)
-        if not hosts or not claims or self.decision not in {"APPROVED", "REJECTED"} or not isinstance(self.reviewed_at, int) or isinstance(self.reviewed_at, bool) or self.reviewed_at < 0 or not isinstance(self.max_content_bytes, int) or isinstance(self.max_content_bytes, bool) or self.max_content_bytes < 1:
+        if not hosts or not claims or self.access_method != _ACCESS_METHOD or self.decision not in {"APPROVED", "REJECTED"} or not isinstance(self.reviewed_at, int) or isinstance(self.reviewed_at, bool) or self.reviewed_at < 0 or not isinstance(self.max_content_bytes, int) or isinstance(self.max_content_bytes, bool) or self.max_content_bytes < 1:
             raise ContractViolation("source approval record is invalid")
         object.__setattr__(self, "allowed_hosts", hosts)
         object.__setattr__(self, "claim_keys", claims)
@@ -103,9 +106,9 @@ class SourceBindingIssuer:
     def issue(self, registration: SourceRegistration, approval: SourceApprovalRecord, *, now: int, ttl: int) -> dict[str, Any]:
         if registration.status != "BOUND" or not isinstance(now, int) or isinstance(now, bool) or now < 0 or not isinstance(ttl, int) or ttl < 1:
             raise ContractViolation("binding requires BOUND registration, time, and ttl")
-        if approval.decision != "APPROVED" or approval.reviewed_at > now or approval.source_id != registration.source_id or approval.allowed_hosts != registration.allowed_hosts or approval.claim_keys != registration.claim_keys or approval.max_content_bytes != registration.max_content_bytes:
+        if approval.decision != "APPROVED" or approval.reviewed_at > now or approval.source_id != registration.source_id or approval.allowed_hosts != registration.allowed_hosts or approval.claim_keys != registration.claim_keys or approval.access_method != registration.access_method or approval.max_content_bytes != registration.max_content_bytes:
             raise ContractViolation("binding requires a current matching approved source record")
-        payload = {"issuer": self.issuer, "source_id": registration.source_id, "scope": registration.scope, "allowed_hosts": list(registration.allowed_hosts), "claim_keys": sorted(registration.claim_keys), "max_content_bytes": registration.max_content_bytes, "issued_at": now, "expires_at": now + ttl}
+        payload = {"issuer": self.issuer, "source_id": registration.source_id, "scope": registration.scope, "allowed_hosts": list(registration.allowed_hosts), "claim_keys": sorted(registration.claim_keys), "access_method": registration.access_method, "max_content_bytes": registration.max_content_bytes, "issued_at": now, "expires_at": now + ttl}
         payload["signature"] = hmac.new(self._secret, _material(payload), sha256).hexdigest()
         return payload
 
@@ -129,13 +132,13 @@ class SourceGateway:
     def _assert_bindings(self, now: int) -> None:
         for source_id, binding in self._bindings.items():
             registration = self._registrations[source_id]
-            required = {"issuer", "source_id", "scope", "allowed_hosts", "claim_keys", "max_content_bytes", "issued_at", "expires_at", "signature"}
+            required = {"issuer", "source_id", "scope", "allowed_hosts", "claim_keys", "access_method", "max_content_bytes", "issued_at", "expires_at", "signature"}
             if set(binding) != required or not isinstance(binding.get("issuer"), str) or not isinstance(binding.get("signature"), str):
                 raise ContractViolation("source binding shape is invalid")
             key = self._keys.get(binding["issuer"])
             if key is None or len(key) < 32 or not hmac.compare_digest(hmac.new(key, _material(binding), sha256).hexdigest(), binding["signature"]):
                 raise ContractViolation("source binding signature is invalid")
-            if binding["source_id"] != registration.source_id or binding["scope"] != registration.scope or tuple(binding["allowed_hosts"]) != registration.allowed_hosts or frozenset(binding["claim_keys"]) != registration.claim_keys or binding["max_content_bytes"] != registration.max_content_bytes or not isinstance(binding["issued_at"], int) or not isinstance(binding["expires_at"], int) or not binding["issued_at"] <= now <= binding["expires_at"]:
+            if binding["source_id"] != registration.source_id or binding["scope"] != registration.scope or tuple(binding["allowed_hosts"]) != registration.allowed_hosts or frozenset(binding["claim_keys"]) != registration.claim_keys or binding["access_method"] != registration.access_method or binding["max_content_bytes"] != registration.max_content_bytes or not isinstance(binding["issued_at"], int) or not isinstance(binding["expires_at"], int) or not binding["issued_at"] <= now <= binding["expires_at"]:
                 raise ContractViolation("source binding does not match active registration")
 
     def attest_manual_bundle(self, bundle: Mapping[str, Any], *, now: int) -> dict[str, Any]:
@@ -159,7 +162,7 @@ class SourceGateway:
         claim_key, correlation = _text("claim_key", bundle["claim_key"]), _text("correlation_id", bundle["correlation_id"])
         if len(content.encode()) > registration.max_content_bytes or not isinstance(observed_at, int) or isinstance(observed_at, bool) or not 0 <= observed_at <= now or claim_key not in registration.claim_keys or polarity not in {-1, 1} or isinstance(polarity, bool):
             raise ContractViolation("manual source bundle values are invalid")
-        return self._issuer.attest({"source_id": source_id, "content": content, "observed_at": observed_at, "root_provenance": f"gateway-source:{source_id}", "evidence_class": "OBSERVED", "scope": registration.scope, "correlation_id": correlation, "claim_key": claim_key, "polarity": polarity, "source_url": url, "publisher": registration.publisher, "content_sha256": sha256(content.encode()).hexdigest(), "ingestion_method": "MANUAL_SOURCE_BUNDLE"})
+        return self._issuer.attest({"source_id": source_id, "content": content, "observed_at": observed_at, "root_provenance": f"gateway-source:{source_id}", "evidence_class": "OBSERVED", "scope": registration.scope, "correlation_id": correlation, "claim_key": claim_key, "polarity": polarity, "source_url": url, "publisher": registration.publisher, "content_sha256": sha256(content.encode()).hexdigest(), "ingestion_method": registration.access_method})
 
     def fetch_network_source(self, *_: object, **__: object) -> None:
         raise ContractViolation("network acquisition is not implemented")
