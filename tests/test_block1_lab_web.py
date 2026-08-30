@@ -59,6 +59,16 @@ class Block1LabWebTests(unittest.TestCase):
             {"GLOBAL", "REGIONAL", "LOCAL"},
         )
 
+    def test_source_readiness_is_read_only_and_never_claims_admissible_data(self):
+        status, _, body = self.request("GET", "/api/source-readiness?region=AMERICAS&domain=TRADE")
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["admissible_source_count"], 0)
+        self.assertEqual(payload["status"], "RESEARCH_BLOCKED_PENDING_SOURCE_BINDING")
+        self.assertIn("cepal", {item["source_id"] for item in payload["candidates"]})
+        status, _, _ = self.request("GET", "/api/source-readiness?region=AMERICAS")
+        self.assertEqual(status, 400)
+
     def test_investigation_and_strategy_comparison_endpoints(self):
         status, _, body = self.request("GET", "/api/investigations/global-components-001")
         self.assertEqual(status, 200)

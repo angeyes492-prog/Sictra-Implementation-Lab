@@ -13,6 +13,7 @@ from .common import (
 from .evidence import EvidenceIssuer, EvidenceVerifier
 from .runtime import IntelligenceRuntime
 from .storage import OperationalStore
+from .source_portfolio import SourceCandidate, source_readiness
 
 __all__ = [
     "ContextPack",
@@ -30,5 +31,7 @@ __all__ = [
     "EvidenceIssuer",
     "EvidenceVerifier",
     "OperationalStore",
+    "SourceCandidate",
+    "source_readiness",
 ]
 

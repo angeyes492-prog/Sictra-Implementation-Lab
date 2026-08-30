@@ -20,6 +20,7 @@ from .logistics import (
     get_investigation,
     workspace_catalog,
 )
+from .source_portfolio import source_readiness
 
 UI_SCOPE = "BLOCK1_LOCAL_INTELLIGENCE_PRODUCT_UI"
 _WEB_ROOT = Path(__file__).with_name("web")
@@ -113,6 +114,17 @@ class LabWebHandler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/api/workspace":
             self._send_json(HTTPStatus.OK, workspace_catalog())
+            return
+        if parsed.path == "/api/source-readiness":
+            query = parse_qs(parsed.query, strict_parsing=False)
+            region, domain = query.get("region", []), query.get("domain", [])
+            if set(query) != {"region", "domain"} or len(region) != 1 or len(domain) != 1:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Se requieren region y domain una sola vez."})
+                return
+            try:
+                self._send_json(HTTPStatus.OK, source_readiness(region=region[0], domain=domain[0]))
+            except ContractViolation as error:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
             return
         comparison_prefix = "/api/comparisons/"
         if parsed.path.startswith(comparison_prefix):
