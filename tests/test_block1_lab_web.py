@@ -149,8 +149,9 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertEqual(status, 404)
         status, _, _ = self.request("GET", "/../../AGENTS.md")
         self.assertEqual(status, 404)
-        status, _, _ = self.request("POST", "/api/scenarios/valid", body=b"{}")
+        status, _, body = self.request("POST", "/api/scenarios/valid", body=b"{}")
         self.assertEqual(status, 400)
+        self.assertIn("payload", json.loads(body)["error"])
         with self.assertRaises(ValueError):
             create_server(host="0.0.0.0", port=0)
 

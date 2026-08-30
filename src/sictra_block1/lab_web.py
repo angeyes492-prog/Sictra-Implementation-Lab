@@ -29,6 +29,7 @@ _STATIC_FILES = {
     "/app.css": ("app.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
 }
+_MAX_REJECTED_PAYLOAD_BYTES = 65_536
 
 
 def _summary(report: dict[str, Any]) -> dict[str, str]:
@@ -102,6 +103,30 @@ class LabWebHandler(BaseHTTPRequestHandler):
         self.wfile.write(encoded)
         return True
 
+    def _has_forbidden_payload(self) -> bool:
+        """Drain small rejected bodies so a local client reliably receives 400."""
+
+        if self.headers.get("Transfer-Encoding") is not None:
+            self.close_connection = True
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta payload."})
+            return True
+        raw_length = self.headers.get("Content-Length")
+        if raw_length in {None, "0"}:
+            return False
+        try:
+            length = int(raw_length)
+        except ValueError:
+            self.close_connection = True
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta payload."})
+            return True
+        if length < 1 or length > _MAX_REJECTED_PAYLOAD_BYTES:
+            self.close_connection = True
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta payload."})
+            return True
+        self.rfile.read(length)
+        self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta payload."})
+        return True
+
     def do_GET(self) -> None:
         if not self._guard_local_request():
             return
@@ -172,8 +197,7 @@ class LabWebHandler(BaseHTTPRequestHandler):
         if scenario not in SCENARIOS or "/" in scenario:
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "Escenario no disponible."})
             return
-        if self.headers.get("Content-Length") not in {None, "0"}:
-            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta payload."})
+        if self._has_forbidden_payload():
             return
         try:
             report = dict(execute_scenario(scenario, store_path=":memory:"))
