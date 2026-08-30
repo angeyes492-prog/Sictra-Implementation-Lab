@@ -22,6 +22,11 @@ Excel Account Seed → Official Website Policy → bounded crawler
 → review/search → M05 ACCOUNT hypotheses → existing Precision pipeline
 ```
 
+La ejecución de la flecha inicial está gobernada: Excel produce una seed
+`UNCONFIRMED`; una aprobación humana local, ligada a fila/hash/tenant/cuenta,
+habilita una sola investigación shadow; el dossier se persiste y el recibo se
+guarda en un ledger HMAC separado. No existe ejecución autónoma ni delivery.
+
 ## Jurisdicción y límites
 
 | Componente | Posee | No posee |
@@ -86,8 +91,8 @@ integridad fallida, aislamiento tenant y cobertura de campos de Excel.
 
 ## Validación local realizada
 
-La suite local ejecutó 17 vectores de Knowledge Fabric y 10 de importación
-Excel, con 241 pruebas de regresión. Cubre
+La suite local ejecutó 17 vectores de Knowledge Fabric, 10 de importación
+Excel y 11 de orquestación, con 268 pruebas de regresión. Cubre
 robots, límites de dominio, SSRF de loopback, redirects de robots, enlaces
 malformados, cuarentena de inyección, hipótesis en vez de facts, aislamiento de
 tenant, expiración, tombstones, alteración de contenido, borrado de cola y
@@ -105,4 +110,3 @@ próximo tramo es su validación y luego un adapter CRM de lectura con scopes
 mínimos. Ningún resultado local demuestra
 autorización web de un sitio concreto, valor comercial, cumplimiento legal,
 seguridad de infraestructura, delivery ni autonomía colectiva.
-

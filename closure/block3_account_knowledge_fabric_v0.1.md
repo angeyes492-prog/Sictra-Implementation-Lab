@@ -7,7 +7,7 @@
 | Local execution | `17/17 PASS`; regresión `231/231 PASS` |
 | Formal | topología web/memoria y fronteras verificadas, incluido redirect preconexión |
 | Hosted CI | `172/172 PASS` on `c3a1c6dd7ec527afcab6e7b3d338e547079adecb`; redirect hardening `success` on `0c9a30238a80e5570e4cfb66de42377bbeae5008` |
-| Integration | `M05 HYPOTHESIS ADAPTER ONLY` |
+| Integration | Excel → approval → dossier → memory local; `M05 HYPOTHESIS ADAPTER ONLY` |
 | CRM / Excel adapter | CRM `NOT IMPLEMENTED`; Excel read-only `LOCAL BOUNDED SUT` |
 | Delivery | `NOT IMPLEMENTED` |
 | Independent review | `PENDING` |
@@ -36,4 +36,3 @@ autorizada.
 
 Los 57 vectores que diferencian el workspace local de la ejecución alojada se
 preservan como alcance local y no se atribuyen al SHA alojado.
-
