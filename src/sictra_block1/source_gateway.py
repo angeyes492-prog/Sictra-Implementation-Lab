@@ -138,7 +138,7 @@ class SourceGateway:
             key = self._keys.get(binding["issuer"])
             if key is None or len(key) < 32 or not hmac.compare_digest(hmac.new(key, _material(binding), sha256).hexdigest(), binding["signature"]):
                 raise ContractViolation("source binding signature is invalid")
-            if binding["source_id"] != registration.source_id or binding["scope"] != registration.scope or tuple(binding["allowed_hosts"]) != registration.allowed_hosts or frozenset(binding["claim_keys"]) != registration.claim_keys or binding["access_method"] != registration.access_method or binding["max_content_bytes"] != registration.max_content_bytes or not isinstance(binding["issued_at"], int) or not isinstance(binding["expires_at"], int) or not binding["issued_at"] <= now <= binding["expires_at"]:
+            if binding["source_id"] != registration.source_id or binding["scope"] != registration.scope or tuple(binding["allowed_hosts"]) != registration.allowed_hosts or frozenset(binding["claim_keys"]) != registration.claim_keys or binding["access_method"] != registration.access_method or binding["max_content_bytes"] != registration.max_content_bytes or not isinstance(binding["issued_at"], int) or isinstance(binding["issued_at"], bool) or not isinstance(binding["expires_at"], int) or isinstance(binding["expires_at"], bool) or not binding["issued_at"] <= now <= binding["expires_at"]:
                 raise ContractViolation("source binding does not match active registration")
 
     def attest_manual_bundle(self, bundle: Mapping[str, Any], *, now: int) -> dict[str, Any]:

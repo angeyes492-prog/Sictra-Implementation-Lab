@@ -1,4 +1,7 @@
 from dataclasses import replace
+from hashlib import sha256
+import hmac
+import json
 import unittest
 
 from sictra_block1 import ContractViolation, EvidenceIssuer, SourceApprovalRecord, SourceBindingIssuer, SourceGateway, SourceRegistration
@@ -25,6 +28,12 @@ def gateway(*, binding=None, now=NOW):
     return SourceGateway(registrations=(value,), issuer=EvidenceIssuer("gateway", EVIDENCE_KEY), binding_keys={"review-control": KEY}, bindings={"unctad": token}, now=now)
 
 
+def resign(binding):
+    material = json.dumps({key: value for key, value in binding.items() if key != "signature"}, sort_keys=True, separators=(",", ":")).encode()
+    binding["signature"] = hmac.new(KEY, material, sha256).hexdigest()
+    return binding
+
+
 class SourceGatewayTests(unittest.TestCase):
     def bundle(self, **changes):
         value = {"source_id": "unctad", "source_url": "https://unctad.org/report", "content": "observation", "observed_at": NOW - 1, "claim_key": "logistics-connectivity", "polarity": 1, "correlation_id": "report-1"}
@@ -47,6 +56,10 @@ class SourceGatewayTests(unittest.TestCase):
         altered["access_method"] = "NETWORK_FETCH"
         with self.assertRaises(ContractViolation):
             gateway(binding=altered)
+        boolean_time = dict(SourceBindingIssuer("review-control", KEY).issue(value, approval(), now=NOW, ttl=10))
+        boolean_time["issued_at"] = True
+        with self.assertRaises(ContractViolation):
+            gateway(binding=resign(boolean_time))
 
     def test_rejected_stale_or_mismatched_approval_cannot_issue_binding(self):
         issuer = SourceBindingIssuer("review-control", KEY)
