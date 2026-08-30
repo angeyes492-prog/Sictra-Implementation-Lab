@@ -11,6 +11,11 @@ from urllib.parse import parse_qs, unquote, urlsplit
 import webbrowser
 from typing import Any
 
+from .editorial import (
+    EditorialContractViolation,
+    editorial_fixture_cycle,
+    select_flagship,
+)
 from .lab import LAB_SCOPE, SCENARIOS, execute_scenario
 from .logistics import (
     FIXTURE_CLASS,
@@ -44,7 +49,7 @@ def _summary(report: dict[str, Any]) -> dict[str, str]:
 
 
 class LabWebHandler(BaseHTTPRequestHandler):
-    server_version = "SICTrAIntelligenceWorkspace/0.2"
+    server_version = "SICTrAIntelligenceWorkspace/0.3"
 
     def log_message(self, format: str, *args: object) -> None:
         return
@@ -151,6 +156,38 @@ class LabWebHandler(BaseHTTPRequestHandler):
             except ContractViolation as error:
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
             return
+        if parsed.path == "/api/editorial":
+            if parsed.query:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta query string."})
+                return
+            self._send_json(HTTPStatus.OK, editorial_fixture_cycle())
+            return
+        editorial_candidate_prefix = "/api/editorial/candidates/"
+        if parsed.path.startswith(editorial_candidate_prefix):
+            suffix = unquote(parsed.path[len(editorial_candidate_prefix):])
+            if not suffix or "/" in suffix or parsed.query:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Candidato editorial no disponible."})
+                return
+            cycle = editorial_fixture_cycle()
+            candidate = next(
+                (item for item in cycle["candidates"] if item["candidate_id"] == suffix),
+                None,
+            )
+            assessment = next(
+                (item for item in cycle["assessments"] if item["candidate_id"] == suffix),
+                None,
+            )
+            if candidate is None or assessment is None:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Candidato editorial no disponible."})
+            else:
+                self._send_json(HTTPStatus.OK, {
+                    "scope": cycle["scope"],
+                    "fixture_class": cycle["fixture_class"],
+                    "shortlisted": suffix in cycle["shortlist_ids"],
+                    "candidate": candidate,
+                    "assessment": assessment,
+                })
+            return
         comparison_prefix = "/api/comparisons/"
         if parsed.path.startswith(comparison_prefix):
             investigation_id = unquote(parsed.path[len(comparison_prefix):])
@@ -189,6 +226,27 @@ class LabWebHandler(BaseHTTPRequestHandler):
         if not self._guard_local_request():
             return
         parsed = urlsplit(self.path)
+        editorial_prefix = "/api/editorial/selections/"
+        if parsed.path.startswith(editorial_prefix):
+            candidate_id = unquote(parsed.path[len(editorial_prefix):])
+            if not candidate_id or "/" in candidate_id or parsed.query:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Candidato editorial no disponible."})
+                return
+            cycle = editorial_fixture_cycle()
+            if candidate_id not in {item["candidate_id"] for item in cycle["candidates"]}:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Candidato editorial no disponible."})
+                return
+            if self._has_forbidden_payload():
+                return
+            try:
+                result = select_flagship(
+                    cycle, candidate_id, selected_by="LOCAL_HUMAN_OPERATOR"
+                )
+            except EditorialContractViolation as error:
+                self._send_json(HTTPStatus.CONFLICT, {"error": str(error)})
+            else:
+                self._send_json(HTTPStatus.OK, result)
+            return
         prefix = "/api/scenarios/"
         if not parsed.path.startswith(prefix):
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "Ruta no disponible."})

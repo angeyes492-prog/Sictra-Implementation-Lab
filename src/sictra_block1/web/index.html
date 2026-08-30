@@ -18,6 +18,7 @@
       <nav class="rail-nav">
         <button class="nav-item active" data-view="overview"><span>⌁</span> Panorama</button>
         <button class="nav-item" data-view="investigations"><span>◎</span> Investigaciones</button>
+        <button class="nav-item" data-view="editorial"><span>◇</span> Mesa editorial</button>
         <button class="nav-item" data-view="strategy"><span>⇄</span> Strategy Lab</button>
         <button class="nav-item" data-view="evidence"><span>⌇</span> Evidencia</button>
         <button class="nav-item" data-view="sources"><span>⌘</span> Fuentes</button>
@@ -71,6 +72,17 @@
         <div class="view-intro"><div><span class="section-kicker">E02 · Source Gateway</span><h2>Readiness de fuentes</h2><p>Candidatos de investigación; ninguno ingresa evidencia hasta completar revisión y binding.</p></div></div>
         <div class="strategy-controls panel"><label>Región<select id="source-region"><option>AMERICAS</option><option>EUROPE</option><option>ASIA_PACIFIC</option><option>OCEANIA</option></select></label><label>Dominio<select id="source-domain"><option>TRADE</option><option>MARITIME</option><option>AIR</option><option>PORTS</option><option>CUSTOMS</option><option>INFRASTRUCTURE</option><option>MACRO</option></select></label><button id="source-refresh" class="primary-button" type="button">Consultar candidatos</button></div>
         <div id="source-readiness-result" aria-live="polite"></div>
+      </section>
+
+      <section class="view" data-view-panel="editorial">
+        <div class="view-intro"><div><span class="section-kicker">E01–E08 · Editorial Engine</span><h2>Mesa editorial</h2><p>De señales gobernadas a una interpretación ejecutiva, sin ranking universal ni publicación automática.</p></div><span class="fixture-badge">Ciclo semanal sintético</span></div>
+        <div id="editorial-summary" class="editorial-summary"></div>
+        <div class="editorial-layout">
+          <section class="panel"><div class="panel-head"><div><span class="section-kicker">Frontera Pareto</span><h2>Lista corta</h2></div><span id="editorial-method" class="method-code"></span></div><div id="editorial-shortlist" class="editorial-shortlist"></div></section>
+          <aside id="editorial-blocked" class="panel editorial-blocked"></aside>
+        </div>
+        <div id="editorial-detail" class="editorial-detail"></div>
+        <div id="editorial-handoff" class="editorial-handoff" aria-live="polite"></div>
       </section>
 
       <section class="view" data-view-panel="watchlists">

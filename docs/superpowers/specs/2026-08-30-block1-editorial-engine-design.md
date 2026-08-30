@@ -2,8 +2,8 @@
 
 ## 1. Estado, decisión y alcance
 
-Versión de diseño `0.1`, fecha `2026-08-30`, estado `PROPOSED DESIGN
-CANDIDATE / YELLOW / B`.
+Versión de diseño `0.1`, fecha `2026-08-30`, estado `APPROVED DESIGN /
+IMPLEMENTATION AUTHORIZED / YELLOW / B`.
 
 El propietario aprobó una mesa editorial semanal que presenta entre tres y
 cinco candidatos, permite seleccionar humanamente una pieza insignia y deriva

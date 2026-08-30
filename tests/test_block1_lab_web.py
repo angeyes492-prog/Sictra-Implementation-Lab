@@ -36,6 +36,7 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertIn(b"Intelligence Workspace", body)
         self.assertIn(b"No consulta internet", body)
         self.assertIn(b"Readiness de fuentes", body)
+        self.assertIn(b"Mesa editorial", body)
         status, content_type, body = self.request("GET", "/app.css")
         self.assertEqual(status, 200)
         self.assertIn("text/css", content_type)
@@ -45,6 +46,8 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertIn("text/javascript", content_type)
         self.assertIn(b"compareStrategies", body)
         self.assertIn(b"renderSourceReadiness", body)
+        self.assertIn(b"renderEditorialDesk", body)
+        self.assertIn(b"selectEditorialFlagship", body)
         status, _, body = self.request("GET", "/health")
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)["scope"], UI_SCOPE)
@@ -80,6 +83,44 @@ class Block1LabWebTests(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)["comparison"]["verdict"], "PREFER_LEFT")
+
+    def test_editorial_desk_exposes_shortlist_blocks_and_bounded_handoff(self):
+        status, _, body = self.request("GET", "/api/editorial")
+        cycle = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(cycle["status"], "SHORTLIST_READY")
+        self.assertGreaterEqual(len(cycle["shortlist_ids"]), 3)
+        self.assertLessEqual(len(cycle["shortlist_ids"]), 5)
+        self.assertTrue(any(
+            item["disposition"] == "QUARANTINED" for item in cycle["assessments"]
+        ))
+
+        selected = cycle["shortlist_ids"][0]
+        status, _, body = self.request("GET", f"/api/editorial/candidates/{selected}")
+        detail = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(detail["assessment"]["editorial_readiness"], "READY")
+
+        status, _, body = self.request("POST", f"/api/editorial/selections/{selected}")
+        dossier = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(dossier["selected_candidate_id"], selected)
+        self.assertEqual(dossier["handoff"]["authority"], "BOUNDED_REVIEW_ONLY")
+
+    def test_editorial_routes_fail_closed_on_unknown_or_uncontracted_input(self):
+        status, _, _ = self.request("GET", "/api/editorial?extra=1")
+        self.assertEqual(status, 400)
+        status, _, _ = self.request("GET", "/api/editorial/candidates/UNKNOWN")
+        self.assertEqual(status, 404)
+        status, _, _ = self.request("POST", "/api/editorial/selections/UNKNOWN")
+        self.assertEqual(status, 404)
+        cycle = json.loads(self.request("GET", "/api/editorial")[2])
+        selected = cycle["shortlist_ids"][0]
+        status, _, body = self.request(
+            "POST", f"/api/editorial/selections/{selected}", body=b"{}"
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("payload", json.loads(body)["error"])
 
     def test_comparison_rejects_missing_or_arbitrary_strategy(self):
         status, _, _ = self.request("GET", "/api/comparisons/global-components-001")
