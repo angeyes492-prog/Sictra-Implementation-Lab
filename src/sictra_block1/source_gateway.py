@@ -147,8 +147,12 @@ class SourceGateway:
         if registration is None or registration.status != "BOUND":
             raise ContractViolation("source is not bound")
         url = _text("source_url", bundle["source_url"])
-        parsed = urlsplit(url)
-        if parsed.scheme.lower() != "https" or parsed.username or parsed.password or parsed.port is not None or parsed.fragment or _host(parsed.hostname or "") not in registration.allowed_hosts:
+        try:
+            parsed = urlsplit(url)
+            port = parsed.port
+        except ValueError as error:
+            raise ContractViolation("source URL is invalid") from error
+        if parsed.scheme.lower() != "https" or parsed.username or parsed.password or port is not None or parsed.fragment or _host(parsed.hostname or "") not in registration.allowed_hosts:
             raise ContractViolation("source URL is not allowed")
         content = _text("content", bundle["content"])
         observed_at, polarity = bundle["observed_at"], bundle["polarity"]

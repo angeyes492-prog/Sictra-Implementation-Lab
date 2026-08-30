@@ -57,7 +57,7 @@ class SourceGatewayTests(unittest.TestCase):
 
     def test_url_escape_bundle_mutation_and_network_are_rejected(self):
         guarded = gateway()
-        for bundle in (self.bundle(source_url="http://unctad.org/report"), self.bundle(source_url="https://127.0.0.1/report"), self.bundle(claim_key="unknown"), self.bundle(observed_at=NOW + 1), {**self.bundle(), "extra": "x"}):
+        for bundle in (self.bundle(source_url="http://unctad.org/report"), self.bundle(source_url="https://127.0.0.1/report"), self.bundle(source_url="https://unctad.org:invalid/report"), self.bundle(claim_key="unknown"), self.bundle(observed_at=NOW + 1), {**self.bundle(), "extra": "x"}):
             with self.subTest(bundle=bundle):
                 with self.assertRaises(ContractViolation):
                     guarded.attest_manual_bundle(bundle, now=NOW)
