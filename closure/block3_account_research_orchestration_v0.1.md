@@ -6,6 +6,7 @@
 | Capability | `IMPLEMENTED / EXECUTED / LOCAL BOUNDED SUT` |
 | Local execution | `11/11 PASS`; regresión `268/268 PASS` |
 | Formal | enlace de aprobación, dossier y recibo modelado |
+| Hosted CI | `success` on `2182e0f73ee43c8b25d7e72c1c3fd4e8724d951e` |
 | Integration | Excel → aprobación → dossier → memoria → recibo, `LOCAL` |
 | CRM / delivery | `NOT IMPLEMENTED` |
 | Independent review | `PENDING` |
@@ -31,5 +32,4 @@ una plantilla ni un dominio real autorizado. Falta gestionar identidad de
 operador, cifrado/keys, políticas de retención reales, revisión independiente,
 CI sobre el SHA final y shadow run explícitamente autorizado. CRM, delivery y
 aprendizaje con outcomes siguen fuera de esta capacidad.
-
 
