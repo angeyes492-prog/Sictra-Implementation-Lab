@@ -55,8 +55,11 @@ Cada stage registra motor, disposición y reasons. E06 registra media types y
 hashes SHA-256. E07 conserva criterio, score, severidad, método y evidencia.
 E08 conserva lineage, hash, estado y deprecación.
 
-Validación local: 83 pruebas Block 2, 292 pruebas workspace, compileall y CLI
-E01–E08. Cobertura adversarial: rights, imitación, lineage, copy no aprobado,
+Validación actual: 161 pruebas Block 2, 449 pruebas workspace, compileall y CLI
+E01–E08. El workspace reconciliado con `main` está ligado a GitHub por PR #11;
+los SHA `6c3adb15484af34e654b650f8b1b2a71010af79e` y
+`157b59fa106c8146aa698072446bfc14fa556cc4` concluyeron CI hospedado con
+`success` (runs `33464431457` y `33464751434`). Cobertura adversarial: rights, imitación, lineage, copy no aprobado,
 markup, publicación/red, criterios faltantes, self-review, thresholds,
 same-generation, colisión, idempotencia y detención temprana.
 
@@ -65,8 +68,8 @@ same-generation, colisión, idempotencia y detención temprana.
 Slack y Notion contienen registros previos que usan E01–E08 también para
 Bloque 1. Esa numeración no transfiere semántica al Bloque 2. GitHub PR #3
 acredita sólo E01 de Bloque 2; Rovo confirma un handoff reciente de Bloque 1,
-no aceptación de este runtime. El checkout local no tiene `HEAD`, por lo que no
-existe SHA capaz de ligar estos resultados a GitHub. Estado: `YELLOW / B` para
-capacidad local; integración remota, CI, revisión independiente, datos reales,
-pruebas perceptuales y gate humano permanecen `INSUFFICIENT EVIDENCE`.
-
+no aceptación de este runtime. La ausencia histórica de `HEAD` quedó resuelta
+mediante reconciliación no destructiva con `main`; PR #11 es mergeable y su CI
+exacto está verde. Estado: `YELLOW / B` para capacidad integrada candidata;
+revisión independiente, provider/datos reales, pruebas perceptuales y gate
+humano permanecen `INSUFFICIENT EVIDENCE`.

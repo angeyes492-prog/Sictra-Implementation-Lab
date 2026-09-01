@@ -21,3 +21,14 @@
   independiente, integración interbloques ni aceptación global.
 - Slack permanece como evidencia contextual de diseño; no es por sí solo
   autoridad normativa.
+
+## Reassessment — 2026-08-31
+
+El checkpoint `RED / NOT AUTHORIZED` de implementación queda superado por la
+autorización posterior del usuario y por el runtime candidato E01 versionado en
+PR #11, con preflight/entrypoint/oráculos ejecutados y CI hospedado verde. Se
+clasifica ahora `YELLOW / IMPLEMENTED CANDIDATE / NOT EMPIRICALLY VALIDATED`.
+
+La evidencia perceptual externa permanece `INSUFFICIENT EVIDENCE`: ni el CI ni
+los fixtures sintéticos sustituyen un caso real autorizado, observador
+independiente o aceptación de arquitectura.

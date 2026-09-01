@@ -11,8 +11,19 @@
 | Integración GitHub/CI | RED | `HEAD` inexistente | no ejecutable remoto ligado | 2026-08-30 | N/A | rama/commit/CI | repo local sin revisión | A | git local | crear baseline coherente |
 | Aceptación global Bloque 2 | YELLOW | evidencia parcial local | no gate humano | 2026-08-30 | N/A | todos los anteriores | aceptación no demostrada | B | pendiente | MAR + aceptación humana |
 
+## Reassessment — 2026-08-31
+
+Las filas anteriores conservan el checkpoint histórico de 2026-08-30. El
+estado actual resuelve el blocker GitHub/CI: PR #11 es mergeable; CI runs
+`33464431457` sobre `6c3adb1…` y `33464751434` sobre `157b59f…` concluyeron
+`success`; la regresión reconciliada es 449/449 y el subconjunto Bloque 2 es
+161/161. Por tanto, `Integración GitHub/CI` pasa de `RED` histórico a
+`GREEN HOSTED` para esos SHA exactos.
+
+No se promueven las demás filas: provider real, ensayo perceptual, revisión
+independiente, MAR y aceptación humana siguen separados y pendientes.
+
 ## Regla de promoción
 
 `LOCAL EXECUTION != INTEGRATED != INDEPENDENTLY VALIDATED != ACCEPTED`.
 Ningún resultado de este ledger publica contenido ni promueve el gate global.
-

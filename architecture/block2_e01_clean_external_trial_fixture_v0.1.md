@@ -188,3 +188,13 @@ la promoción, integración y aceptación permanecen fuera de alcance.
   validez empírica, integración y aceptación
 - Impacto downstream: ninguno aceptado; no introduce contrato común ni cambia
   el runtime del Bloque 1.
+
+## Reassessment de implementación — 2026-08-31
+
+La frase histórica `NOT IMPLEMENTED` describe correctamente el checkpoint del
+24 de agosto, pero ya no es el estado actual del runtime candidato. E01 tiene
+preflight, normalización upstream, entrypoint, oráculo y binding Create→E01
+ejecutados localmente y en CI dentro de PR #11. Esto resuelve la ausencia de
+implementación y SHA, no la validación perceptual externa: aún falta un objeto
+SICTrA real autorizado y un observador humano independiente. El fixture externo
+continúa `YELLOW / NOT EMPIRICALLY VALIDATED`.
