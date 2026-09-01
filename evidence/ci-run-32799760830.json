@@ -1,0 +1,28 @@
+{
+  "closure_id": "SICTRA-CONTEXT-FABRIC-1.3",
+  "commit_sha": "b904ff187490c882e95f4783679e2021ca23156c",
+  "workflow_run_id": 32799760830,
+  "job_id": 97658180072,
+  "runner": {"provider":"GitHub Actions hosted runner","os":"Ubuntu 24.04.4 LTS","python":"3.12.14"},
+  "status": "completed",
+  "conclusion": "success",
+  "tests": {"executed":43,"passed":43,"failed":0},
+  "repair_history": {
+    "failed_run_id": 32799707815,
+    "failure": "test oracle expected 3 independent roots while fixture contained 2 current admissible distinct roots",
+    "repair": "corrected oracle expectation to 2; implementation unchanged",
+    "retest": "43/43 PASS"
+  },
+  "validated_scope": [
+    "14-field context integrity invariant",
+    "immutable provenance handoff",
+    "independent evidence counting by distinct current admissible root",
+    "current versus historical separation",
+    "relation versus dependency separation",
+    "cross-agent isolation with explicit shared records",
+    "contradiction preservation",
+    "fabric reproducibility",
+    "no verification or promotion authority in context fabric"
+  ],
+  "global_acceptance": false
+}

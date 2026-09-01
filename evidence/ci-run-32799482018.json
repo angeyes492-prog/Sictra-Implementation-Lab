@@ -1,0 +1,45 @@
+{
+  "closure_id": "SICTRA-MULTIAGENT-CONTEXT-1.2",
+  "commit_sha": "392df6178047a21fe9390a826aa8ecbae107a44a",
+  "workflow_run_id": 32799482018,
+  "job_id": 97657393266,
+  "runner": {
+    "provider": "GitHub Actions hosted runner",
+    "os": "Ubuntu 24.04.4 LTS",
+    "python": "3.12.14"
+  },
+  "status": "completed",
+  "conclusion": "success",
+  "tests": {
+    "executed": 28,
+    "passed": 28,
+    "failed": 0
+  },
+  "accepted_scope_candidates": [
+    "bounded Context Engine integration slice",
+    "Intelligence Context Pack",
+    "Design Context Pack",
+    "Precision Context Pack",
+    "Orchestration Context Pack"
+  ],
+  "attacks_observed": [
+    "cross-engine contamination",
+    "engine identity mutation",
+    "temporal contamination",
+    "provenance loss",
+    "hypothesis-to-fact leakage",
+    "formal-to-runtime leakage",
+    "historical-to-current leakage",
+    "context collapse",
+    "cross-agent contamination",
+    "stale decision leakage",
+    "false corroboration",
+    "stale evidence",
+    "contradiction loss",
+    "stale blocker",
+    "missing dependency",
+    "authority leakage",
+    "action-to-evidence confusion"
+  ],
+  "global_acceptance": false
+}

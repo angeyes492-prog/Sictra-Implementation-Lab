@@ -1,0 +1,29 @@
+{
+  "closure_id": "SICTRA-INTEGRATED-SLICE-1.1",
+  "commit_sha": "9a8a62bfdc79466bbcf617fc0d7a2635a123b78f",
+  "workflow_run_id": 32799171045,
+  "job_id": 97656530116,
+  "runner": {
+    "provider": "GitHub Actions hosted runner",
+    "os": "Ubuntu 24.04.4 LTS",
+    "python": "3.12.14"
+  },
+  "status": "completed",
+  "conclusion": "success",
+  "tests": {
+    "executed": 7,
+    "passed": 7,
+    "failed": 0,
+    "includes": [
+      "engine-contract-context vs independent oracle",
+      "cross-engine isolation",
+      "engine identity mutation",
+      "temporal mutation",
+      "provenance mutation",
+      "reassessment mismatch rejection",
+      "promotion guard"
+    ]
+  },
+  "epistemic_scope": "bounded integrated Context Engine slice",
+  "global_acceptance": false
+}

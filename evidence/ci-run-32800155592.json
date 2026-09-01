@@ -1,0 +1,28 @@
+{
+  "closure_id":"SICTRA-SIX-LAYER-1.5",
+  "commit_sha":"b5199338d0ded743f2a8a3bde76ad6bba23e14a0",
+  "workflow_run_id":32800155592,
+  "job_id":97659270441,
+  "runner":{"provider":"GitHub Actions hosted runner","os":"Ubuntu 24.04.4 LTS","python":"3.12.14"},
+  "status":"completed","conclusion":"success",
+  "tests":{"executed":72,"passed":72,"failed":0},
+  "six_layer_attacks":[
+    "C1-C2 agent context contamination",
+    "C1-C3 wrong decision context / lineage loss",
+    "C1-C4 stale context during reassessment",
+    "C1-C5 relation interpreted as dependency",
+    "C1-C6 proactive over/under retrieval",
+    "C2-C3 agent output promoted to fact",
+    "C2-C4 historical state lost",
+    "C2-C5 cross-agent relation contamination",
+    "C2-C6 repeated signal duplicate context",
+    "C3-C4 superseded requirement used in reassessment",
+    "C3-C5 dependency edge direction error",
+    "C3-C6 affected requirement missed",
+    "C4-C5 stale dependency graph used as current",
+    "C4-C6 wrong context after new evidence",
+    "C5-C6 false dependency drives irrelevant context",
+    "full-system C1-C6 oracle agreement and no promotion authority"
+  ],
+  "global_acceptance":false
+}
