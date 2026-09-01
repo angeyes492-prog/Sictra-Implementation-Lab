@@ -15,7 +15,7 @@
 | Accesibilidad UI | YELLOW | `block2_design_console_accessibility_review_2026-08-30.md` | estructura/keyboard/contrast + probe 640px/47 controles | 2026-08-31 | 0.2 | NVDA/VoiceOver + revisión humana | validación asistiva pendiente | B | Edge automatizado + revisión local | auditoría asistiva |
 | Regresión workspace | GREEN hosted | `block2_design_os_hosted_ci_2026-08-31.json` | 449/449 local + workflow completo | 2026-08-31 | SHA 6c3adb1 | ninguna técnica para ese SHA | aceptación separada | A | unittest + GitHub Actions 33464431457 | nueva ejecución ante cambio material |
 | Slice 1 completo | YELLOW | núcleo local E2E + CI exacto | Block2 161/161 + workspace 449/449 | 2026-08-31 | 0.5 | provider real/MAR/a11y humana | aceptación incompleta | B | local + GitHub Actions | cierre de dependencias |
-| Aceptación global Bloque 2 | YELLOW | arquitectura aprobada por usuario, evidencia parcial local | no gate final | 2026-08-30 | N/A | MAR, CI, review y restantes slices | no implementación final | B | pendiente | entrega ejecutable final |
+| Aceptación global Bloque 2 | YELLOW | `block2_final_acceptance_reconciliation_2026-08-31.md` | core/CI demostrados; no gate final | 2026-08-31 | N/A | MAR + provider real + revisión asistiva + aceptación humana | ninguna fuente vigente los sustituye | B | pendiente | resolver cuatro condiciones independientes |
 
 `LOCAL PASS != INTEGRATED != INDEPENDENTLY VALIDATED != ACCEPTED`. Este ledger
 no publica, cambia reglas protegidas ni promueve el gate global.
