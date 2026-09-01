@@ -20,14 +20,17 @@ architecture del Bloque 2, conservando E01–E08 v0.4.
 
 ## Evidencia disponible
 
-Runtime E01–E08 local v0.4, 83 pruebas Block 2, 292 workspace, contratos v0.1,
-reconciliación Slack/Notion/GitHub/Rovo y modelos formales Wolfram. No existe
-todavía HEAD local, CI para esta arquitectura, provider API, UI ejecutada ni
-revisión independiente.
+Runtime E01–E08 local v0.4, 161 pruebas Block 2 y 449 pruebas workspace,
+contratos v0.1, reconciliación Slack/Notion/GitHub/Rovo y modelos formales
+Wolfram. La rama reconciliada con `main` tiene SHA
+`6c3adb15484af34e654b650f8b1b2a71010af79e`; GitHub Actions run
+`33464431457` concluyó `success`. La UI Create/Studio/Ops fue ejecutada en Edge
+y tiene un probe automatizado de reflow, nombres, targets y navegación. Siguen
+pendientes un provider API real, NVDA/VoiceOver y la decisión humana de este
+MAR; ninguno se infiere del CI.
 
 ## Recomendación
 
 Aprobar sólo Slice 1 como candidate implementation boundary. Mantener adapters
 reales, infraestructura distribuida, publicación y aceptación bloqueados hasta
 sus revisiones separadas.
-

@@ -1,7 +1,8 @@
 # Accessibility Audit: SICTrA Design Console v0.1
 
 **Standard:** WCAG 2.1 AA | **Date:** 2026-08-30  
-**Scope:** local read model, desktop 1440×1000 and mobile 390×844.
+**Scope:** local read model, desktop 1440×1000, mobile 390×844 and an
+automated Edge probe at 640×720 (1280px at 200% equivalent).
 
 ## Summary
 
@@ -20,6 +21,11 @@ zoom testing remain required before an AA claim.
 | Status/errors | polite live regions and alert; project missing returns explicit 404 | 3.3.1, 4.1.2 |
 | Motion | reduced-motion media query disables animation/transition | 2.3.3 supporting |
 | Reflow | 390px viewport has 0px global overflow; Ribbon scroll is localized | 1.4.10 supporting |
+| 200% equivalent | 640px viewport has `scrollWidth == clientWidth == 640` | 1.4.10 |
+| Accessible names | 47 visible controls across Studio/Create/Ops; 0 nameless | 3.3.2, 4.1.2 |
+| Interactive targets | 0 non-checkbox controls below 44×44 in the automated probe | 2.5.5 |
+| Mode access | Create and Ops both reachable and visible through native buttons | 2.1.1 |
+| Forced colors | explicit `forced-colors: active` borders and active outline | 1.4.11 supporting |
 
 ## Color contrast
 
@@ -35,7 +41,16 @@ zoom testing remain required before an AA claim.
 ## Remaining manual checks
 
 1. NVDA and VoiceOver reading order, live announcements and disabled modes.
-2. Browser zoom 200% and text-only resize.
-3. High-contrast/forced-colors mode.
+2. Text-only resize in a manually controlled browser session.
+3. Windows High Contrast visual inspection with a human operator.
 4. Cognitive review of technical labels with representative designers.
 
+## Executable probe delta — 2026-08-31
+
+`tools/block2_accessibility_probe.js` executed against the local server in
+Microsoft Edge. It verified zero global overflow, the skip-link target,
+Create/Ops reachability, reduced-motion activation, names for every visible
+control and minimum target size. Result: `PASS` for this automated scope.
+
+This is a separate browser oracle, not a substitute for NVDA/VoiceOver or a
+human accessibility acceptance review.

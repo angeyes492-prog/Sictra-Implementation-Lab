@@ -207,6 +207,8 @@ class DesignConsoleTests(unittest.TestCase):
         css = (Path(__file__).parents[1] / "src" / "sictra_block2_design" / "design_console" / "app.css").read_text(encoding="utf-8")
         self.assertIn(":focus-visible", css)
         self.assertIn("prefers-reduced-motion:reduce", css)
+        self.assertIn("input:focus-visible", css)
+        self.assertIn("@media(forced-colors:active)", css)
         self.assertIn("min-height:44px", css)
         self.assertIn("min-width:48px", css)
         self.assertIn("[hidden]{display:none!important}", css)
