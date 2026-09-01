@@ -1,0 +1,19 @@
+{
+  "artifact": "block3-excel-account-import-hosted-ci",
+  "timestamp_utc": "2026-08-29T03:16:12Z",
+  "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+  "pull_request": 9,
+  "head_sha": "7419c11d1ee09616c1175de5554f84a0c6b87bc4",
+  "workflow": {
+    "name": "SICTrA CI",
+    "run_id": 33230957386,
+    "job_id": 99043592178,
+    "job_name": "test",
+    "command": "python -m unittest discover -s tests -v",
+    "conclusion": "success"
+  },
+  "certainty": "VERIFIED",
+  "confidence": "A",
+  "scope": "hosted CI successful for the exact Excel import implementation SHA; the hosted test count was not extracted",
+  "promotion_boundary": "not authorization to process a production workbook, crawl real accounts, persist a batch, connect Excel/CRM, deliver messages, or accept a global gate"
+}

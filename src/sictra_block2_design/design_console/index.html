@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Design Console · SICTrA</title>
+  <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/ops.css">
+  <link rel="stylesheet" href="/create.css">
+  <link rel="stylesheet" href="/history.css">
+</head>
+<body>
+  <a class="skip-link" href="#studio">Saltar al contenido</a>
+  <div class="shell">
+    <aside class="product-rail" aria-label="Modos del Design Intelligence OS">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">S</span><div><strong>SICTrA</strong><small>Design / 02</small></div></div>
+      <nav aria-label="Navegación principal">
+        <button type="button" data-view="create"><span aria-hidden="true">＋</span> Create<small>Brief verificable</small></button>
+        <button type="button" class="active" aria-current="page" data-view="studio"><span aria-hidden="true">⌗</span> Studio<small>Documento trazable</small></button>
+        <button type="button" data-view="ops"><span aria-hidden="true">◫</span> Ops<small>Ejecución auditable</small></button>
+      </nav>
+      <div class="runtime"><i id="runtime-dot" aria-hidden="true"></i><div><strong>Runtime local</strong><small id="runtime-status">Comprobando…</small></div></div>
+    </aside>
+
+    <main id="studio" tabindex="-1">
+      <header class="command-bar">
+        <div><span class="eyebrow">Design intelligence / Studio</span><h1>Evidence-first canvas</h1></div>
+        <div class="command-meta"><span id="project-badge">Proyecto local</span><button id="refresh" type="button">Actualizar evidencia</button></div>
+      </header>
+      <section class="boundary" aria-label="Límite de autoridad">
+        <strong>Candidato local, no publicado</strong>
+        <span>La consola explica el run; no acepta calidad, derechos ni gates.</span>
+      </section>
+      <div id="loading" class="loading" role="status">Abriendo el grafo de diseño…</div>
+      <div id="error" class="error" role="alert" hidden></div>
+
+      <section id="workspace" class="workspace" hidden aria-label="Design Studio">
+        <aside class="project-panel" aria-labelledby="project-heading">
+          <div class="panel-title"><span>Project rail</span><h2 id="project-heading">Run actual</h2></div>
+          <ol id="stage-list" class="stage-list"></ol>
+        </aside>
+
+        <section class="canvas-panel" aria-labelledby="canvas-heading">
+          <div class="canvas-head"><div><span>Canonical Design Document</span><h2 id="canvas-heading">Lienzo semántico</h2></div><span id="document-state" class="state-chip"></span></div>
+          <div id="canvas" class="canvas" aria-live="polite"></div>
+        </section>
+
+        <aside class="inspector" aria-labelledby="inspector-heading">
+          <div class="panel-title"><span>Evidence inspector</span><h2 id="inspector-heading">Elemento seleccionado</h2></div>
+          <div id="inspector-content" class="inspector-content" aria-live="polite"></div>
+          <div id="edit-status" class="edit-status" role="status" aria-live="polite"></div>
+        </aside>
+      </section>
+
+      <section id="lineage-section" class="lineage-section" hidden aria-labelledby="lineage-heading">
+        <div><span class="eyebrow">Firma del sistema</span><h2 id="lineage-heading">Lineage Ribbon</h2></div>
+        <ol id="lineage-ribbon" class="lineage-ribbon"></ol>
+      </section>
+      <section id="history-section" class="history-section" hidden aria-labelledby="history-heading">
+        <header><div><span class="eyebrow">CDD / historia inmutable</span><h2 id="history-heading">Versiones y cambios</h2></div><p>Cada edición crea un hijo. La comparación no reescribe versiones anteriores.</p></header>
+        <div class="history-grid"><ol id="version-list" class="version-list"></ol><div id="visual-diff" class="visual-diff" aria-live="polite"></div></div>
+      </section>
+
+      <section id="ops-view" class="ops-view" hidden aria-labelledby="ops-heading">
+        <header class="ops-head">
+          <div><span class="eyebrow">Orchestrator / observación</span><h2 id="ops-heading">Execution tape</h2></div>
+          <p>Separa trabajo ejecutado de estado reutilizado. No concede aceptación.</p>
+        </header>
+        <div id="ops-summary" class="ops-summary"></div>
+        <div class="ops-grid">
+          <section class="execution-panel" aria-labelledby="execution-heading">
+            <div class="panel-title"><span>Último recorrido</span><h3 id="execution-heading">Motores y procedencia</h3></div>
+            <ol id="execution-tape" class="execution-tape"></ol>
+          </section>
+          <aside class="integrity-panel" aria-labelledby="integrity-heading">
+            <div class="panel-title"><span>Fronteras activas</span><h3 id="integrity-heading">Integridad operacional</h3></div>
+            <div id="integrity-list" class="integrity-list"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="create-view" class="create-view" hidden aria-labelledby="create-heading">
+        <header class="create-head">
+          <div><span class="eyebrow">Create / handoff compiler</span><h2 id="create-heading">Construir un brief verificable</h2></div>
+          <p>Describe la intención y enlaza evidencia existente. Create no completa hechos ni derechos ausentes.</p>
+        </header>
+        <form id="create-form" class="create-form">
+          <div class="create-sections">
+            <fieldset>
+              <legend><span>01</span> Intención</legend>
+              <label>Audiencia<input name="audience" maxlength="400" value="operations leaders"></label>
+              <label>Decisión que debe facilitar<input name="decision" maxlength="800" value="understand the bounded claim"></label>
+              <label>Tarea de diseño<textarea name="task" maxlength="1200">create an accessible executive brief</textarea></label>
+              <label>Canal<select name="channel"><option>EMAIL</option><option>WEB</option><option>SOCIAL</option><option>PRESENTATION</option><option>PRINT</option></select></label>
+              <label>Criterio observable<input name="success_criterion" maxlength="800" value="reader locates claim and limitation"></label>
+            </fieldset>
+            <fieldset>
+              <legend><span>02</span> Evidencia upstream</legend>
+              <label>Object ID<input name="object_id" maxlength="256" value="INTEL-OBJECT-001"></label>
+              <label>Identidad de fuente<input name="source_identity" maxlength="400" value="INTELLIGENCE:OBJECT:001"></label>
+              <label>Fact IDs <small>separados por coma</small><input name="fact_ids" value="FACT-001"></label>
+              <label>Evidence refs <small>separados por coma</small><input name="evidence_refs" value="EVIDENCE-001"></label>
+              <label>Certainty<select name="certainty"><option>VERIFIED</option><option>PROBABLE</option><option>PLAUSIBLE</option><option>UNCONFIRMED</option><option>CONTRADICTED</option><option>INSUFFICIENT EVIDENCE</option></select></label>
+              <label>Authority reference<input name="authority_reference" value="AUTHORITY-001"></label>
+              <label>Provenance refs<input name="provenance_refs" value="PROVENANCE-001"></label>
+            </fieldset>
+            <fieldset>
+              <legend><span>03</span> Límites y derechos</legend>
+              <label>Accesibilidad<input name="accessibility_requirements" value="WCAG-AA"></label>
+              <label>Restricciones de canal<input name="channel_constraints" value="EMAIL-600PX"></label>
+              <label>Restricciones legales<input name="legal_constraints"></label>
+              <label>Contradicciones<input name="contradictions"></label>
+              <label>Non-claims<input name="non_claims" value="NO-CAUSAL-CLAIM"></label>
+              <label>Incertidumbre<input name="uncertainty"></label>
+              <label>Brand manifest<input name="brand_manifest_ref" value="BRAND-001"></label>
+              <label class="check"><input type="checkbox" name="references_declared"> Incluye referencias, capturas, logos o fuentes</label>
+              <label>Rights manifest<input name="reference_rights_manifest_ref"><small>Obligatorio cuando se declaran referencias.</small></label>
+            </fieldset>
+          </div>
+          <button class="compile-button" type="submit">Compilar handoff</button>
+        </form>
+        <aside id="handoff-seal" class="handoff-seal" role="status" aria-live="polite">
+          <span>Handoff Seal</span><strong>Sin compilar</strong><p>El sobre aún no tiene una clasificación.</p>
+        </aside>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
