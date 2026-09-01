@@ -17,6 +17,9 @@ architecture del Bloque 2, conservando E01–E08 v0.4.
 5. Persistencia local v0.1 y requisitos de futura migración durable.
 6. Relación entre export, publication, delivery y acceptance.
 7. Firma/attestation de checkpoints, receipts y memory promotion.
+8. Aprobar o rechazar la separación `GENERATIVE_MEDIA`,
+   `DETERMINISTIC_RENDER` y `DESIGN_PLATFORM` propuesta en
+   `block2_provider_lane_architecture_v0.1.md`; elegir providers y secret owner.
 
 ## Evidencia disponible
 
