@@ -25,6 +25,7 @@ contenido ni sustituye accesibilidad por layout.
 | Browser | `python tools/block2_export_render_probe.py` con Edge headless | HTML: un `main`, un `h1`, overflow horizontal `0`; SVG normal: role/img, título+descripción, 2 `tspan`, 0 cajas fuera del viewBox |
 | Browser red-team | mismo probe con 120 repeticiones de `evidencia-trazable` | 31 `tspan`, viewBox `1200×1238`, 0 cajas de texto fuera del viewBox |
 | Sintaxis | `node --check tools/block2_export_render_probe.js` y `python -m compileall -q src tests tools/block2_export_render_probe.py` | PASS |
+| GitHub Actions | run `33575896009` sobre `a19b4df7cb023b47f5c9b39ba2aa12077bae3315` | `success`; regresión, compilación y smoke CI |
 
 El probe genera los paquetes mediante `execute_traceable_block2` y
 `persist_export`, no con HTML/SVG escrito a mano. No publica artefactos:
@@ -41,6 +42,7 @@ pendiente y no cambia el gate de accesibilidad.
 
 ## Siguiente ataque
 
-Vincular los dos commits del ciclo a GitHub Actions sobre su SHA exacto. Luego,
-mantener las cuatro condiciones globales separadas: MAR, provider real
-gobernado, revisión asistiva humana y aceptación humana.
+Mantener las cuatro condiciones globales separadas: MAR, provider real
+gobernado, revisión asistiva humana y aceptación humana. Cualquier ajuste de
+render vuelve a requerir CI del SHA exacto y, antes de promoción, verificación
+en clientes reales.

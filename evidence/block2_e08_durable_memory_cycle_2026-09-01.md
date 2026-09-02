@@ -27,10 +27,10 @@ leer se verifican el payload, la identidad y cada evento de deprecación.
 | Git local | `python -m unittest discover -s tests` | 457/457 PASS | regresión workspace |
 | Git local | `python -m compileall -q src tests` | PASS | compilación |
 | Git local | `python -m sictra_block2_design` | PASS; publicación y aceptación siguen `NOT_*` | smoke E01–E08 |
+| GitHub Actions | run `33575896009` sobre `a19b4df7cb023b47f5c9b39ba2aa12077bae3315` | `success` | regresión + compilación + smoke CI del SHA descendiente del cambio E08 |
 
-La identidad GitHub y el resultado CI se añaden únicamente después de que el
-commit exacto exista y GitHub Actions lo ejecute; por eso esta evidencia no
-declara todavía CI para un SHA futuro.
+El resultado hosted está ligado al SHA indicado. Un cambio posterior requiere
+otra ejecución exacta; este resultado no se hereda por similitud de código.
 
 ## Red-team y límites
 
