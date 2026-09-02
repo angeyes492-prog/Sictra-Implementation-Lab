@@ -10,6 +10,7 @@ from .canonical_document import DesignDocumentVersion, document_from_completed_r
 from .project_graph import GraphEdge, GraphNode, ProjectGraphStore
 from .runtime import Block2RunInput, Block2RunResult, execute_block2
 from .e08_creative_memory import CreativeMemoryStore
+from .creative_memory_store import ProjectGraphCreativeMemoryStore
 from .design_context import DesignContextEnvelope, assess_runtime_binding
 
 
@@ -49,7 +50,10 @@ def execute_traceable_block2(
         binding = assess_runtime_binding(design_context, request)
         if not binding.ready:
             raise ValueError(";".join(binding.reasons))
-    result = execute_block2(request, now=now, memory_store=memory_store)
+    effective_memory_store = memory_store or ProjectGraphCreativeMemoryStore(
+        graph, project_id, recorded_at=now,
+    )
+    result = execute_block2(request, now=now, memory_store=effective_memory_store)
     actions: list[str] = []
     try:
         previous_id: str | None = None
@@ -74,6 +78,17 @@ def execute_traceable_block2(
                     project_id, node_id, "DERIVED_FROM", previous_id, "BOUNDED_RUNTIME_STAGE_ORDER", now,
                 )))
             previous_id = node_id
+
+        if (
+            isinstance(effective_memory_store, ProjectGraphCreativeMemoryStore)
+            and result.memory is not None
+            and result.memory_store_action in {"STORED", "IDEMPOTENT"}
+        ):
+            actions.append(graph.append_edge(GraphEdge(
+                project_id,
+                ProjectGraphCreativeMemoryStore.node_id(result.memory.memory_id),
+                "DERIVED_FROM", f"{run_id}-E08", result.memory.content_hash, now,
+            )))
 
         document = None
         if result.completed and result.production and result.production.candidate:

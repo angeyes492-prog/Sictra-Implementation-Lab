@@ -54,6 +54,7 @@ from .design_context import (
 from .provider_sandbox import (
     CancellationRegistry, GovernedProviderSandbox, ProviderResponse, SandboxPolicy,
 )
+from .creative_memory_store import ProjectGraphCreativeMemoryStore
 from .reference_fixture import reference_run_input, run_reference_fixture
 
 __all__ = [
@@ -124,6 +125,7 @@ __all__ = [
     "GovernedProviderSandbox",
     "ProviderResponse",
     "SandboxPolicy",
+    "ProjectGraphCreativeMemoryStore",
     "reference_run_input",
     "run_reference_fixture",
 ]

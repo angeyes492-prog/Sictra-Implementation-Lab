@@ -86,13 +86,20 @@ class MemoryProposal:
     @property
     def content_hash(self) -> str:
         material = json.dumps({
+            "memory_id": self.memory_id,
+            "contract_version": self.contract_version,
             "review": self.source_review_id,
             "candidate": self.source_candidate_id,
+            "source_generation": self.source_generation,
             "observation": self.observation,
             "interpretation": self.interpretation,
             "hypothesis": self.hypothesis,
             "evidence": self.evidence_roots,
             "eligible_generation": self.eligible_generation,
+            "promotion_owner_id": self.promotion_owner_id,
+            "rights_current": self.rights_current,
+            "privacy_allowed": self.privacy_allowed,
+            "expires_at": self.expires_at.isoformat(),
         }, sort_keys=True, separators=(",", ":"))
         return sha256(material.encode("utf-8")).hexdigest()
 
@@ -180,7 +187,7 @@ class CreativeMemoryStore:
         self._records[proposal.memory_id] = stored
         return "STORED", stored
 
-    def deprecate(self, memory_id: str, reason: str) -> StoredMemory:
+    def deprecate(self, memory_id: str, reason: str, *, at: datetime | None = None) -> StoredMemory:
         _text(reason, "reason")
         current = self._records[memory_id]
         updated = replace(current, state="DEPRECATED", deprecation_reason=reason)
@@ -189,4 +196,3 @@ class CreativeMemoryStore:
 
     def get(self, memory_id: str) -> StoredMemory | None:
         return self._records.get(memory_id)
-

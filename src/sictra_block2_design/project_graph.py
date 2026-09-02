@@ -18,6 +18,7 @@ RELATIONS = frozenset({
     "DERIVED_FROM", "SUPPORTS", "CONTRADICTS", "REPRESENTS", "GENERATED_BY",
     "TRANSFORMED_FROM", "USED_IN", "VALIDATED_BY", "SUPERSEDES", "EXPORTED_AS",
 })
+MEMORY_EVENT_TYPES = frozenset({"DEPRECATED"})
 _HASH = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -63,6 +64,26 @@ class GraphEdge:
     def edge_id(self) -> str:
         material = "\x1f".join((self.project_id, self.source_id, self.relation, self.target_id, self.evidence_ref))
         return "EDGE-" + sha256(material.encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class GraphMemoryRecord:
+    project_id: str
+    memory_id: str
+    content_hash: str
+    payload: dict[str, Any]
+    created_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class GraphMemoryEvent:
+    project_id: str
+    event_id: str
+    memory_id: str
+    event_type: str
+    content_hash: str
+    payload: dict[str, Any]
+    created_at: datetime
 
 
 class ProjectGraphStore:
@@ -121,6 +142,26 @@ class ProjectGraphStore:
                 created_at TEXT NOT NULL,
                 PRIMARY KEY (project_id, version_id)
             );
+            CREATE TABLE IF NOT EXISTS creative_memory_records (
+                project_id TEXT NOT NULL,
+                memory_id TEXT NOT NULL,
+                content_hash TEXT NOT NULL,
+                canonical_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (project_id, memory_id)
+            );
+            CREATE TABLE IF NOT EXISTS creative_memory_events (
+                project_id TEXT NOT NULL,
+                event_id TEXT NOT NULL,
+                memory_id TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                content_hash TEXT NOT NULL,
+                canonical_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (project_id, event_id),
+                FOREIGN KEY (project_id, memory_id)
+                    REFERENCES creative_memory_records(project_id, memory_id)
+            );
             """
         )
         self._connection.commit()
@@ -140,10 +181,21 @@ class ProjectGraphStore:
             if tuple(existing) == identity:
                 return "IDEMPOTENT"
             raise ProjectGraphViolation("node identity collision")
-        self._connection.execute(
-            "INSERT INTO graph_nodes VALUES (?, ?, ?, ?, ?, ?)",
-            (node.project_id, node.node_id, node.node_type, node.content_hash, payload_json, _timestamp(node.created_at)),
-        )
+        try:
+            self._connection.execute(
+                "INSERT INTO graph_nodes VALUES (?, ?, ?, ?, ?, ?)",
+                (node.project_id, node.node_id, node.node_type, node.content_hash,
+                 payload_json, _timestamp(node.created_at)),
+            )
+        except sqlite3.IntegrityError as error:
+            existing = self._connection.execute(
+                "SELECT node_type, content_hash, payload_json FROM graph_nodes "
+                "WHERE project_id=? AND node_id=?",
+                (node.project_id, node.node_id),
+            ).fetchone()
+            if existing is not None and tuple(existing) == identity:
+                return "IDEMPOTENT"
+            raise ProjectGraphViolation("node identity collision") from error
         return "APPENDED"
 
     def append_edge(self, edge: GraphEdge) -> str:
@@ -193,6 +245,86 @@ class ProjectGraphStore:
         )
         return "APPENDED"
 
+    def append_memory_record(self, record: GraphMemoryRecord) -> str:
+        for name, value in (
+            ("project_id", record.project_id), ("memory_id", record.memory_id),
+            ("content_hash", record.content_hash),
+        ):
+            _text(value, name)
+        if not _HASH.fullmatch(record.content_hash):
+            raise ProjectGraphViolation("memory content_hash must be a lowercase SHA-256 identity")
+        material = _payload(record.payload)
+        existing = self._connection.execute(
+            "SELECT content_hash, canonical_json FROM creative_memory_records "
+            "WHERE project_id=? AND memory_id=?",
+            (record.project_id, record.memory_id),
+        ).fetchone()
+        identity = (record.content_hash, material)
+        if existing is not None:
+            if tuple(existing) == identity:
+                return "IDEMPOTENT"
+            raise ProjectGraphViolation("creative memory identity collision")
+        try:
+            self._connection.execute(
+                "INSERT INTO creative_memory_records VALUES (?, ?, ?, ?, ?)",
+                (record.project_id, record.memory_id, record.content_hash, material,
+                 _timestamp(record.created_at)),
+            )
+        except sqlite3.IntegrityError as error:
+            existing = self._connection.execute(
+                "SELECT content_hash, canonical_json FROM creative_memory_records "
+                "WHERE project_id=? AND memory_id=?",
+                (record.project_id, record.memory_id),
+            ).fetchone()
+            if existing is not None and tuple(existing) == identity:
+                return "IDEMPOTENT"
+            raise ProjectGraphViolation("creative memory identity collision") from error
+        return "APPENDED"
+
+    def append_memory_event(self, event: GraphMemoryEvent) -> str:
+        for name, value in (
+            ("project_id", event.project_id), ("event_id", event.event_id),
+            ("memory_id", event.memory_id), ("content_hash", event.content_hash),
+        ):
+            _text(value, name)
+        if event.event_type not in MEMORY_EVENT_TYPES:
+            raise ProjectGraphViolation("memory event type is not contracted")
+        if not _HASH.fullmatch(event.content_hash):
+            raise ProjectGraphViolation("memory event content_hash must be a lowercase SHA-256 identity")
+        material = _payload(event.payload)
+        existing = self._connection.execute(
+            "SELECT memory_id, event_type, content_hash, canonical_json "
+            "FROM creative_memory_events WHERE project_id=? AND event_id=?",
+            (event.project_id, event.event_id),
+        ).fetchone()
+        identity = (event.memory_id, event.event_type, event.content_hash, material)
+        if existing is not None:
+            if tuple(existing) == identity:
+                return "IDEMPOTENT"
+            raise ProjectGraphViolation("creative memory event identity collision")
+        try:
+            self._connection.execute(
+                "INSERT INTO creative_memory_events VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (event.project_id, event.event_id, event.memory_id, event.event_type,
+                 event.content_hash, material, _timestamp(event.created_at)),
+            )
+        except sqlite3.IntegrityError as error:
+            existing = self._connection.execute(
+                "SELECT memory_id, event_type, content_hash, canonical_json "
+                "FROM creative_memory_events WHERE project_id=? AND event_id=?",
+                (event.project_id, event.event_id),
+            ).fetchone()
+            if existing is not None and tuple(existing) == identity:
+                return "IDEMPOTENT"
+            parent = self._connection.execute(
+                "SELECT 1 FROM creative_memory_records WHERE project_id=? AND memory_id=?",
+                (event.project_id, event.memory_id),
+            ).fetchone()
+            if parent is None:
+                raise ProjectGraphViolation("memory event requires an existing memory record") from error
+            raise ProjectGraphViolation("creative memory event identity collision") from error
+        return "APPENDED"
+
     def commit(self) -> None:
         self._connection.commit()
 
@@ -238,6 +370,47 @@ class ProjectGraphStore:
         ).fetchall()
         return tuple(row["project_id"] for row in rows)
 
+    def load_memory_record(self, project_id: str, memory_id: str) -> dict[str, Any] | None:
+        row = self._connection.execute(
+            "SELECT content_hash, canonical_json, created_at FROM creative_memory_records "
+            "WHERE project_id=? AND memory_id=?",
+            (project_id, memory_id),
+        ).fetchone()
+        if row is None:
+            return None
+        event = self._connection.execute(
+            "SELECT event_id, event_type, content_hash, canonical_json, created_at "
+            "FROM creative_memory_events WHERE project_id=? AND memory_id=? "
+            "ORDER BY created_at DESC, event_id DESC LIMIT 1",
+            (project_id, memory_id),
+        ).fetchone()
+        return {
+            "memory_id": memory_id,
+            "content_hash": row["content_hash"],
+            "payload": json.loads(row["canonical_json"]),
+            "created_at": row["created_at"],
+            "latest_event": None if event is None else {
+                "event_id": event["event_id"], "event_type": event["event_type"],
+                "content_hash": event["content_hash"],
+                "payload": json.loads(event["canonical_json"]),
+                "created_at": event["created_at"],
+            },
+        }
+
+    def memory_events(self, project_id: str, memory_id: str) -> tuple[dict[str, Any], ...]:
+        rows = self._connection.execute(
+            "SELECT event_id, event_type, content_hash, canonical_json, created_at "
+            "FROM creative_memory_events WHERE project_id=? AND memory_id=? "
+            "ORDER BY created_at, event_id",
+            (project_id, memory_id),
+        ).fetchall()
+        return tuple({
+            "event_id": row["event_id"], "event_type": row["event_type"],
+            "content_hash": row["content_hash"],
+            "payload": json.loads(row["canonical_json"]),
+            "created_at": row["created_at"],
+        } for row in rows)
+
     def snapshot(self, project_id: str) -> dict[str, Any] | None:
         """Return a JSON-ready read model; it carries no mutation authority."""
 
@@ -259,6 +432,16 @@ class ProjectGraphStore:
             "FROM design_document_versions WHERE project_id=? ORDER BY created_at, version_id",
             (project_id,),
         ).fetchall()
+        memory_rows = self._connection.execute(
+            "SELECT memory_id, content_hash, canonical_json, created_at "
+            "FROM creative_memory_records WHERE project_id=? ORDER BY created_at, memory_id",
+            (project_id,),
+        ).fetchall()
+        memory_event_rows = self._connection.execute(
+            "SELECT event_id, memory_id, event_type, content_hash, canonical_json, created_at "
+            "FROM creative_memory_events WHERE project_id=? ORDER BY created_at, event_id",
+            (project_id,),
+        ).fetchall()
         return {
             "project_id": project_id,
             "nodes": [
@@ -277,6 +460,21 @@ class ProjectGraphStore:
                     "document": json.loads(row["canonical_json"]), "created_at": row["created_at"],
                 }
                 for row in document_rows
+            ],
+            "creative_memories": [
+                {
+                    "memory_id": row["memory_id"], "content_hash": row["content_hash"],
+                    "payload": json.loads(row["canonical_json"]), "created_at": row["created_at"],
+                }
+                for row in memory_rows
+            ],
+            "creative_memory_events": [
+                {
+                    "event_id": row["event_id"], "memory_id": row["memory_id"],
+                    "event_type": row["event_type"], "content_hash": row["content_hash"],
+                    "payload": json.loads(row["canonical_json"]), "created_at": row["created_at"],
+                }
+                for row in memory_event_rows
             ],
             "authority": {
                 "publication": "NOT_PUBLISHED", "acceptance": "NOT_ACCEPTED",

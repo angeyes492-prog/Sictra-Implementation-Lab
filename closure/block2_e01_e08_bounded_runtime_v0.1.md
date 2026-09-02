@@ -23,6 +23,21 @@ estado actual resuelve el blocker GitHub/CI: PR #11 es mergeable; CI runs
 No se promueven las demás filas: provider real, ensayo perceptual, revisión
 independiente, MAR y aceptación humana siguen separados y pendientes.
 
+## Reassessment — 2026-09-01 (memoria E08 durable)
+
+La fila `Memoria E08` de 2026-08-30 sigue siendo evidencia histórica: entonces
+el store era volátil. El adaptador actual persiste el candidato y sus eventos
+en `ProjectGraph` SQLite dentro de la transacción de la traza. Ocho vectores
+locales demostraron reinicio, deprecación append-only e idempotente, colisión,
+rollback atómico, detección de alteración del payload y del evento, cobertura
+del hash para los campos de gobierno y convergencia de dos escritores. La
+regresión local posterior fue 169/169 para Bloque 2 y 457/457 para el
+workspace.
+
+Clasificación: `VERIFIED / A` sólo para ese alcance local y para el SHA que se
+registrará con CI. Permanece `YELLOW`: SQLite local no constituye evidencia
+independiente, aceptación de aprendizaje, provider real ni gate global.
+
 ## Regla de promoción
 
 `LOCAL EXECUTION != INTEGRATED != INDEPENDENTLY VALIDATED != ACCEPTED`.
