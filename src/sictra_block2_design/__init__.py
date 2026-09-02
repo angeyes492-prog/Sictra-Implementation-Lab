@@ -55,6 +55,10 @@ from .provider_sandbox import (
     CancellationRegistry, GovernedProviderSandbox, ProviderResponse, SandboxPolicy,
 )
 from .creative_memory_store import ProjectGraphCreativeMemoryStore
+from .e01_external_observation import (
+    ExternalObservationReceipt, ExternalObservationAssessment,
+    assess_external_observation, fixture_fingerprint,
+)
 from .reference_fixture import reference_run_input, run_reference_fixture
 
 __all__ = [
@@ -126,6 +130,10 @@ __all__ = [
     "ProviderResponse",
     "SandboxPolicy",
     "ProjectGraphCreativeMemoryStore",
+    "ExternalObservationReceipt",
+    "ExternalObservationAssessment",
+    "assess_external_observation",
+    "fixture_fingerprint",
     "reference_run_input",
     "run_reference_fixture",
 ]

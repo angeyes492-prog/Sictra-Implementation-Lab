@@ -41,3 +41,17 @@
 - No se reclama runtime creativo, producción, evidencia humana, reproducción,
   integración interbloques, CI externa, aceptación E01 ni finalización de
   Bloque 2.
+
+## Reassessment — 2026-09-01 (recibo de observación externa)
+
+Se añadió el contrato candidato y validador local `E01 External Observation
+Receipt`. El recibo queda ligado al hash del fixture y al objeto/autoridad
+upstream exactos; rechaza sustitución, autorrevisión, falta de independencia,
+fuga, exposición de tesis anterior a la respuesta y confounder material. Cuatro
+vectores locales ejecutados demuestran esos límites y que una observación
+registrada conserva `NOT_PROMOTED / NOT_ACCEPTED`.
+
+La mejora hace ejecutable el handoff del revisor humano, no aporta uno: no
+existe aún objeto SICTrA autorizado, observador humano independiente ni ensayo
+perceptual. Por tanto E01 general continúa `YELLOW / NOT EMPIRICALLY VALIDATED`
+y el resultado admisible sin esos inputs sigue siendo `RETURN_UPSTREAM`.
