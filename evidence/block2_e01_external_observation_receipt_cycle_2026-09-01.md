@@ -34,6 +34,11 @@ no es evidencia runtime ni evidencia humana.
 Comando focal: `python -m unittest tests.test_block2_e01_external_observation -v`:
 4/4 PASS. `python -m compileall -q src tests`: PASS.
 
+GitHub Actions ejecutó el workflow `SICTrA bounded runtime validation` con
+resultado `success` en el run `33576265333`, ligado al SHA
+`fc3d74e7f67214ca8dffc074328e9128734e46a9`. Esta es evidencia de CI para ese
+validador local; no acredita la identidad o independencia de un reviewer real.
+
 ## Riesgos y siguiente ataque
 
 La identidad real del revisor, firma/atestación externa, almacenamiento remoto,
