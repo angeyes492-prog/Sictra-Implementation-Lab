@@ -93,8 +93,45 @@ def _html(document: DesignDocumentVersion) -> str:
     )
 
 
+def _svg_lines(value: str, *, columns: int = 76) -> tuple[str, ...]:
+    """Wrap untrusted CDD copy deterministically before placing it in SVG.
+
+    SVG ``text`` does not wrap by default.  Keeping every line below a bounded
+    character budget prevents a long, valid CDD field from leaving the declared
+    1200-unit canvas.  The accessibility description still carries the complete
+    source content, so this is a visual layout guard rather than a truncation.
+    """
+
+    lines: list[str] = []
+    for paragraph in value.splitlines() or [""]:
+        words = paragraph.split() or [""]
+        current = ""
+        for word in words:
+            fragments = [word[index:index + columns] for index in range(0, len(word), columns)] or [""]
+            for fragment in fragments:
+                proposed = fragment if not current else f"{current} {fragment}"
+                if current and len(proposed) > columns:
+                    lines.append(current)
+                    current = fragment
+                else:
+                    current = proposed
+        lines.append(current)
+    return tuple(lines)
+
+
 def _svg(document: DesignDocumentVersion) -> str:
-    height = max(220, 90 + len(document.elements) * 76)
+    pages = {page.page_id: page for page in document.pages}
+    ordered = tuple(
+        (pages[page_id], element_id)
+        for page_id in (page.page_id for page in document.pages)
+        for element_id in pages[page_id].reading_order
+    )
+    by_id = {item.element_id: item for item in document.elements}
+    wrapped = {
+        element_id: _svg_lines(by_id[element_id].content or by_id[element_id].accessibility_label)
+        for _, element_id in ordered
+    }
+    height = max(220, 88 + len(document.pages) * 52 + sum(34 * len(lines) + 22 for lines in wrapped.values()))
     chunks = [
         f'<svg xmlns="http://www.w3.org/2000/svg" role="img" '
         f'aria-labelledby="title desc" viewBox="0 0 1200 {height}">',
@@ -102,12 +139,28 @@ def _svg(document: DesignDocumentVersion) -> str:
         f'<desc id="desc">{escape(_plain(document))}</desc>',
         '<rect width="1200" height="100%" fill="#ffffff"/>',
     ]
-    for index, element in enumerate(document.elements):
-        y = 80 + index * 76
+    y = 56
+    active_page: str | None = None
+    for page, element_id in ordered:
+        element = by_id[element_id]
+        if page.page_id != active_page:
+            active_page = page.page_id
+            chunks.append(
+                f'<text x="56" y="{y}" fill="#182033" font-size="32" font-weight="700">'
+                f'{escape(page.name)}</text>'
+            )
+            y += 52
+        lines = wrapped[element_id]
         chunks.append(
-            f'<text x="56" y="{y}" fill="#182033" font-size="24">'
-            f'{escape(element.content or element.accessibility_label)}</text>'
+            f'<text data-element="{escape(element.element_id, quote=True)}" x="56" y="{y}" '
+            f'fill="#182033" font-size="24">'
+            + "".join(
+                f'<tspan x="56" dy="{0 if index == 0 else 34}">{escape(line)}</tspan>'
+                for index, line in enumerate(lines)
+            )
+            + '</text>'
         )
+        y += 34 * len(lines) + 22
     chunks.append('</svg>')
     return "".join(chunks)
 

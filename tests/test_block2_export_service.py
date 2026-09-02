@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -74,6 +75,17 @@ class ExportServiceTests(unittest.TestCase):
         assessment = persist_export(self.graph, self.request(version_id="MISSING"))
         self.assertEqual("RETURN_TO_DOCUMENT", assessment.disposition)
         self.assertIsNone(assessment.package)
+
+    def test_svg_wraps_long_valid_copy_without_truncating_the_accessible_text(self):
+        long_copy = " ".join(["evidencia-trazable"] * 120)
+        first = replace(self.document.elements[0], content=long_copy)
+        document = replace(self.document, elements=(first, *self.document.elements[1:]))
+        assessment = build_export_package(document, self.request("SVG"))
+        self.assertTrue(assessment.ready)
+        svg = assessment.package.content.decode("utf-8")
+        self.assertGreater(svg.count("<tspan"), 2)
+        self.assertIn("evidencia-trazable", svg)
+        self.assertIn(long_copy, assessment.package.accessibility_content.decode("utf-8"))
 
 
 if __name__ == "__main__":

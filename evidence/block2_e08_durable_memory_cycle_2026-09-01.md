@@ -44,6 +44,7 @@ se requieran para aceptación.
 
 ## Siguiente ataque
 
-Ligar el commit a CI hosted del SHA exacto y ejecutar una auditoría de render
-HTML/SVG en navegador. Las dependencias globales independientes siguen siendo
-MAR, provider real gobernado, revisión asistiva humana y aceptación humana.
+Ligar el commit a CI hosted del SHA exacto. En paralelo se abrió una auditoría
+separada de render HTML/SVG en navegador; las dependencias globales
+independientes siguen siendo MAR, provider real gobernado, revisión asistiva
+humana y aceptación humana.
