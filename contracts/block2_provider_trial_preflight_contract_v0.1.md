@@ -14,8 +14,9 @@ determinista existente.
 1. El registro conserva provider, snapshot, lane, handle no secreto, términos,
    política de datos, hash de rights, presupuesto, autoridad de trial y
    referencia MAR.
-2. Un handle que parezca secreto/API key se rechaza estructuralmente. El vault
-   es quien resuelve el handle; este contrato nunca recibe la credencial.
+2. El handle debe usar `vault://` y cualquier forma que parezca secreto/API key
+   se rechaza estructuralmente. El vault es quien resuelve el handle; este
+   contrato nunca recibe la credencial.
 3. Credencial ausente/expirada/revocada, preflight vencido o scopes mínimos
    ausentes devuelve `RETURN_UPSTREAM` con razones.
 4. `PRECONDITIONS_DECLARED` significa sólo que la declaración local está

@@ -1,6 +1,10 @@
 import unittest
+import ast
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+import sictra_block2_design.provider_trial_preflight as preflight_module
 
 from sictra_block2_design.provider_trial_preflight import (
     ProviderTrialPreflightViolation, ProviderTrialReadinessRecord,
@@ -44,8 +48,32 @@ class ProviderTrialPreflightTests(unittest.TestCase):
         self.assertEqual(("SCOPE_MISSING_DESIGN_EXPORT",), assessment.reasons)
 
     def test_secret_material_is_rejected_before_assessment(self):
+        for handle in (
+            "sk-real-secret-must-not-enter-contract", "Bearer actual-secret",
+            "vault://sictra/provider?token=actual-secret",
+            "vault://sictra/provider?x-api-key=actual-secret",
+        ):
+            with self.subTest(handle=handle), self.assertRaises(ProviderTrialPreflightViolation):
+                record(credential_handle=handle)
+
+    def test_credential_handle_must_be_a_vault_reference(self):
         with self.assertRaises(ProviderTrialPreflightViolation):
-            record(credential_handle="sk-real-secret-must-not-enter-contract")
+            record(credential_handle="reference://sictra/openai/design-trial")
+
+    def test_preflight_module_has_no_transport_or_secret_resolver_dependency(self):
+        """Independent AST guard for the deliberately non-operational boundary."""
+
+        source = Path(preflight_module.__file__).read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        imported_roots = {
+            alias.name.split(".", 1)[0]
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.Import, ast.ImportFrom))
+            for alias in node.names
+        }
+        self.assertFalse(imported_roots.intersection({
+            "aiohttp", "httpx", "openai", "requests", "socket", "urllib",
+        }))
 
 
 if __name__ == "__main__":

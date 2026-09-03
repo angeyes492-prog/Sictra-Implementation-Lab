@@ -22,7 +22,10 @@ _LANE_SCOPES = {
     "DESIGN_PLATFORM": frozenset({"DESIGN_CREATE", "DESIGN_EXPORT"}),
 }
 _HASH = re.compile(r"^[0-9a-f]{64}$")
-_SECRET_MARKERS = ("sk-", "bearer ", "api_key=", "apikey=")
+_SECRET_MARKERS = (
+    "sk-", "bearer ", "authorization:", "api_key=", "api-key=",
+    "apikey=", "x-api-key=", "token=",
+)
 
 
 class ProviderTrialPreflightViolation(ValueError):
@@ -76,6 +79,8 @@ class ProviderTrialReadinessRecord:
         handle = self.credential_handle.lower()
         if any(marker in handle for marker in _SECRET_MARKERS):
             raise ProviderTrialPreflightViolation("credential_handle must be a non-secret vault reference")
+        if not handle.startswith("vault://"):
+            raise ProviderTrialPreflightViolation("credential_handle must use the vault:// reference scheme")
         if not self.declared_scopes or any(not isinstance(scope, str) or not scope.strip() for scope in self.declared_scopes):
             raise ProviderTrialPreflightViolation("declared_scopes must be non-empty strings")
         if not isinstance(self.reviewed_at, datetime) or self.reviewed_at.tzinfo is None:
