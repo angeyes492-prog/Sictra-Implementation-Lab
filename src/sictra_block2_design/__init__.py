@@ -59,6 +59,10 @@ from .e01_external_observation import (
     ExternalObservationReceipt, ExternalObservationAssessment,
     assess_external_observation, fixture_fingerprint,
 )
+from .provider_trial_preflight import (
+    ProviderTrialReadinessRecord, ProviderTrialPreflightAssessment,
+    assess_provider_trial_readiness,
+)
 from .reference_fixture import reference_run_input, run_reference_fixture
 
 __all__ = [
@@ -134,6 +138,9 @@ __all__ = [
     "ExternalObservationAssessment",
     "assess_external_observation",
     "fixture_fingerprint",
+    "ProviderTrialReadinessRecord",
+    "ProviderTrialPreflightAssessment",
+    "assess_provider_trial_readiness",
     "reference_run_input",
     "run_reference_fixture",
 ]

@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 import re
 import sqlite3
+import time
 from typing import Any
 
 from .canonical_document import DesignDocumentVersion, canonical_json, document_from_mapping
@@ -92,12 +93,14 @@ class ProjectGraphStore:
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path).resolve()
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._connection = sqlite3.connect(self.path, timeout=5.0)
+        # IMMEDIATE prevents two independent writers from both reading an
+        # absent identity and then deadlocking while upgrading a deferred
+        # transaction.  Readers remain non-blocking under WAL.
+        self._connection = sqlite3.connect(
+            self.path, timeout=5.0, isolation_level="IMMEDIATE",
+        )
         self._connection.row_factory = sqlite3.Row
-        self._connection.execute("PRAGMA journal_mode=WAL")
-        self._connection.execute("PRAGMA foreign_keys=ON")
-        self._connection.execute("PRAGMA busy_timeout=5000")
-        self._create_schema()
+        self._configure_and_create_schema()
 
     def close(self) -> None:
         self._connection.close()
@@ -107,6 +110,30 @@ class ProjectGraphStore:
 
     def __exit__(self, *_: object) -> None:
         self.close()
+
+    def _configure_and_create_schema(self) -> None:
+        """Initialize a shared SQLite file without stranding a concurrent opener.
+
+        WAL activation and schema creation both need an exclusive SQLite
+        transition when a database is first created.  A bounded retry turns
+        that transient contention into ordinary startup serialization; other
+        operational failures remain visible to the caller.
+        """
+
+        for attempt in range(6):
+            try:
+                self._connection.execute("PRAGMA journal_mode=WAL")
+                self._connection.execute("PRAGMA foreign_keys=ON")
+                self._connection.execute("PRAGMA busy_timeout=5000")
+                self._create_schema()
+                return
+            except sqlite3.OperationalError as error:
+                transient = "locked" in str(error).lower() or "busy" in str(error).lower()
+                if not transient or attempt == 5:
+                    self.close()
+                    raise
+                self._connection.rollback()
+                time.sleep(0.025 * (2 ** attempt))
 
     def _create_schema(self) -> None:
         self._connection.executescript(

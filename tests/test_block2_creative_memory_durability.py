@@ -167,7 +167,9 @@ class CreativeMemoryDurabilityTests(unittest.TestCase):
         def bounded_write():
             with ProjectGraphStore(self.path) as graph:
                 store = ProjectGraphCreativeMemoryStore(graph, PROJECT, recorded_at=NOW)
-                barrier.wait()
+                # An initialization or locking regression must surface as a
+                # bounded test failure, never leave its peer waiting forever.
+                barrier.wait(timeout=5)
                 action, _ = store.write(assessment, proposal)
                 graph.commit()
                 return action
