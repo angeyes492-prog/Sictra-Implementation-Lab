@@ -54,3 +54,18 @@ control and minimum target size. Result: `PASS` for this automated scope.
 
 This is a separate browser oracle, not a substitute for NVDA/VoiceOver or a
 human accessibility acceptance review.
+
+## Keyboard traversal delta — 2026-09-02
+
+`tools/block2_console_accessibility_probe.py` now creates una instancia local
+temporal de la consola y ejecuta el probe Edge sin depender de un servidor
+manual. Además del alcance anterior, recorre los stops de teclado de Studio,
+Create y Ops: 42 stops observados, 0 ocultos y 0 sin nombre. Conserva los
+resultados anteriores: 47 controles visibles, 0 targets insuficientes, 0px de
+overflow, skip-link hacia `#studio`, Create/Ops alcanzables y motion reducido
+activo.
+
+Esto es `VERIFIED / A` sólo como recorrido browser automatizado de la fixture
+sintética. El protocolo humano sigue en
+`architecture/block2_assistive_review_protocol_v0.1.md`; no se promueve WCAG
+AA, review asistiva ni aceptación.
