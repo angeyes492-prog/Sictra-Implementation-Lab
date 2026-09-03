@@ -46,3 +46,17 @@ el objeto upstream de producción y la observación humana no están disponibles
 en este ciclo. Para un caso real, el owner upstream debe aportar primero el
 objeto actual y autorizado; después un revisor independiente debe emitir el
 recibo con evidencia atribuible. Si falta cualquiera de ellos, `RETURN_UPSTREAM`.
+
+## Reassessment de fuentes — 2026-09-02
+
+| Fuente | Consulta / identidad | Resultado | Clasificación |
+|---|---|---|---|
+| Slack | `"Wave 37" after:2026-09-01` y `"E01" "fixture" after:2026-09-01` | sin resultados | `INSUFFICIENT EVIDENCE` |
+| Notion | `Wave 37 E01 authorized upstream fixture` | sólo páginas históricas Wave 34/35 del 2026-08-25, marcadas `unverified` | `INSUFFICIENT EVIDENCE` |
+| GitHub | PR #11, head `09fe341e83df393290032e874ed7b193876983d1`, reviews | CI 33711675428 verde para código; cero reviews | `VERIFIED` para CI local; `INSUFFICIENT EVIDENCE` para MAR/observador |
+| Wolfram | `upstream && independentReviewer && !materialLeakage && !materialConfounder` | la forma normal conserva las cuatro condiciones conjunctivas | `VERIFIED` formal auxiliar, no evidencia runtime/humana |
+
+Conclusión: no existe un objeto upstream autorizado, observador independiente ni
+decisión MAR que pueda alimentar el recibo. El caso E01 real queda
+`RETURN_UPSTREAM`; el fixture y el validador locales no se promueven por la
+ausencia de resultados ni por CI verde.
