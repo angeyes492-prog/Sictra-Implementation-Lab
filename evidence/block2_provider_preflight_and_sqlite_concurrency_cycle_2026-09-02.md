@@ -22,6 +22,11 @@ completa produce únicamente `PRECONDITIONS_DECLARED`, con
 expiración o scopes incompletos devuelven `RETURN_UPSTREAM`; material que parece
 una API key se rechaza antes de evaluar.
 
+El sandbox candidato complementario no puede convertir una policy permisiva en
+integración externa: cualquier manifest `remote_io=true` devuelve
+`REMOTE_IO_RETURN_UPSTREAM` antes de invocar el adapter. Esta protección es
+independiente del preflight declarativo.
+
 El contrato está en
 `contracts/block2_provider_trial_preflight_contract_v0.1.md`. No existe adapter
 remoto ni se ha conectado esta capacidad al runtime determinista.
@@ -45,11 +50,13 @@ La semántica probada sigue siendo la misma: dos escritores exactos producen un
 | Vector | Resultado | Alcance |
 |---|---:|---|
 | `python -m unittest tests.test_block2_provider_trial_preflight -v` | 6/6 PASS | declaración no operativa, expiry/credencial, scope por lane, esquema `vault://`, rechazo de secreto y guard AST sin transporte |
+| `python -m unittest tests.test_block2_provider_sandbox tests.test_block2_provider_trial_preflight -v` | 14/14 PASS | timeout, cancel, budget, hash, media, replay y `remote_io` fail-closed, más preflight |
 | `python -m unittest tests.test_block2_creative_memory_durability -v` | 8/8 PASS | reinicio, append-only, tamper, rollback y dos escritores concurrentes |
 | `python -m unittest discover -s tests -q` | 468/468 PASS en 45.987 s | regresión workspace en un único proceso |
 | `python -m compileall -q src tests` | PASS | sintaxis de fuentes y pruebas |
 | GitHub Actions `33700400122` | `success` sobre `0a48487eaeee04cdc797e88dd8a16d6cee830296` | regresión, compilación, validación JavaScript y runtimes de referencia |
 | GitHub Actions `33707108439` | `success` sobre `cd7c144ba3db2943fe7294a866b5a4e3fd94e16a` | hardening de `vault://`, patrones de secreto y boundary AST, más regresión completa |
+| GitHub Actions `33711539343` | `success` sobre `0efb469239812177b53b19a6205bb20b13f87bd1` | sandbox rechaza `remote_io` aun con policy permisiva; regresión, compilación y runtimes |
 
 El run hosted está ligado al SHA de implementación indicado. El commit de
 evidencia posterior no altera código de runtime; aun así, la PR requiere una
@@ -62,6 +69,10 @@ ejecución propia antes de declarar su head verificado.
   transporte/SDK. Esto no valida un vault real ni detecta todas las formas
   posibles de secreto: el boundary de provider deberá verificarlo de forma
   independiente.
+- El vector de sandbox usa un adapter local y una policy con
+  `allow_remote_io=true`; un manifest remoto no llega a `invoke`. No prueba que
+  un futuro adapter remoto tenga cancelación o billing correctos: ese adapter
+  sigue `RETURN_UPSTREAM` hasta su contrato/MAR y provider trial verificable.
 - La concurrencia se probó con dos conexiones locales y SQLite/WAL. No demuestra
   seguridad distribuida, lock manager externo ni rendimiento bajo carga.
 - La consulta de Slack y Notion del 2026-09-02 no aportó una promoción MAR ni

@@ -28,15 +28,16 @@ architecture del Bloque 2, conservando E01–E08 v0.4.
 
 Runtime E01–E08 local v0.4, contratos candidatos v0.1 y 468/468 pruebas
 workspace en un solo proceso. La rama de PR #11 tiene SHA
-`cd7c144ba3db2943fe7294a866b5a4e3fd94e16a`; GitHub Actions run
-`33707108439` concluyó `success` para tests, compilación, consola y ambos
+`0efb469239812177b53b19a6205bb20b13f87bd1`; GitHub Actions run
+`33711539343` concluyó `success` para tests, compilación, consola y ambos
 runtimes de referencia. La UI Create/Studio/Ops fue ejecutada en Edge y tiene
 un probe automatizado de reflow, nombres, targets y navegación por teclado.
 
 Como deltas posteriores al request inicial: E08 soporta reinicio, integridad,
 deprecación, rollback y concurrencia durable; E01 tiene validación estructural
 de receipt; y existe un preflight de provider que sólo acepta handles no
-secretos y conserva `NOT_ACCEPTED`. Ninguno es una validación de provider real,
+secretos y conserva `NOT_ACCEPTED`. El sandbox candidato rechaza `remote_io`
+incluso ante una policy permisiva. Ninguno es una validación de provider real,
 un objeto upstream autorizado ni una decisión MAR. Slack y Notion no aportaron
 una promoción vigente; el último intento formal Wolfram de este ciclo falló
 internamente y se clasifica `INSUFFICIENT EVIDENCE`.

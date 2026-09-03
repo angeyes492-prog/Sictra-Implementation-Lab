@@ -57,8 +57,8 @@ E08 conserva lineage, hash, estado y deprecación.
 
 Validación actual: 180 pruebas Block 2, 468 pruebas workspace, compileall y CLI
 E01–E08. El workspace reconciliado con `main` está ligado a GitHub por PR #11;
-el SHA `cd7c144ba3db2943fe7294a866b5a4e3fd94e16a` concluyó CI hospedado con
-`success` (run `33707108439`). Los runs históricos permanecen como evidencia de
+el SHA `0efb469239812177b53b19a6205bb20b13f87bd1` concluyó CI hospedado con
+`success` (run `33711539343`). Los runs históricos permanecen como evidencia de
 sus SHA, no sustitutos del head actual. Cobertura adversarial: rights, imitación, lineage, copy no aprobado,
 markup, publicación/red, criterios faltantes, self-review, thresholds,
 same-generation, colisión, idempotencia y detención temprana.
