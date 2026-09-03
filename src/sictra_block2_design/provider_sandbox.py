@@ -30,7 +30,9 @@ class SandboxPolicy:
     max_output_bytes: int
     allowed_adapters: tuple[str, ...]
     rights_hash: str
-    allow_remote_io: bool = True
+    # This declaration is retained for a future MAR-approved adapter contract;
+    # it is not execution authority in the candidate sandbox.
+    allow_remote_io: bool = False
 
     def __post_init__(self) -> None:
         if not self.policy_id.strip() or not self.contract_version.startswith("0.1."):
@@ -133,8 +135,11 @@ class GovernedProviderSandbox:
             failures.append("PROVIDER_MANIFEST_UNHEALTHY")
         if not self.manifest.rights_current:
             failures.append("PROVIDER_RIGHTS_NOT_CURRENT")
-        if self.manifest.remote_io and not self.policy.allow_remote_io:
-            failures.append("REMOTE_IO_POLICY_FORBIDDEN")
+        # v0.1 has only injected local fixtures.  A permissive field on a
+        # caller-supplied policy cannot turn this candidate implementation into
+        # a real provider integration.
+        if self.manifest.remote_io:
+            failures.append("REMOTE_IO_RETURN_UPSTREAM")
         if spec.adapter not in self.policy.allowed_adapters:
             failures.append("ADAPTER_NOT_ALLOWLISTED")
         if self.manifest.adapter != spec.adapter:

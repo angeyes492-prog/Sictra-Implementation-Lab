@@ -31,7 +31,7 @@ class FakeAdapter:
 def manifest(**changes):
     value = ProviderManifest(
         "MANIFEST-SANDBOX-0.1.0", "INJECTED_PROVIDER_FIXTURE", "HTML_EMAIL",
-        "0.1.0", True, True, True,
+        "0.1.0", True, True, False,
     )
     return replace(value, **changes)
 
@@ -39,7 +39,7 @@ def manifest(**changes):
 def policy(**changes):
     value = SandboxPolicy(
         "POLICY-SANDBOX-001", "0.1.0", 10, 1000, 500_000,
-        ("HTML_EMAIL",), "rights-current-001", True,
+        ("HTML_EMAIL",), "rights-current-001", False,
     )
     return replace(value, **changes)
 
@@ -106,11 +106,14 @@ class ProviderSandboxTests(unittest.TestCase):
                 self.assertIn(reason, result.stages[-1].reasons)
                 self.assertEqual("QUARANTINED", result.gateway_receipt.outcome)
 
-    def test_remote_io_policy_and_manifest_substitution_fail_before_adapter(self):
+    def test_remote_io_returns_upstream_even_under_permissive_policy(self):
         adapter = FakeAdapter()
-        forbidden = sandbox(adapter, sandbox_policy=policy(allow_remote_io=False))
+        forbidden = sandbox(
+            adapter, provider_manifest=manifest(remote_io=True),
+            sandbox_policy=policy(allow_remote_io=True),
+        )
         result = execute_block2(complete_run_input(), now=NOW, model_gateway=forbidden)
-        self.assertIn("REMOTE_IO_POLICY_FORBIDDEN", result.stages[-1].reasons)
+        self.assertIn("REMOTE_IO_RETURN_UPSTREAM", result.stages[-1].reasons)
         self.assertEqual(0, adapter.calls)
 
     def test_provider_exception_is_typed_and_quarantined(self):

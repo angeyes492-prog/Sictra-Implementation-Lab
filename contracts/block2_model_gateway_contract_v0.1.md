@@ -49,5 +49,9 @@ contenido/tipo/hash divergente, excepción, sustitución o rights stale producen
 receipt tipado y cuarentena sin candidato. El receipt registra latency, cost,
 budget, timeout, cancel state y hashes policy/rights.
 
-Las pruebas usan providers inyectados locales; no demuestran credenciales,
-rate limits ni comportamiento contractual de una API comercial real.
+La realización candidata v0.1 rechaza cualquier manifest con `remote_io=true`
+antes de invocar el adapter, aun si una policy declara `allow_remote_io=true`.
+Ese campo sólo reserva la forma de un contrato futuro: no es una capability ni
+autoridad de ejecución. Las pruebas usan providers inyectados locales; no
+demuestran credenciales, rate limits ni comportamiento contractual de una API
+comercial real.
