@@ -1,6 +1,6 @@
 # Master Architecture Review Request — Block 2 Design Intelligence OS
 
-> Fecha: `2026-08-30` · Estado: `OPEN / NO PROMOTION`
+> Fecha de actualización: `2026-09-02` · Estado: `OPEN / NO PROMOTION`
 
 ## Cambio solicitado
 
@@ -20,20 +20,35 @@ architecture del Bloque 2, conservando E01–E08 v0.4.
 8. Aprobar o rechazar la separación `GENERATIVE_MEDIA`,
    `DETERMINISTIC_RENDER` y `DESIGN_PLATFORM` propuesta en
    `block2_provider_lane_architecture_v0.1.md`; elegir providers y secret owner.
+9. Decidir si el recibo E01 y el preflight de provider candidato son
+   instrumentación suficiente para pasar a un trial autorizado. La respuesta
+   no puede inferirse de sus tests: ambos siguen fail-closed/no operativos.
 
 ## Evidencia disponible
 
-Runtime E01–E08 local v0.4, 161 pruebas Block 2 y 449 pruebas workspace,
-contratos v0.1, reconciliación Slack/Notion/GitHub/Rovo y modelos formales
-Wolfram. La rama reconciliada con `main` tiene SHA
-`6c3adb15484af34e654b650f8b1b2a71010af79e`; GitHub Actions run
-`33464431457` concluyó `success`. La UI Create/Studio/Ops fue ejecutada en Edge
-y tiene un probe automatizado de reflow, nombres, targets y navegación. Siguen
-pendientes un provider API real, NVDA/VoiceOver y la decisión humana de este
-MAR; ninguno se infiere del CI.
+Runtime E01–E08 local v0.4, contratos candidatos v0.1 y 466/466 pruebas
+workspace en un solo proceso. La rama de PR #11 tiene SHA
+`23e4f59d4a4bbfeec8f6c36dd0c06fe3785866ed`; GitHub Actions run
+`33700527287` concluyó `success` para tests, compilación, consola y ambos
+runtimes de referencia. La UI Create/Studio/Ops fue ejecutada en Edge y tiene
+un probe automatizado de reflow, nombres, targets y navegación por teclado.
+
+Como deltas posteriores al request inicial: E08 soporta reinicio, integridad,
+deprecación, rollback y concurrencia durable; E01 tiene validación estructural
+de receipt; y existe un preflight de provider que sólo acepta handles no
+secretos y conserva `NOT_ACCEPTED`. Ninguno es una validación de provider real,
+un objeto upstream autorizado ni una decisión MAR. Slack y Notion no aportaron
+una promoción vigente; el último intento formal Wolfram de este ciclo falló
+internamente y se clasifica `INSUFFICIENT EVIDENCE`.
+
+Siguen pendientes un provider API real gobernado, revisión NVDA/VoiceOver,
+fixture E01 autorizado con observador independiente y la decisión humana de
+este MAR; ninguno se infiere del CI.
 
 ## Recomendación
 
-Aprobar sólo Slice 1 como candidate implementation boundary. Mantener adapters
-reales, infraestructura distribuida, publicación y aceptación bloqueados hasta
-sus revisiones separadas.
+Aprobar sólo el boundary de implementación candidata si las decisiones 1–9 se
+resuelven expresamente. Mantener adapters reales, infraestructura distribuida,
+publicación y aceptación bloqueados hasta sus revisiones separadas. Un rechazo
+debe identificar el contrato afectado y preservar la evidencia actual como
+histórica, sin reescribir sus estados.
