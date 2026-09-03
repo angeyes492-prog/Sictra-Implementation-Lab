@@ -55,10 +55,10 @@ Cada stage registra motor, disposición y reasons. E06 registra media types y
 hashes SHA-256. E07 conserva criterio, score, severidad, método y evidencia.
 E08 conserva lineage, hash, estado y deprecación.
 
-Validación actual: 178 pruebas Block 2, 466 pruebas workspace, compileall y CLI
+Validación actual: 180 pruebas Block 2, 468 pruebas workspace, compileall y CLI
 E01–E08. El workspace reconciliado con `main` está ligado a GitHub por PR #11;
-el SHA `0b61e8481f02ba93219be23fea9790e45897ef62` concluyó CI hospedado con
-`success` (run `33700724827`). Los runs históricos permanecen como evidencia de
+el SHA `cd7c144ba3db2943fe7294a866b5a4e3fd94e16a` concluyó CI hospedado con
+`success` (run `33707108439`). Los runs históricos permanecen como evidencia de
 sus SHA, no sustitutos del head actual. Cobertura adversarial: rights, imitación, lineage, copy no aprobado,
 markup, publicación/red, criterios faltantes, self-review, thresholds,
 same-generation, colisión, idempotencia y detención temprana.

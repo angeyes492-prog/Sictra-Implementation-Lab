@@ -14,7 +14,7 @@
 ### Preflight de provider candidato
 
 `ProviderTrialReadinessRecord` formaliza el paquete declarativo mínimo de un
-trial futuro: lane, snapshot, handle no secreto, estado de credencial, términos,
+trial futuro: lane, snapshot, handle `vault://` no secreto, estado de credencial, términos,
 política de datos, derechos, presupuesto, autoridad y referencia MAR. Las lanes
 `GENERATIVE_MEDIA` y `DESIGN_PLATFORM` exigen scopes distintos. Una declaración
 completa produce únicamente `PRECONDITIONS_DECLARED`, con
@@ -44,11 +44,12 @@ La semántica probada sigue siendo la misma: dos escritores exactos producen un
 
 | Vector | Resultado | Alcance |
 |---|---:|---|
-| `python -m unittest tests.test_block2_provider_trial_preflight -v` | 4/4 PASS | declaración completa no operativa, expiry/credencial, scope por lane, rechazo de secreto |
+| `python -m unittest tests.test_block2_provider_trial_preflight -v` | 6/6 PASS | declaración no operativa, expiry/credencial, scope por lane, esquema `vault://`, rechazo de secreto y guard AST sin transporte |
 | `python -m unittest tests.test_block2_creative_memory_durability -v` | 8/8 PASS | reinicio, append-only, tamper, rollback y dos escritores concurrentes |
-| `python -m unittest discover -s tests -q` | 466/466 PASS en 30.726 s | regresión workspace en un único proceso |
+| `python -m unittest discover -s tests -q` | 468/468 PASS en 45.987 s | regresión workspace en un único proceso |
 | `python -m compileall -q src tests` | PASS | sintaxis de fuentes y pruebas |
 | GitHub Actions `33700400122` | `success` sobre `0a48487eaeee04cdc797e88dd8a16d6cee830296` | regresión, compilación, validación JavaScript y runtimes de referencia |
+| GitHub Actions `33707108439` | `success` sobre `cd7c144ba3db2943fe7294a866b5a4e3fd94e16a` | hardening de `vault://`, patrones de secreto y boundary AST, más regresión completa |
 
 El run hosted está ligado al SHA de implementación indicado. El commit de
 evidencia posterior no altera código de runtime; aun así, la PR requiere una
@@ -56,9 +57,11 @@ ejecución propia antes de declarar su head verificado.
 
 ## Red-team, fuentes y riesgos
 
-- El vector de secreto usa un prefijo `sk-`; la API no acepta el valor en el
-  registro. Esto no valida un vault real ni detecta todas las formas posibles
-  de secreto: el boundary de provider deberá hacer verificación independiente.
+- Los vectores de secreto cubren `sk-`, `Bearer`, `token=` y `x-api-key=`; el
+  registro exige además el esquema `vault://`. El guard AST rechaza imports de
+  transporte/SDK. Esto no valida un vault real ni detecta todas las formas
+  posibles de secreto: el boundary de provider deberá verificarlo de forma
+  independiente.
 - La concurrencia se probó con dos conexiones locales y SQLite/WAL. No demuestra
   seguridad distribuida, lock manager externo ni rendimiento bajo carga.
 - La consulta de Slack y Notion del 2026-09-02 no aportó una promoción MAR ni

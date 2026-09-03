@@ -26,10 +26,10 @@ architecture del Bloque 2, conservando E01–E08 v0.4.
 
 ## Evidencia disponible
 
-Runtime E01–E08 local v0.4, contratos candidatos v0.1 y 466/466 pruebas
+Runtime E01–E08 local v0.4, contratos candidatos v0.1 y 468/468 pruebas
 workspace en un solo proceso. La rama de PR #11 tiene SHA
-`23e4f59d4a4bbfeec8f6c36dd0c06fe3785866ed`; GitHub Actions run
-`33700527287` concluyó `success` para tests, compilación, consola y ambos
+`cd7c144ba3db2943fe7294a866b5a4e3fd94e16a`; GitHub Actions run
+`33707108439` concluyó `success` para tests, compilación, consola y ambos
 runtimes de referencia. La UI Create/Studio/Ops fue ejecutada en Edge y tiene
 un probe automatizado de reflow, nombres, targets y navegación por teclado.
 
