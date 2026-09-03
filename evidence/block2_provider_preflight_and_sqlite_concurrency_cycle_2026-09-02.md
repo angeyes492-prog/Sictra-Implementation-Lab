@@ -48,6 +48,11 @@ La semántica probada sigue siendo la misma: dos escritores exactos producen un
 | `python -m unittest tests.test_block2_creative_memory_durability -v` | 8/8 PASS | reinicio, append-only, tamper, rollback y dos escritores concurrentes |
 | `python -m unittest discover -s tests -q` | 466/466 PASS en 30.726 s | regresión workspace en un único proceso |
 | `python -m compileall -q src tests` | PASS | sintaxis de fuentes y pruebas |
+| GitHub Actions `33700400122` | `success` sobre `0a48487eaeee04cdc797e88dd8a16d6cee830296` | regresión, compilación, validación JavaScript y runtimes de referencia |
+
+El run hosted está ligado al SHA de implementación indicado. El commit de
+evidencia posterior no altera código de runtime; aun así, la PR requiere una
+ejecución propia antes de declarar su head verificado.
 
 ## Red-team, fuentes y riesgos
 
