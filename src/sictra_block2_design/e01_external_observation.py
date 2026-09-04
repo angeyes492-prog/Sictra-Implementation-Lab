@@ -148,7 +148,9 @@ def assess_external_observation(
         failures.append("FIXTURE_ID_MISMATCH")
     if receipt.fixture_hash != fixture_fingerprint(fixture):
         failures.append("FIXTURE_HASH_MISMATCH")
-    if receipt.reviewer_id == receipt.fixture_author_id:
+    if receipt.fixture_author_id != fixture.fixture_author_id:
+        failures.append("FIXTURE_AUTHOR_MISMATCH")
+    if receipt.reviewer_id == fixture.fixture_author_id:
         failures.append("REVIEWER_IS_FIXTURE_AUTHOR")
     if not receipt.reviewer_external_to_fixture:
         failures.append("REVIEWER_NOT_EXTERNAL")

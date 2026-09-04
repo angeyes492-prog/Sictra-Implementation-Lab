@@ -60,3 +60,18 @@ Conclusión: no existe un objeto upstream autorizado, observador independiente n
 decisión MAR que pueda alimentar el recibo. El caso E01 real queda
 `RETURN_UPSTREAM`; el fixture y el validador locales no se promueven por la
 ausencia de resultados ni por CI verde.
+
+## Red-team de identidad del autor — 2026-09-03
+
+Se detectó y reparó una debilidad local: `fixture_author_id` vivía sólo en el
+recibo, lo que permitía declarar un autor distinto para ocultar una
+autorrevisión. La identidad ahora pertenece al `Fixture`, forma parte de su
+fingerprint y el recibo debe repetirla exactamente. Autor ausente retorna
+`RETURN_UPSTREAM / FIXTURE_AUTHOR_ID_MISSING`; discrepancia de autor invalida
+el ensayo con `FIXTURE_AUTHOR_MISMATCH`; el reviewer se compara contra la
+identidad del fixture, no contra una declaración autocontenida del recibo.
+
+Los vectores de preflight, entrypoint, oracle independiente y recibo (26/26)
+pasaron localmente, junto con 472/472 pruebas del workspace. Esto cierra la
+sustitución estructural, no acredita la identidad de una persona, una firma
+externa ni una observación real.

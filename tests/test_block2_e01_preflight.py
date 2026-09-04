@@ -42,7 +42,7 @@ def fixture(**changes):
         fixture_id="FIXTURE-001", upstream=upstream, task=task,
         candidate_a=candidate_a, candidate_b=candidate_b,
         intended_manipulation="visual mechanism", observer=observer,
-        confounders=(Confounder("mechanism", "MANIPULATED", True),),
+        confounders=(Confounder("mechanism", "MANIPULATED", True),), fixture_author_id="FIXTURE-AUTHOR",
     )
     return Fixture(**{name: changes.get(name, getattr(value, name)) for name in value.__dataclass_fields__})
 
@@ -53,6 +53,11 @@ class E01PreflightTests(unittest.TestCase):
         self.assertEqual(result.disposition, "READY_FOR_OBSERVATION")
         self.assertTrue(result.ready_for_observation)
         self.assertEqual(result.reasons, ())
+
+    def test_missing_fixture_author_returns_upstream(self):
+        result = assess_fixture(fixture(fixture_author_id=""))
+        self.assertEqual("RETURN_UPSTREAM", result.disposition)
+        self.assertEqual(("FIXTURE_AUTHOR_ID_MISSING",), result.reasons)
 
     def test_missing_upstream_authority_returns_upstream(self):
         upstream = fixture().upstream

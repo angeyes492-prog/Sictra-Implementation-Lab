@@ -38,6 +38,7 @@ def draft(**changes):
         intended_manipulation="visual mechanism",
         observer=ObserverProfile("observer-001", True, True, False, "COUNTERBALANCED"),
         confounders=(Confounder("mechanism", "MANIPULATED", True),),
+        fixture_author_id="FIXTURE-AUTHOR",
     )
     return TrialDraft(**{
         field: changes.get(field, getattr(value, field))
@@ -80,6 +81,12 @@ class E01EntrypointTests(unittest.TestCase):
         self.assertEqual("NORMALIZED", result.upstream.disposition)
         self.assertEqual("INVALID_TRIAL", result.preflight.disposition)
         self.assertEqual(("TASK_LEAKAGE",), result.preflight.reasons)
+
+    def test_missing_fixture_author_returns_upstream_after_normalization(self):
+        result = assess_trial(upstream(), draft(fixture_author_id=""))
+        self.assertEqual("NORMALIZED", result.upstream.disposition)
+        self.assertEqual("RETURN_UPSTREAM", result.preflight.disposition)
+        self.assertEqual(("FIXTURE_AUTHOR_ID_MISSING",), result.preflight.reasons)
 
 
 if __name__ == "__main__":

@@ -12,8 +12,8 @@
 1. The raw upstream record is normalized first.
 2. If normalization returns `RETURN_UPSTREAM`, no `Fixture` is constructed.
 3. The same `RETURN_UPSTREAM` reasons and task claim quarantine are returned.
-4. Only a normalized current record may enter fixture equivalence, leakage,
-   observer, confounder, and composition checks.
+4. Only a normalized current record may enter fixture author identity,
+   equivalence, leakage, observer, confounder, and composition checks.
 
 This makes upstream insufficiency precede downstream trial invalidity. A
 leaking task paired with missing evidence still returns upstream first; the
@@ -25,7 +25,8 @@ source owner must repair the handoff before an E01 trial can be assessed.
 - **Output:** `EntrypointAssessment` containing both normalization and
   preflight results.
 - **Recovery:** repair/version the upstream record at its owner, then submit a
-  fresh request. Do not reuse a rejected normalized payload.
+  fresh request. If the fixture author is absent, identify and bind that author
+  before preflight. Do not reuse a rejected normalized payload.
 
 ## Validation vectors
 

@@ -16,8 +16,10 @@ siempre lleva `NOT_PROMOTED / NOT_ACCEPTED`.
    exacto; sustitución de candidatos, tarea o confounders es `INVALID_TRIAL`.
 2. El objeto upstream y la autoridad deben coincidir; temporalidad distinta de
    `CURRENT` es `RETURN_UPSTREAM`.
-3. El reviewer no puede ser el autor del fixture, debe ser externo, tener
-   independencia revisada y aportar evidencia atribuible.
+3. La identidad del autor vive dentro del fixture y está cubierta por el hash;
+   el recibo debe repetirla exactamente. El reviewer no puede ser ese autor,
+   debe ser externo, tener independencia revisada y aportar evidencia
+   atribuible. Una sustitución de autor invalida el ensayo.
 4. Fuga material, exposición de tesis antes de la respuesta o confounder
    material hacen el ensayo `INVALID_TRIAL`.
 5. Un preflight `RETURN_UPSTREAM` domina la recepción; un preflight no listo

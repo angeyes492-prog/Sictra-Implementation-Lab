@@ -70,6 +70,7 @@ def reference_run_input(
         Candidate("A", "aligned-position", **common), Candidate("B", "grouped-table", **common),
         "visual mechanism", ObserverProfile("OBSERVER-DEMO", True, True, False, "COUNTERBALANCED"),
         (Confounder("mechanism", "MANIPULATED", True),),
+        fixture_author_id="FIXTURE-AUTHOR-DEMO",
     )
     envelope = E02Envelope(
         "MESSAGE-DEMO" if design_context is None else design_context.message_id,

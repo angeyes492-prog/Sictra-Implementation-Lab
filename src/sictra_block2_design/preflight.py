@@ -177,9 +177,14 @@ class Fixture:
     observer: ObserverProfile
     confounders: tuple[Confounder, ...]
     composition: ClaimComposition = ClaimComposition()
+    # Bound to the fixture fingerprint so a later observation receipt cannot
+    # self-declare a different author to evade the independent-review rule.
+    fixture_author_id: str = ""
 
     def __post_init__(self) -> None:
         _required(fixture_id=self.fixture_id, intended_manipulation=self.intended_manipulation)
+        if not isinstance(self.fixture_author_id, str):
+            raise E01PreflightViolation("fixture_author_id must be a string")
         if self.candidate_a.candidate_id == self.candidate_b.candidate_id:
             raise E01PreflightViolation("candidate identities must be distinct")
         if self.candidate_a.mechanism == self.candidate_b.mechanism:
@@ -226,6 +231,11 @@ def assess_fixture(fixture: Fixture) -> PreflightAssessment:
     )
     if upstream_missing:
         return PreflightAssessment("RETURN_UPSTREAM", upstream_missing, (fixture.task.claim_id,))
+
+    if not fixture.fixture_author_id.strip():
+        return PreflightAssessment(
+            "RETURN_UPSTREAM", ("FIXTURE_AUTHOR_ID_MISSING",), (fixture.task.claim_id,)
+        )
 
     failures: list[str] = []
     if not fixture.task.leakage_clear:

@@ -25,6 +25,7 @@ def draft(**changes):
         "FIXTURE-001", task, Candidate("A", "position", **common), Candidate("B", "table", **common),
         "visual mechanism", ObserverProfile("observer-001", True, True, False, "COUNTERBALANCED"),
         (Confounder("mechanism", "MANIPULATED", True),),
+        fixture_author_id="FIXTURE-AUTHOR",
     )
     return TrialDraft(**{field: changes.get(field, getattr(value, field)) for field in value.__dataclass_fields__})
 
@@ -56,6 +57,9 @@ class E01EntrypointOracleTests(unittest.TestCase):
 
     def test_claim_composition_boundary_matches_declarative_oracle(self):
         self.assert_matches_oracle(upstream(), draft(composition=ClaimComposition(("A", "B"), False)))
+
+    def test_missing_fixture_author_matches_declarative_oracle(self):
+        self.assert_matches_oracle(upstream(), draft(fixture_author_id=""))
 
 
 if __name__ == "__main__":

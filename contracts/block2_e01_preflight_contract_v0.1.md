@@ -20,11 +20,14 @@ resultado de diseño ni promoción de memoria.
 - Dos candidatos con igualdad en contenido, tarea, etiquetas, escala,
   incertidumbre, anotación, contexto, atención y carga de implementación.
 - Perfil de observador con independencia revisada y control de orden.
+- Identidad no vacía del autor del fixture, fijada dentro del fixture antes del
+  preflight y, por tanto, cubierta por su fingerprint.
 - Registro de confounders y composición de claims, si existe.
 
 ## Invariantes y rechazo
 
-- Entrada upstream incompleta: `RETURN_UPSTREAM`.
+- Entrada upstream incompleta o identidad de autor del fixture ausente:
+  `RETURN_UPSTREAM`.
 - Fuga, desigualdad semántica, observador contaminado, orden no controlado o
   confounder material: `INVALID_TRIAL`.
 - Combinación de claims sin prueba de interacción: `UNSUPPORTED_COMBINATION`.

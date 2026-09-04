@@ -62,6 +62,11 @@ def expected_entrypoint(upstream: UpstreamRecord, draft: TrialDraft) -> Expected
             "RETURN_UPSTREAM", "RETURN_UPSTREAM", tuple(upstream_reasons), (draft.task.claim_id,)
         )
 
+    if not isinstance(draft.fixture_author_id, str) or not draft.fixture_author_id.strip():
+        return ExpectedEntrypoint(
+            "NORMALIZED", "RETURN_UPSTREAM", ("FIXTURE_AUTHOR_ID_MISSING",), (draft.task.claim_id,)
+        )
+
     failures: list[str] = []
     if not draft.task.leakage_clear:
         failures.append("TASK_LEAKAGE")

@@ -35,6 +35,7 @@ class TrialDraft:
     observer: ObserverProfile
     confounders: tuple[Confounder, ...]
     composition: ClaimComposition = ClaimComposition()
+    fixture_author_id: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,5 +77,6 @@ def assess_trial(upstream: UpstreamRecord, draft: TrialDraft) -> EntrypointAsses
         observer=draft.observer,
         confounders=draft.confounders,
         composition=draft.composition,
+        fixture_author_id=draft.fixture_author_id,
     )
     return EntrypointAssessment(upstream=normalized, preflight=assess_fixture(fixture))
