@@ -126,6 +126,9 @@ async function main() {
     result.namelessFocusStops = result.keyboardTrail.filter(
       (item) => !item.name && !item.disabled && item.tag !== "MAIN"
     );
+    result.lineageFocusStop = result.keyboardTrail.find(
+      (item) => item.tag === "OL" && item.key.includes("lineage-ribbon")
+    ) || null;
     console.log(JSON.stringify(result, null, 2));
     if (
       result.reflow.overflow !== 0 ||
@@ -133,6 +136,8 @@ async function main() {
       result.undersizedControls.length ||
       result.hiddenFocusStops.length ||
       result.namelessFocusStops.length ||
+      !result.lineageFocusStop ||
+      result.lineageFocusStop.name !== "Progreso de los motores de diseño" ||
       result.skipTarget !== "studio" ||
       !result.createVisible ||
       !result.opsVisible

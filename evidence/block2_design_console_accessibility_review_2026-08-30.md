@@ -69,3 +69,17 @@ Esto es `VERIFIED / A` sólo como recorrido browser automatizado de la fixture
 sintética. El protocolo humano sigue en
 `architecture/block2_assistive_review_protocol_v0.1.md`; no se promueve WCAG
 AA, review asistiva ni aceptación.
+
+## Scrollable lineage name delta — 2026-09-03
+
+El recorrido de teclado a 640px reveló que Chromium expone `#lineage-ribbon`
+como una parada de foco cuando la banda horizontal necesita desplazamiento. No
+es un `tabindex` artificial: conservarlo permite acceder al scroll localizado
+por teclado. Se añadió el nombre explícito `Progreso de los motores de diseño`
+al `<ol>` y el probe ahora falla si esa parada desaparece o queda sin ese
+nombre. La prueba de markup y el probe Edge pasaron, junto con 13/13 pruebas
+de consola y 468/468 pruebas del workspace.
+
+Resultado: `VERIFIED / A` para esta corrección automatizada sobre la fixture
+sintética local. Sigue siendo insuficiente para un claim WCAG AA, una revisión
+NVDA/VoiceOver o aceptación humana.

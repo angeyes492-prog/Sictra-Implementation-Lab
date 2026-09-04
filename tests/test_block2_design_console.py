@@ -196,6 +196,11 @@ class DesignConsoleTests(unittest.TestCase):
         self.assertTrue(any(attrs.get("href") == "#studio" for tag, attrs in parser.attributes if tag == "a"))
         self.assertTrue(any(attrs.get("role") == "alert" for _, attrs in parser.attributes))
         self.assertTrue(any(attrs.get("aria-live") == "polite" for _, attrs in parser.attributes))
+        self.assertTrue(any(
+            attrs.get("id") == "lineage-ribbon"
+            and attrs.get("aria-label") == "Progreso de los motores de diseño"
+            for _, attrs in parser.attributes
+        ))
         self.assertFalse(any(tag == "style" for tag in parser.tags))
         scripts = [attrs for tag, attrs in parser.attributes if tag == "script"]
         self.assertTrue(scripts and all(attrs.get("src") for attrs in scripts))
