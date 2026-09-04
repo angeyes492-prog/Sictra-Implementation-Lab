@@ -91,6 +91,14 @@ async function main() {
     const createVisible = await page.locator("#create-view").isVisible();
     const createControls = await visibleControls(page, "create");
     const createTrail = await keyboardTrail(page, "create");
+    await page.locator('input[name="object_id"]').fill("");
+    await page.getByRole("button", { name: "Compilar handoff" }).click();
+    await page.locator("#handoff-announcement").waitFor({ state: "attached" });
+    await page.waitForFunction(
+      () => document.querySelector("#handoff-announcement").textContent.startsWith("Handoff devuelto al origen.")
+    );
+    const handoffAnnouncement = await page.locator("#handoff-announcement").innerText();
+    const handoffDetail = await page.locator("#handoff-seal").innerText();
     await page.getByRole("button", { name: /Ops/ }).click();
     const opsVisible = await page.locator("#ops-view").isVisible();
     const opsControls = await visibleControls(page, "ops");
@@ -118,6 +126,8 @@ async function main() {
       firstFocus,
       skipTarget,
       createVisible,
+      handoffAnnouncement,
+      handoffDetail,
       opsVisible,
       reducedMotionDuration,
       keyboardTrail: [...studioTrail, ...createTrail, ...opsTrail],
@@ -140,6 +150,8 @@ async function main() {
       result.lineageFocusStop.name !== "Progreso de los motores de diseño" ||
       result.skipTarget !== "studio" ||
       !result.createVisible ||
+      result.handoffAnnouncement !== "Handoff devuelto al origen. Faltan 1 datos o validaciones." ||
+      !result.handoffDetail.includes("OBJECT_ID_MISSING") ||
       !result.opsVisible
     ) {
       process.exitCode = 1;

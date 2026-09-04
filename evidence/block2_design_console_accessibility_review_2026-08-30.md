@@ -43,6 +43,26 @@ zoom testing remain required before an AA claim.
 1. NVDA and VoiceOver reading order, live announcements and disabled modes.
 2. Text-only resize in a manually controlled browser session.
 3. Windows High Contrast visual inspection with a human operator.
+
+## Hallazgo NVDA y reparación de anuncio — 2026-09-03
+
+**Hecho reportado:** durante una revisión manual en NVDA, el usuario indicó que
+el resultado de `RETURN_UPSTREAM` de Create decía demasiadas frases y no se
+podía seguir. Clasificación: `PROBABLE / B` para el problema de usabilidad
+asistiva; no es un recibo de revisión humana completo ni una aceptación.
+
+**Reparación local:** `#handoff-seal` conserva el diagnóstico visible completo,
+incluida la lista de razones. Un nuevo `#handoff-announcement` oculto
+visualmente, atómico y con `role=status` anuncia únicamente una frase breve:
+`Handoff devuelto al origen. Faltan N datos o validaciones.` El detalle ya no
+es una región viva. Se añadieron una prueba estructural y una comprobación Edge
+que envía un Create con `object_id` vacío y exige el anuncio breve junto con el
+detalle visible `OBJECT_ID_MISSING`.
+
+**Límite y siguiente paso:** la sonda automatizada verifica el contrato DOM y
+el flujo local; no demuestra qué NVDA pronuncia. Hace falta que una persona
+repita ese único flujo con NVDA y registre el resultado en un recibo asistivo
+válido antes de cualquier promoción.
 4. Cognitive review of technical labels with representative designers.
 
 ## Executable probe delta — 2026-08-31

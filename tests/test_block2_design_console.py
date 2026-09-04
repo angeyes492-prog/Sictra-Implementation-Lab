@@ -231,10 +231,13 @@ class DesignConsoleTests(unittest.TestCase):
         root = Path(__file__).parents[1] / "src" / "sictra_block2_design" / "design_console"
         html = (root / "index.html").read_text(encoding="utf-8")
         create_css = (root / "create.css").read_text(encoding="utf-8")
+        app_js = (root / "app.js").read_text(encoding="utf-8")
         self.assertIn('data-view="create"', html)
         self.assertEqual(3, html.count("<fieldset>"))
         self.assertIn('id="handoff-seal"', html)
-        self.assertIn('aria-live="polite"', html)
+        self.assertIn('id="handoff-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"', html)
+        self.assertNotIn('id="handoff-seal" class="handoff-seal" role="status"', html)
+        self.assertIn("Handoff devuelto al origen. Faltan ${result.reasons.length} datos o validaciones.", app_js)
         self.assertIn(".handoff-seal.return", create_css)
         self.assertNotIn('name="object_id" required', html)
 
