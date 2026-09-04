@@ -51,6 +51,11 @@ no equivale a conformidad WCAG total, aceptación humana general ni promoción d
 gate. Un hallazgo crítico o mayor deja la fila accesibilidad en `YELLOW` o
 `RED` hasta reparación, retest y revisión independiente.
 
+`contracts/block2_assistive_review_receipt_contract_v0.1.md` y
+`assistive_review.py` validan localmente el binding del recibo a SHA, fixture,
+URL loopback y hash del probe. Esa validación no sustituye ni valida la
+experiencia de la persona revisora.
+
 ## Dependencias y recuperación
 
 La ejecución requiere una persona con NVDA o VoiceOver y autoridad para

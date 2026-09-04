@@ -88,3 +88,18 @@ La CI alojada `SICTrA bounded runtime validation` ejecutó correctamente sobre
 el SHA de runtime `f6e841dd0b48178338f75db258254cb32b4304e7` (run
 `33825990909`, 2026-09-03). Esta corroboración reproduce la regresión en CI,
 pero no amplía el límite de validación asistiva indicado arriba.
+
+## Receipt boundary delta — 2026-09-03
+
+Se implementó el contrato candidato
+`block2_assistive_review_receipt_contract_v0.1.md`. El recibo humano queda
+ligado a SHA, fixture, URL loopback y hash del browser probe; exige tecnología
+NVDA/VoiceOver y su versión, SO, navegador, zoom, contraste, paso observado,
+evidencia y limitaciones. Sustitución de target o revisión anterior al target
+retorna upstream; inconsistencias de autoridad/severidad invalidan el recibo.
+
+Cinco vectores ejecutables cubren el camino íntegro, sustitución, temporalidad,
+autoridad, severidad, retorno upstream y forma maliciosa. La regresión completa
+local pasó 477/477. El resultado grabado se mantiene explícitamente en
+`NOT_PROMOTED / NOT_ACCEPTED`: esta frontera prepara la evidencia humana, no la
+simula.

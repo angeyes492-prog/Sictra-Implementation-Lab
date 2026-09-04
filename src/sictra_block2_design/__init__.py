@@ -59,6 +59,10 @@ from .e01_external_observation import (
     ExternalObservationReceipt, ExternalObservationAssessment,
     assess_external_observation, fixture_fingerprint,
 )
+from .assistive_review import (
+    AssistiveReviewAssessment, AssistiveReviewReceipt, AssistiveReviewTarget,
+    AssistiveReviewViolation, assess_assistive_review,
+)
 from .provider_trial_preflight import (
     ProviderTrialReadinessRecord, ProviderTrialPreflightAssessment,
     assess_provider_trial_readiness,
@@ -138,6 +142,11 @@ __all__ = [
     "ExternalObservationAssessment",
     "assess_external_observation",
     "fixture_fingerprint",
+    "AssistiveReviewAssessment",
+    "AssistiveReviewReceipt",
+    "AssistiveReviewTarget",
+    "AssistiveReviewViolation",
+    "assess_assistive_review",
     "ProviderTrialReadinessRecord",
     "ProviderTrialPreflightAssessment",
     "assess_provider_trial_readiness",
