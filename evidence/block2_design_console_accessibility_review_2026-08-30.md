@@ -43,6 +43,7 @@ zoom testing remain required before an AA claim.
 1. NVDA and VoiceOver reading order, live announcements and disabled modes.
 2. Text-only resize in a manually controlled browser session.
 3. Windows High Contrast visual inspection with a human operator.
+4. Cognitive review of technical labels with representative designers.
 
 ## Hallazgo NVDA y reparación de anuncio — 2026-09-03
 
@@ -63,7 +64,19 @@ detalle visible `OBJECT_ID_MISSING`.
 el flujo local; no demuestra qué NVDA pronuncia. Hace falta que una persona
 repita ese único flujo con NVDA y registre el resultado en un recibo asistivo
 válido antes de cualquier promoción.
-4. Cognitive review of technical labels with representative designers.
+
+## Retesteo NVDA informado por el usuario — 2026-09-03
+
+Tras aplicar la reparación, el usuario repitió el flujo: vaciar `OBJECT ID` y
+compilar el handoff. Reportó que NVDA anunció: “handoff devuelto a origen,
+faltan datos”. Esto confirma la comprensión del resumen breve y la ausencia de
+la lista extensa en el anuncio automático.
+
+Clasificación: `VERIFIED / C` únicamente para esta observación verbal acotada
+del usuario. No contiene versión de tecnología, sistema operativo, zoom,
+contraste, identidad/autoridad de revisor ni evidencia de cada paso; por ello
+no es un `AssistiveReviewReceipt` válido, no satisface VoiceOver ni promueve el
+estado `YELLOW` de accesibilidad.
 
 ## Executable probe delta — 2026-08-31
 
