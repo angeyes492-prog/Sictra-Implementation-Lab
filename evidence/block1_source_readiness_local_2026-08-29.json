@@ -1,0 +1,25 @@
+{
+  "artifact": "Block 1 Source Readiness CLI v0.1 local validation",
+  "executed_on": "2026-08-29",
+  "environment": {"python": "3.12.10", "workspace_git_identity": "NO_COMMIT_ON_MASTER"},
+  "commands": [
+    {"command": "python -m compileall -q src", "result": "PASS"},
+    {"command": "python -m unittest tests.test_block1_source_readiness_cli -v", "result": "PASS", "tests_run": 2, "failures": 0, "errors": 0},
+    {"command": "python -m sictra_block1 --source-readiness --region AMERICAS --domain TRADE", "result": "PASS", "assertion": "six proposed candidates; zero admissible sources"},
+    {"command": "python -m unittest discover -s tests -q", "result": "PASS", "tests_run": 274, "failures": 0, "errors": 0}
+  ],
+  "artifacts_sha256": {
+    "architecture/block1_source_portfolio_v0.1.md": "4fa7feafc1f2756b42a3e7f1be62ce8690a12936122aa8942d5487c7efc98ba4",
+    "contracts/block1_source_portfolio_contract_v0.1.md": "cb1c482a9015880eed444e5c664d11e2d87a96df25287498da880e07c0c9051b",
+    "src/sictra_block1/__main__.py": "415c9a6aba1d1f10eee181d47c214c1cd98adcdac27d69862508213d2115b2ce",
+    "tests/test_block1_source_readiness_cli.py": "839daa11822deef90a42ee7e559985b477e1bb52d6de30e9e711d1cc7ad5d40b"
+  },
+  "scope": "local planning interface only; no network acquisition, source binding, or runtime evidence",
+  "certainty": "VERIFIED",
+  "confidence": "B",
+  "limitations": [
+    "Local test evidence only; no immutable Git SHA or external CI is associated with this worktree.",
+    "Candidate sources are not verified, approved, bound, fetched, or treated as evidence.",
+    "The output is JSON for an internal interface, not the product Workspace UI."
+  ]
+}

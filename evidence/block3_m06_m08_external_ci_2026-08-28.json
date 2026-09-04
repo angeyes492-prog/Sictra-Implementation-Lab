@@ -1,0 +1,27 @@
+{
+  "artifact": "block3-m06-m08-adaptive-frontier-hosted-ci",
+  "timestamp_utc": "2026-08-28T04:04:55Z",
+  "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+  "pull_request": 8,
+  "head_sha": "6ffa871057e950369dc27e32684b2513981d0732",
+  "workflow": {
+    "name": "SICTrA CI",
+    "run_id": 33140754050,
+    "job_id": 98750857359,
+    "job_name": "test",
+    "command": "python -m unittest discover -s tests -v",
+    "tests_passed": 156,
+    "failures": 0,
+    "errors": 0,
+    "conclusion": "success"
+  },
+  "local_comparison": {
+    "tests_passed": 173,
+    "difference": 17,
+    "interpretation": "The local workspace contains 17 additional regression vectors not represented by this hosted head; the two scopes are not interchangeable."
+  },
+  "certainty": "VERIFIED",
+  "confidence": "A",
+  "scope": "hosted CI for the exact implementation SHA",
+  "promotion_boundary": "not independent review, production integration, outcome validation or global gate acceptance"
+}

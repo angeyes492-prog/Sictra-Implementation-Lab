@@ -1,0 +1,42 @@
+{
+  "evidence_id": "BLOCK3-M01-M05-EXTERNAL-CI-2026-08-27",
+  "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+  "pull_request": 7,
+  "implementation_commit_sha": "491f07545046b938906d95666c25acf943c0c38c",
+  "base_commit_sha": "051d5088c95fd2610b3a3a386241ef820c1c2c85",
+  "workflow": {
+    "name": "SICTrA CI",
+    "run_id": 33034171469,
+    "run_number": 125,
+    "job_id": 98393142134,
+    "status": "completed",
+    "conclusion": "success",
+    "runner": "ubuntu-latest",
+    "python": "3.12",
+    "command": "python -m unittest discover -s tests -v"
+  },
+  "tests": {
+    "executed": 116,
+    "passed": 116,
+    "failed": 0,
+    "errors": 0,
+    "block3_vectors": 37
+  },
+  "verified_scope": [
+    "M01 professional-only profile and sensitive-attribute rejection",
+    "M02 hypothesis-only synthesis, source governance and root non-inflation",
+    "M03 observed behavior without intent attribution",
+    "M04 temporal relationship transition and permission separation",
+    "M05 fact/hypothesis context map and fail-closed Global requirement",
+    "bounded M01/M03/M04/M05 to M02 foundation pipeline",
+    "regression with the canonical repository test suite"
+  ],
+  "limitations": [
+    "CI is implementation evidence, not independent architectural review",
+    "No real Block 1, Block 2, Account Intelligence, CRM or delivery adapter executed",
+    "No Relevance Gate or M06-M08 implementation",
+    "No production, consent enforcement, outcome validation or global acceptance"
+  ],
+  "classification": "VERIFIED / EXTERNAL BOUNDED CI / A",
+  "global_acceptance": false
+}

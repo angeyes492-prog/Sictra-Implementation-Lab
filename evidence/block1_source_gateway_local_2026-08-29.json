@@ -1,0 +1,43 @@
+{
+  "artifact": "Block 1 Source Gateway v0.1 local validation",
+  "executed_on": "2026-08-29",
+  "environment": {
+    "python": "3.12.10",
+    "workspace_git_identity": "NO_COMMIT_ON_MASTER"
+  },
+  "commands": [
+    {
+      "command": "python -m compileall -q src",
+      "result": "PASS"
+    },
+    {
+      "command": "python -m unittest tests.test_block1_source_gateway -v",
+      "result": "PASS",
+      "tests_run": 7,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "command": "python -m unittest discover -s tests -q",
+      "result": "PASS",
+      "tests_run": 248,
+      "failures": 0,
+      "errors": 0
+    }
+  ],
+  "artifacts_sha256": {
+    "architecture/block1_source_gateway_v0.1.md": "664791c5511885f91277c76a0111ffd229d64681e27b63246615507e2bcd882e",
+    "contracts/block1_source_gateway_contract_v0.1.md": "998a814e32d829591b4bbd36937edee4c2eac971e4e29695a6bf1cc4733b237a",
+    "src/sictra_block1/source_gateway.py": "c9764b40ca9d762592a35571b9c709d7783d97ddae12981dde37bc428df3e185",
+    "src/sictra_block1/__init__.py": "eb66f81adcfedb5019cbd1046a93e688806b5d2a72cb25297068fae6cb77cae8",
+    "tests/test_block1_source_gateway.py": "4c392ae586e0c1d1fcdde09b339d3628754a81e861b657b8898de0fac6c66f65"
+  },
+  "scope": "manual source bundles only; no network acquisition",
+  "certainty": "VERIFIED",
+  "confidence": "B",
+  "limitations": [
+    "Local test evidence only; no immutable Git SHA or external CI is associated with this worktree.",
+    "No real source, credential, license validation, scheduled watchlist, HTTP adapter, or production runtime was exercised.",
+    "The adversarial review was performed by the constructor and is not an independent human or agent review."
+  ]
+}
