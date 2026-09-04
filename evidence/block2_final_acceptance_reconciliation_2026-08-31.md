@@ -17,7 +17,7 @@ con tecnología asistiva o aceptación humana final.
 | Slack | búsquedas `"Wave 37" after:2026-09-01` y `"E01" "fixture" after:2026-09-01`: sin resultados | `VERIFIED / A` para la respuesta de búsqueda; `INSUFFICIENT EVIDENCE` para fixture/promoción | ausencia de resultado no es desaprobación ni aprobación |
 | Notion | `Wave 37 E01 authorized upstream fixture` devuelve sólo Wave 34/35 del 2026-08-25, marcadas `unverified` | `VERIFIED / A` para resultados; `INSUFFICIENT EVIDENCE` para aceptación | Notion ordena; no reemplaza arquitectura canónica |
 | GitHub | PR #11 mergeable, head `2a7fba5…`, CI `33711895357` `success`; no hay reviews | `VERIFIED / A` para CI/estado; `INSUFFICIENT EVIDENCE` para MAR/revisión humana | CI demuestra ejecución exacta, no aceptación global |
-| Atlassian Rovo | Jira `SI-1 — Block 2 Design` sigue `Tareas por hacer`, sin comentarios; última actualización `2026-08-27T22:43:40-0600` | `VERIFIED / A` | estado de Jira es coordinación, no gate arquitectónico |
+| Atlassian Rovo | Jira `SI-1 — Block 2 Design` sigue `Tareas por hacer`; comentario `10006` (2026-09-03) enlaza PR/CI y registra los gates sin mover estado ni aceptación | `VERIFIED / A` | estado/comentario Jira es coordinación, no gate arquitectónico |
 | Wolfram | `upstream && independentReviewer && !materialLeakage && !materialConfounder` conserva las cuatro condiciones conjunctivas | `VERIFIED / A` para el cálculo; `PLAUSIBLE / B` para el modelo | análisis formal no es evidencia runtime ni autoridad de promoción |
 
 ## Contradicciones resueltas
