@@ -83,3 +83,8 @@ de consola y 468/468 pruebas del workspace.
 Resultado: `VERIFIED / A` para esta corrección automatizada sobre la fixture
 sintética local. Sigue siendo insuficiente para un claim WCAG AA, una revisión
 NVDA/VoiceOver o aceptación humana.
+
+La CI alojada `SICTrA bounded runtime validation` ejecutó correctamente sobre
+el SHA de runtime `f6e841dd0b48178338f75db258254cb32b4304e7` (run
+`33825990909`, 2026-09-03). Esta corroboración reproduce la regresión en CI,
+pero no amplía el límite de validación asistiva indicado arriba.
