@@ -75,3 +75,8 @@ Los vectores de preflight, entrypoint, oracle independiente y recibo (26/26)
 pasaron localmente, junto con 472/472 pruebas del workspace. Esto cierra la
 sustitución estructural, no acredita la identidad de una persona, una firma
 externa ni una observación real.
+
+GitHub Actions corroboró el runtime exacto en el run `33826434590` con
+resultado `success` para el SHA
+`658651b9efd6fb47629da2e41e990618a20dd061`. La CI valida el comportamiento
+local reproducible; no cambia los límites humanos o upstream de este recibo.
