@@ -103,3 +103,7 @@ autoridad, severidad, retorno upstream y forma maliciosa. La regresión completa
 local pasó 477/477. El resultado grabado se mantiene explícitamente en
 `NOT_PROMOTED / NOT_ACCEPTED`: esta frontera prepara la evidencia humana, no la
 simula.
+
+La CI alojada `33827201289` terminó `success` para el SHA exacto
+`0572df780353883df1a51c35db119e556c51b1b9`. Es corroboración del validador
+local y sus tests; no es un receipt humano ni promoción de gate.
