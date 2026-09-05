@@ -7,6 +7,11 @@ new observations and observations no longer published. It performs no network
 fetch, scheduling, aggregation, imputation, trend interpretation or alert
 delivery.
 
+The same comparator accepts two fully revalidated manual bundles, allowing the
+latest HMAC-ledger checkpoint to become the previous state without reopening
+its original XLSX. It requires equal geography levels and non-regressive
+manual observation time; both checkpoints remain non-evidentiary.
+
 An identical file produces `IDENTICAL_FILE_NOT_EVIDENCE`. Different content
 must declare a strictly newer source update; a changed file under the same
 release timestamp or an older current release fails closed as source drift or

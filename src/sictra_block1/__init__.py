@@ -25,9 +25,14 @@ from .eurostat_manual_bundle import (
     EurostatManualBundleViolation,
     build_eurostat_manual_bundle,
 )
-from .manual_bundle_ledger import ManualBundleLedger, ManualBundleLedgerViolation
+from .manual_bundle_ledger import (
+    ManualBundleLedger,
+    ManualBundleLedgerViolation,
+    validate_unattested_manual_bundle,
+)
 from .eurostat_maritime_delta import (
     EurostatMaritimeDeltaViolation,
+    compare_eurostat_manual_bundles,
     compare_eurostat_maritime_workbooks,
 )
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
@@ -63,7 +68,9 @@ __all__ = [
     "build_eurostat_manual_bundle",
     "ManualBundleLedger",
     "ManualBundleLedgerViolation",
+    "validate_unattested_manual_bundle",
     "EurostatMaritimeDeltaViolation",
+    "compare_eurostat_manual_bundles",
     "compare_eurostat_maritime_workbooks",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",

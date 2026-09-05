@@ -6,8 +6,10 @@ from copy import deepcopy
 from hashlib import sha256
 import hmac
 import json
+import math
 import os
 from pathlib import Path
+import re
 from tempfile import NamedTemporaryFile
 from threading import Lock
 from typing import Any, Callable, Mapping
@@ -25,6 +27,17 @@ _BUNDLE_FIELDS = frozenset((
 _ENTRY_FIELDS = frozenset((
     "entry_id", "recorded_at", "bundle_sha256", "previous_hash", "record_hash", "bundle",
 ))
+_SHA256 = re.compile(r"[0-9a-f]{64}$")
+_CORRELATION = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+_OBSERVATION_FIELDS = frozenset((
+    "geo_code", "geo_label", "geo_level", "time_period",
+    "value_thousand_tonnes", "status_flag",
+))
+_COVERAGE_FIELDS = frozenset((
+    "declared_geography_count", "observed_geography_count",
+    "all_missing_geography_count", "expected_geo_time_cells",
+    "observation_count", "missing_value_count",
+))
 
 
 class ManualBundleLedgerViolation(ContractViolation):
@@ -41,7 +54,9 @@ def _nonempty_text(name: str, value: object, maximum: int = 512) -> str:
     return value
 
 
-def _valid_bundle(value: object) -> dict[str, Any]:
+def validate_unattested_manual_bundle(value: object) -> dict[str, Any]:
+    """Return a defensive copy only when the complete bundle is self-consistent."""
+
     if not isinstance(value, Mapping) or frozenset(value) != _BUNDLE_FIELDS:
         raise ManualBundleLedgerViolation("bundle fields do not match the gateway contract")
     bundle = dict(value)
@@ -49,6 +64,8 @@ def _valid_bundle(value: object) -> dict[str, Any]:
         raise ManualBundleLedgerViolation("bundle source is unsupported")
     for name in ("source_url", "content", "correlation_id"):
         _nonempty_text(name, bundle[name], 131_072 if name == "content" else 512)
+    if _CORRELATION.fullmatch(bundle["correlation_id"]) is None:
+        raise ManualBundleLedgerViolation("bundle correlation identifier is invalid")
     if len(bundle["content"].encode("utf-8")) > 131_072:
         raise ManualBundleLedgerViolation("bundle content exceeds the governed byte limit")
     try:
@@ -90,6 +107,87 @@ def _valid_bundle(value: object) -> dict[str, Any]:
         or not isinstance(content["observations"], list)
     ):
         raise ManualBundleLedgerViolation("bundle content is not an un-attested mapper selection")
+    provenance = content["provenance"]
+    if (
+        set(provenance) != {
+            "source_file_sha256", "dataset_code", "dataset_title",
+            "dataset_last_updated", "mapping_scope", "mapping_status",
+            "mapping_evidence_state",
+        }
+        or _SHA256.fullmatch(str(provenance.get("source_file_sha256"))) is None
+        or provenance.get("dataset_code") != "tran_r_mago_nm"
+        or not isinstance(provenance.get("dataset_title"), str)
+        or not provenance["dataset_title"].strip()
+        or provenance.get("mapping_scope") != "BLOCK1_EUROSTAT_MARITIME_SCHEMA_MAPPING"
+    ):
+        raise ManualBundleLedgerViolation("bundle provenance is invalid")
+    try:
+        datetime_value = provenance["dataset_last_updated"]
+        if not isinstance(datetime_value, str):
+            raise ValueError
+        from datetime import datetime
+        datetime.fromisoformat(datetime_value)
+    except (TypeError, ValueError):
+        raise ManualBundleLedgerViolation("bundle source update time is invalid") from None
+    if content["filters"] != {
+        "frequency": "A", "transport_measure": "FR_LD_NLD", "unit": "THS_T",
+    }:
+        raise ManualBundleLedgerViolation("bundle filters are outside the bounded asset")
+    selection = content["selection"]
+    if (
+        set(selection) != {
+            "geo_level", "grain", "years", "coverage", "selection_scope",
+            "selection_status", "selection_evidence_state",
+        }
+        or selection.get("geo_level") not in {"COUNTRY", "NUTS1", "NUTS2"}
+        or selection.get("grain") != ["geo_code", "time_period"]
+        or selection.get("selection_scope") != "BLOCK1_EUROSTAT_MARITIME_GEO_LEVEL_SELECTION"
+        or not isinstance(selection.get("years"), list)
+    ):
+        raise ManualBundleLedgerViolation("bundle selection is invalid")
+    years = selection["years"]
+    if (
+        not years or any(not isinstance(year, int) or isinstance(year, bool) or not 1900 <= year <= 2100 for year in years)
+        or years != sorted(set(years))
+    ):
+        raise ManualBundleLedgerViolation("bundle years are invalid")
+    coverage = selection["coverage"]
+    if not isinstance(coverage, Mapping) or frozenset(coverage) != _COVERAGE_FIELDS:
+        raise ManualBundleLedgerViolation("bundle coverage shape is invalid")
+    if any(not isinstance(coverage[field], int) or isinstance(coverage[field], bool) or coverage[field] < 0 for field in _COVERAGE_FIELDS):
+        raise ManualBundleLedgerViolation("bundle coverage values are invalid")
+    observations = content["observations"]
+    seen: set[tuple[str, int]] = set()
+    observed_codes: set[str] = set()
+    for observation in observations:
+        if not isinstance(observation, Mapping) or frozenset(observation) != _OBSERVATION_FIELDS:
+            raise ManualBundleLedgerViolation("bundle observation shape is invalid")
+        key = (observation["geo_code"], observation["time_period"])
+        value = observation["value_thousand_tonnes"]
+        flag = observation["status_flag"]
+        if (
+            not isinstance(key[0], str) or not key[0]
+            or not isinstance(observation["geo_label"], str) or not observation["geo_label"].strip()
+            or observation["geo_level"] != selection["geo_level"]
+            or key[1] not in years or key in seen
+            or not isinstance(value, (int, float)) or isinstance(value, bool)
+            or not math.isfinite(value) or value < 0
+            or (flag is not None and (not isinstance(flag, str) or not flag.strip()))
+        ):
+            raise ManualBundleLedgerViolation("bundle observation is invalid")
+        seen.add(key)
+        observed_codes.add(key[0])
+    declared = coverage["declared_geography_count"]
+    expected_cells = declared * len(years)
+    if (
+        coverage["observed_geography_count"] != len(observed_codes)
+        or coverage["all_missing_geography_count"] != declared - len(observed_codes)
+        or coverage["expected_geo_time_cells"] != expected_cells
+        or coverage["observation_count"] != len(observations)
+        or coverage["missing_value_count"] != expected_cells - len(observations)
+        or declared < len(observed_codes) or len(observations) > expected_cells
+    ):
+        raise ManualBundleLedgerViolation("bundle coverage is inconsistent with observations")
     return deepcopy(bundle)
 
 
@@ -157,7 +255,7 @@ class ManualBundleLedger:
                 raise ManualBundleLedgerViolation("ledger record time is invalid")
             if entry["recorded_at"] < previous_time:
                 raise ManualBundleLedgerViolation("ledger logical time regressed")
-            bundle = _valid_bundle(entry["bundle"])
+            bundle = validate_unattested_manual_bundle(entry["bundle"])
             bundle_sha = sha256(_encoded(bundle).encode("utf-8")).hexdigest()
             if (
                 entry["bundle_sha256"] != bundle_sha or entry["previous_hash"] != previous_hash
@@ -194,8 +292,15 @@ class ManualBundleLedger:
         with self._lock:
             return [self._receipt(entry) for entry in self._load_unlocked()]
 
+    def latest_bundle(self) -> dict[str, Any] | None:
+        """Return a defensive, revalidated checkpoint without changing its state."""
+
+        with self._lock:
+            entries = self._load_unlocked()
+            return None if not entries else deepcopy(entries[-1]["bundle"])
+
     def record(self, bundle: Mapping[str, Any]) -> dict[str, Any]:
-        normalized = _valid_bundle(bundle)
+        normalized = validate_unattested_manual_bundle(bundle)
         fingerprint = sha256(_encoded(normalized).encode("utf-8")).hexdigest()
         with self._lock:
             entries = self._load_unlocked()

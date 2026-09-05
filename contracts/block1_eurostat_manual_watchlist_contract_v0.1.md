@@ -10,6 +10,13 @@ mapper. Identical content is a valid no-change result. Different content must
 have a strictly newer `Last updated` value in the current workbook; equal-time
 content drift and temporal regression are rejected.
 
+The alternate checkpoint input is two complete, revalidated
+`UNATTESTED_MANUAL_BUNDLE` objects recovered from the Layer 4 ledger. Their
+geography levels must match, source update time must advance when source-file
+content differs, and manual observation time must not regress. This path
+allows durable checkpoint comparison without re-reading the original files;
+it does not raise either checkpoint to evidence.
+
 The comparison grain remains `(geo_code, time_period)`. Output preserves both
 file hashes and release timestamps, selected coverage snapshots and an ordered
 change list. Change types are `ADDED_OBSERVATION`, `REMOVED_OBSERVATION`,

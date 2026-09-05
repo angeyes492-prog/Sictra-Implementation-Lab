@@ -22,6 +22,16 @@ def bundle():
     )
 
 
+def mutate_content(original, mutation):
+    changed = dict(original)
+    content = json.loads(changed["content"])
+    mutation(content)
+    changed["content"] = json.dumps(
+        content, ensure_ascii=False, separators=(",", ":"), sort_keys=True,
+    )
+    return changed
+
+
 class ManualBundleLedgerTests(unittest.TestCase):
     def setUp(self):
         self.temp = TemporaryDirectory()
@@ -35,14 +45,19 @@ class ManualBundleLedgerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_records_an_unattested_bundle_idempotently_without_minting_evidence(self):
-        receipt = self.store.record(bundle())
+        source_bundle = bundle()
+        receipt = self.store.record(source_bundle)
         self.assertEqual(receipt["status"], "RECORDED_UNATTESTED_NOT_EVIDENCE")
         self.assertEqual(receipt["evidence_state"], "NOT_EVIDENCE")
         self.assertEqual(receipt["previous_hash"], "GENESIS")
-        self.assertEqual(self.store.record(bundle()), receipt)
+        self.assertEqual(self.store.record(source_bundle), receipt)
         self.assertEqual(self.store.list_receipts(), [receipt])
         reopened = ManualBundleLedger(self.path, integrity_key=KEY, clock=lambda: 10_002)
         self.assertEqual(reopened.list_receipts(), [receipt])
+        returned = reopened.latest_bundle()
+        self.assertEqual(returned, source_bundle)
+        returned["correlation_id"] = "mutated"
+        self.assertEqual(reopened.latest_bundle(), source_bundle)
 
     def test_tampering_key_mismatch_and_bundle_state_fail_closed(self):
         self.store.record(bundle())
@@ -87,6 +102,22 @@ class ManualBundleLedgerTests(unittest.TestCase):
         ledger.record(bundle())
         with self.assertRaises(ManualBundleLedgerViolation):
             ledger.record({**bundle(), "correlation_id": "eurostat-ledger-time-002"})
+
+    def test_internally_inconsistent_bundle_content_fails_before_persistence(self):
+        mutations = (
+            lambda content: content["selection"].__setitem__("geo_level", "NUTS1"),
+            lambda content: content["selection"]["coverage"].__setitem__("observation_count", 99),
+            lambda content: content["observations"].append(dict(content["observations"][0])),
+            lambda content: content["provenance"].__setitem__("source_file_sha256", "0"),
+            lambda content: content.__setitem__("filters", {"frequency": "A"}),
+        )
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), self.assertRaises(ManualBundleLedgerViolation):
+                self.store.record(mutate_content(bundle(), mutation))
+        self.assertFalse(self.path.exists())
+
+    def test_empty_ledger_has_no_latest_checkpoint(self):
+        self.assertIsNone(self.store.latest_bundle())
 
 
 if __name__ == "__main__":

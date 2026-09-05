@@ -14,6 +14,12 @@ bundle SHA-256; any altered field, content, prior hash, MAC, schema or
 duplicate identity fails closed. The integrity key never resides in the ledger
 file.
 
+Canonical encoding alone is insufficient: the ledger also revalidates source
+hash and update time, filters, geographic level, year domain, observation
+types and uniqueness, and coverage arithmetic before every write/read. Its
+`latest_bundle` checkpoint is a defensive copy and cannot mutate durable
+state.
+
 This is a local pilot boundary only. It does not encrypt data at rest, manage
 retention, supply user identity, recover lost keys, offer concurrency across
 processes, or substitute a later gateway attestation and independent review.

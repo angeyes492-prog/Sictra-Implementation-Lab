@@ -13,6 +13,12 @@ store needs a caller-held integrity key of at least 32 bytes, a bounded
 capacity, a deterministic entry identity source and a non-negative logical
 record time.
 
+Before persistence, provenance shape and file hash, source update time,
+controlled filters, selected level, grain, ordered year domain, every
+observation type/value/key and all coverage arithmetic must be mutually
+consistent. Canonical encoding and an intact outer bundle are insufficient if
+these internal invariants disagree.
+
 An accepted first write atomically replaces the complete ledger and returns an
 immutable receipt with entry identity, bundle SHA-256, predecessor hash,
 record hash, recorded time and
@@ -20,6 +26,8 @@ record hash, recorded time and
 receipt without extending the chain. Every load recomputes strict shape,
 bundle SHA-256, predecessor linkage and HMAC; malformed JSON, capacity
 exhaustion, key mismatch or any mutation raise `ManualBundleLedgerViolation`.
+`latest_bundle` returns a defensive, fully revalidated copy of the newest
+checkpoint, or `None`; mutating that copy cannot alter durable state.
 
 The ledger never adds an attestation, changes `evidence_class`, binds a
 source, calls a gateway, derives a fact, schedules work, fetches the network or
