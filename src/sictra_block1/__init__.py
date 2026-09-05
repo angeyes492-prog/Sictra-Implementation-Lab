@@ -14,7 +14,13 @@ from .evidence import EvidenceIssuer, EvidenceVerifier
 from .runtime import IntelligenceRuntime
 from .storage import OperationalStore
 from .source_portfolio import SourceCandidate, source_readiness
-from .source_gateway import SourceApprovalRecord, SourceBindingIssuer, SourceGateway, SourceRegistration
+from .source_gateway import (
+    SourceApprovalRecord,
+    SourceBindingIssuer,
+    SourceGateway,
+    SourceRegistration,
+    source_approval_fingerprint,
+)
 from .manual_source_preflight import ManualSourcePreflightViolation, preflight_manual_source_file
 from .eurostat_maritime_mapper import (
     EurostatMaritimeMappingViolation,
@@ -60,6 +66,7 @@ __all__ = [
     "SourceApprovalRecord",
     "SourceGateway",
     "SourceRegistration",
+    "source_approval_fingerprint",
     "ManualSourcePreflightViolation",
     "preflight_manual_source_file",
     "EurostatMaritimeMappingViolation",

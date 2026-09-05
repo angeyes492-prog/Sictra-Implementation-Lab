@@ -8,6 +8,7 @@ from sictra_block1 import (
     SourceBindingIssuer,
     SourceGateway,
     SourceRegistration,
+    source_approval_fingerprint,
 )
 
 
@@ -97,6 +98,7 @@ class EurostatMaritimeDraftTests(unittest.TestCase):
         observed = gateway.attest_manual_bundle(bundle, now=NOW)
         self.assertEqual(observed["scope"], "BLOCK1_EUROPE_MARITIME_INTELLIGENCE")
         self.assertEqual(observed["root_provenance"], "gateway-source:eurostat")
+        self.assertEqual(observed["source_approval_fingerprint"], source_approval_fingerprint(approval))
         with self.assertRaises(ContractViolation):
             gateway.attest_manual_bundle({**bundle, "claim_key": "out-of-scope"}, now=NOW)
 

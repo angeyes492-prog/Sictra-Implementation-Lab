@@ -4,7 +4,7 @@ import hmac
 import json
 import unittest
 
-from sictra_block1 import ContractViolation, EvidenceIssuer, SourceApprovalRecord, SourceBindingIssuer, SourceGateway, SourceRegistration
+from sictra_block1 import ContractViolation, EvidenceIssuer, SourceApprovalRecord, SourceBindingIssuer, SourceGateway, SourceRegistration, source_approval_fingerprint
 
 
 NOW = 10_000
@@ -64,6 +64,27 @@ class SourceGatewayTests(unittest.TestCase):
         source = gateway().attest_manual_bundle(self.bundle(), now=NOW)
         self.assertEqual(source["root_provenance"], "gateway-source:sample-public-source")
         self.assertEqual(source["ingestion_method"], "MANUAL_SOURCE_BUNDLE")
+        self.assertEqual(source["source_approval_fingerprint"], source_approval_fingerprint(approval()))
+        self.assertEqual(len(source["source_binding_fingerprint"]), 64)
+
+    def test_binding_cryptographically_identifies_the_exact_human_approval(self):
+        issuer = SourceBindingIssuer("review-control", KEY)
+        first = issuer.issue(registration(), approval(), now=NOW, ttl=10)
+        second = issuer.issue(
+            registration(), approval(reviewer_id="reviewer-02"), now=NOW, ttl=10
+        )
+        self.assertEqual(first["approval_fingerprint"], source_approval_fingerprint(approval()))
+        self.assertNotEqual(first["approval_fingerprint"], second["approval_fingerprint"])
+        altered = dict(first)
+        altered["approval_fingerprint"] = "0" * 64
+        with self.assertRaises(ContractViolation):
+            gateway(binding=altered)
+        malformed = dict(first)
+        malformed["approval_fingerprint"] = "z" * 64
+        with self.assertRaises(ContractViolation):
+            gateway(binding=resign(malformed))
+        with self.assertRaises(ContractViolation):
+            source_approval_fingerprint("not-an-approval")
 
     def test_missing_tampered_or_expired_binding_fails_closed(self):
         value = registration()

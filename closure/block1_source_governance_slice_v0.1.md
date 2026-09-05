@@ -11,6 +11,9 @@ promovible a fuente real ni a cierre global.
 
 ## Evidence
 
+- `evidence/block1_source_binding_approval_lineage_v0.1.md`: repair `HIGH`
+  linking each signed source binding and observed record to the exact
+  normalized human approval; 240/240 local tests.
 - SHA del incremento de ensamblaje manual Eurostat:
   `24fabd68bf5b3511d2c415c137b8ff4f8ccd05aa`.
 - `evidence/ci-run-33992985995.json`: GitHub Actions run `33992985995`
@@ -30,7 +33,8 @@ promovible a fuente real ni a cierre global.
   (`#201`), terminado en `success` sobre ese SHA exacto.
 - `evidence/ci-run-33325016910.json`: antecedente verificable de la
   vinculación del método de acceso, CI #197 sobre `829f5a3`.
-- Ejecución local del mismo estado: 224 pruebas, 0 fallos, 0 errores.
+- Ejecución local del current source-governance state: 240 pruebas, 0 fallos,
+  0 errores.
 - El binding HMAC exige coincidencia exacta de identidad, scope, hosts,
   claims, límite de bytes y `MANUAL_SOURCE_BUNDLE`; la aprobación rechazada,
   futura o incongruente falla cerrada. Los campos temporales booleanos se

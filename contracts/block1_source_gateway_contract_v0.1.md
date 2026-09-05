@@ -6,6 +6,11 @@ Binding emission requires an `APPROVED` record with reviewer identity, date,
 terms reference, source identity, hosts, claims and byte limit exactly matching
 the registration, including its `MANUAL_SOURCE_BUNDLE` access method. A
 rejected, future or mismatched review fails closed.
+The signed binding includes the SHA-256 fingerprint of the complete normalized
+approval record (reviewer, review time, terms reference, decision and bounded
+source fields). The emitted observed record carries both that approval
+fingerprint and a fingerprint of the signed binding, so durable evidence can
+be traced to the exact authorization rather than merely to a compatible scope.
 The output is an `OBSERVED` source attested by the existing evidence issuer.
 The same registered source always has one provenance root.
 
