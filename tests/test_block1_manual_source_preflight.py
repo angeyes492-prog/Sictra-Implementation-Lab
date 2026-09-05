@@ -53,6 +53,8 @@ class ManualSourcePreflightTests(unittest.TestCase):
     def test_unsafe_and_inconsistent_payloads_fail_closed(self):
         with self.assertRaises(ManualSourcePreflightViolation):
             preflight_manual_source_file("..\\eurostat.csv", b"a,b\n1,2\n")
+        with self.assertRaises(ManualSourcePreflightViolation):
+            preflight_manual_source_file("../eurostat.csv", b"a,b\n1,2\n")
         inconsistent = preflight_manual_source_file("eurostat.csv", b"a,b\n1,2,3\n")
         self.assertEqual(inconsistent["reason"], "CSV_ROWS_HAVE_INCONSISTENT_WIDTH")
         bomb = BytesIO()

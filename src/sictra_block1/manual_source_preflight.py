@@ -33,7 +33,7 @@ def _file_name(value: object) -> tuple[str, str]:
         raise ManualSourcePreflightViolation("source file name must be non-empty text")
     name = value.strip()
     path = PurePath(name)
-    if path.name != name or not path.stem or path.suffix.lower() not in _SUPPORTED_EXTENSIONS:
+    if "/" in name or "\\" in name or not path.stem or path.suffix.lower() not in _SUPPORTED_EXTENSIONS:
         raise ManualSourcePreflightViolation("source file name or extension is not allowed")
     return name, path.suffix.lower()
 
