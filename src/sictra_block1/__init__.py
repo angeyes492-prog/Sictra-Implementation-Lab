@@ -21,6 +21,10 @@ from .eurostat_maritime_mapper import (
     map_eurostat_maritime_workbook,
     select_eurostat_geography_level,
 )
+from .eurostat_manual_bundle import (
+    EurostatManualBundleViolation,
+    build_eurostat_manual_bundle,
+)
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -50,6 +54,8 @@ __all__ = [
     "EurostatMaritimeMappingViolation",
     "map_eurostat_maritime_workbook",
     "select_eurostat_geography_level",
+    "EurostatManualBundleViolation",
+    "build_eurostat_manual_bundle",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",

@@ -16,7 +16,7 @@ Neither label follows from a passing test suite alone.
 | 1. Source policy | Limit each source to a known asset, terms, host and claim vocabulary. | Eurostat owner decision recorded; no runtime binding. | Approval record and signed binding match exactly. | Periodic terms review, owner and expiry controls. |
 | 2. Guided ingress | Accept operator-supplied files without arbitrary network access. | CSV/XLSX preflight implemented locally. | First file passes preflight and is mapped without data loss. | Authenticated upload, malware scanning, quotas and retention policy. |
 | 3. Schema and quality | Map source fields and reject ambiguous, invalid or incomplete values. | Eurostat mapper implemented; mixed geography requires selection. | Explicit geography-level selection and coverage report. | Versioned mappers, drift alerts, reconciliation and rollback. |
-| 4. Evidence ledger | Preserve provenance and transformations for every admitted observation. | Gateway contracts exist; no durable real-source ledger. | Immutable local record links file hash, filters, mapping and attestation. | Durable encrypted store, audit trail, retention and restore exercise. |
+| 4. Evidence ledger | Preserve provenance and transformations for every admitted observation. | Unattested Eurostat bundle assembly is implemented; no binding, attestation or durable ledger. | Signed binding, gateway attestation and immutable local record link file hash, filters and mapping. | Durable encrypted store, audit trail, retention and restore exercise. |
 | 5. Intelligence runtime | Form research questions, detect changes, contradictions and bounded insights. | E01–E08 local runtime; real inputs absent. | A real-source run produces facts, interpretations and uncertainties separately. | Load/performance SLOs and continuous regression with real anonymised cases. |
 | 6. Editorial decisioning | Select only relevant, attributable insight candidates and hand off to Design. | Bounded editorial engine runs on fixtures. | One reviewed brief links every statement to evidence and abstains when weak. | Approval workflow, versioned outputs and publishing audit trail. |
 | 7. Watchlists and cadence | Recheck approved sources and surface meaningful change without noise. | Watchlists are fixture-only; no scheduler. | Defined cadence and a manually triggered delta report for one source. | Budgeted workers, rate limits, change detection, alerts, kill switch and incident runbook. |
@@ -25,8 +25,8 @@ Neither label follows from a passing test suite alone.
 ## Required order
 
 1. Bind the already approved Eurostat scope locally.
-2. Complete Layer 3 against the supplied workbook and produce a mapping report.
-3. Persist one attested evidence bundle under Layer 4.
+2. Assemble one explicitly selected Layer 3 result without changing its non-evidentiary state.
+3. Bind, attest and durably persist one evidence bundle under Layer 4.
 4. Run Layers 5 and 6 on that evidence, with an explicit human review.
 5. Add a manual watchlist cycle before any scheduler.
 6. Promote to an internal pilot only after a clean independent review; start

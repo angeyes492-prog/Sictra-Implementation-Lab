@@ -5,7 +5,7 @@
 | Input identity | `tran_r_mago_nm$defaultview_spreadsheet (1).xlsx` |
 | Content SHA-256 | `4d45ad8a11a49a1f79df57b845178d0e413483b4882200591f2f36b47c6dbeca` |
 | Dataset and filter | `tran_r_mago_nm`; annual `FR_LD_NLD`; `THS_T` |
-| Declared last update | `2026-09-05T06:14` |
+| Declared last update | `2026-03-15T23:00` |
 | Output state | `MAPPED_NOT_EVIDENCE` / `REQUIRES_GEO_LEVEL_SELECTION` |
 | Observation grain | `geo_code × time_period` |
 | Years | 2020–2024 |
