@@ -15,6 +15,6 @@ claim. Rejection is recoverable by exporting a proper table and resubmitting it
 to the later guided-ingress surface.
 
 The design limits payload and decompressed archive size, rejects XML DTDs and
-does not retain a file. Its next dependency is a reviewed schema mapper that
-will verify Eurostat dimensions and units before the existing signed Source
-Gateway may attest a bundle.
+does not retain a file. Its reviewed Eurostat maritime schema-mapper dependency
+now verifies the approved dimensions and units; a signed Source Gateway binding
+and independent review still remain before a bundle may be attested.

@@ -16,6 +16,11 @@ from .storage import OperationalStore
 from .source_portfolio import SourceCandidate, source_readiness
 from .source_gateway import SourceApprovalRecord, SourceBindingIssuer, SourceGateway, SourceRegistration
 from .manual_source_preflight import ManualSourcePreflightViolation, preflight_manual_source_file
+from .eurostat_maritime_mapper import (
+    EurostatMaritimeMappingViolation,
+    map_eurostat_maritime_workbook,
+    select_eurostat_geography_level,
+)
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -42,6 +47,9 @@ __all__ = [
     "SourceRegistration",
     "ManualSourcePreflightViolation",
     "preflight_manual_source_file",
+    "EurostatMaritimeMappingViolation",
+    "map_eurostat_maritime_workbook",
+    "select_eurostat_geography_level",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",
