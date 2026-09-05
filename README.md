@@ -30,6 +30,9 @@ explicit abstention, and a bounded Block 2 handoff candidate.
 4. Entra en **Mesa editorial** para revisar la lista corta.
 5. Escribe tu razonamiento y elige una pieza insignia, o registra que ninguna
    debe avanzar esa semana.
+6. Entra en **Investigaciones** para guardar una pregunta propia como
+   **borrador local**. No pegues secretos ni datos personales: la referencia
+   opcional no se consulta ni se convierte en evidencia.
 
 Mantén abierta la ventana de inicio mientras utilizas la herramienta. Para
 detenerla, ciérrala o presiona `Ctrl+C`.
@@ -48,6 +51,7 @@ and no third-party runtime dependencies.
 
 ## Evidence boundary
 
-The included investigations are synthetic. The workspace does not access the
-internet, ingest company data, prove source truth, provide production security,
-operate Blocks 2–4, or imply global gate acceptance.
+The included investigations are synthetic. The Workspace can persist a local
+operator-declared research question, but it does not access the internet,
+ingest company data, prove source truth, provide production security, operate
+Blocks 2–4, or imply global gate acceptance.

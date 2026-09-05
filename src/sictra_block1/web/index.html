@@ -36,7 +36,7 @@
         <div><span class="crumb">Bloque 1 / <strong id="view-name">Panorama</strong></span><h1>Intelligence Workspace</h1></div>
         <div class="command-actions"><span class="fixture-badge">Campo sintético</span><button id="refresh" class="icon-button" type="button" aria-label="Actualizar workspace">↻</button></div>
       </header>
-      <section class="boundary-strip" aria-label="Límite del entorno"><strong>Entorno de pruebas trazable</strong><span>No consulta internet, no contiene empresas reales y no cambia gates.</span></section>
+      <section class="boundary-strip" aria-label="Límite del entorno"><strong>Entorno de pruebas trazable</strong><span>No consulta internet; un borrador local no es evidencia ni cambia gates.</span></section>
       <div id="loading" class="loading-state"><span></span>Cargando el tejido de inteligencia…</div>
       <div id="error" class="error-state" role="alert" hidden></div>
 
@@ -53,7 +53,25 @@
       </section>
 
       <section class="view" data-view-panel="investigations">
-        <div class="view-intro"><div><span class="section-kicker">Research desk</span><h2>Investigaciones acotadas</h2><p>Selecciona un expediente para recorrer su trazabilidad completa.</p></div><select id="investigation-select" aria-label="Seleccionar investigación"></select></div>
+        <div class="view-intro"><div><span class="section-kicker">Research desk</span><h2>Investigaciones acotadas</h2><p>Selecciona un expediente o formula una pregunta local que empiece sin evidencia.</p></div><select id="investigation-select" aria-label="Seleccionar investigación"></select></div>
+        <section class="panel intake-panel">
+          <div class="panel-head"><div><span class="section-kicker">Entrada local</span><h2>Formular investigación</h2></div><span class="fixture-badge">Siempre DRAFT</span></div>
+          <p>Guarda una pregunta y su alcance en esta computadora. Una referencia declarada no se consulta ni se convierte en evidencia; no ingreses secretos ni datos personales.</p>
+          <form id="research-intake-form" class="intake-form">
+            <label>Título<input name="title" required minlength="3" maxlength="160" placeholder="Ej.: Riesgo de reposición electrónica"></label>
+            <label>Pregunta<textarea name="question" required minlength="12" maxlength="600" placeholder="¿Qué debe investigarse y por qué?" rows="3"></textarea></label>
+            <label>Escala<select name="level"><option>GLOBAL</option><option>REGIONAL</option><option>LOCAL</option></select></label>
+            <label>Geografía<input name="geography" required minlength="2" maxlength="120" placeholder="China → México"></label>
+            <label>Industria<select name="industry"><option value="electronics">Electrónica</option><option value="automotive">Automotriz</option><option value="manufacturing">Manufactura</option><option value="retail">Retail</option><option value="food">Alimentos</option><option value="pharmaceuticals">Farmacéutica</option><option value="chemicals">Química</option></select></label>
+            <label>Actor<input name="actor" required minlength="2" maxlength="100" placeholder="Importadores"></label>
+            <label>Modalidad<input name="mode" required minlength="2" maxlength="100" placeholder="Marítimo + terrestre"></label>
+            <label>Período<input name="period" required minlength="2" maxlength="60" placeholder="30 días"></label>
+            <label>Tema principal<select name="topic_key"><option value="supply_chain_resilience">Resiliencia de cadena</option><option value="ocean_freight_rates">Flete marítimo</option><option value="port_congestion">Congestión portuaria</option><option value="tariff_change">Cambio arancelario</option><option value="customs_audits">Aduanas</option><option value="geopolitical_risk">Riesgo geopolítico</option><option value="electronics">Industria electrónica</option></select></label>
+            <label class="intake-wide">Referencia opcional, aún no verificada<input name="source_reference" maxlength="500" placeholder="URL, título de informe o nota para investigar"></label>
+            <button class="primary-button" type="submit">Guardar borrador local</button>
+          </form>
+          <div id="research-intake-result" aria-live="polite"></div>
+        </section>
         <div id="investigation-detail"></div>
       </section>
 

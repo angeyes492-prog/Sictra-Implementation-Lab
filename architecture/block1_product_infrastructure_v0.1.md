@@ -2,7 +2,7 @@
 
 ## Estado, versión y decisión
 
-`IMPLEMENTED CANDIDATE / PLAUSIBLE / C`, versión `0.1`.
+`IMPLEMENTED CANDIDATE / PROBABLE / C`, versión `0.2`.
 
 Esta arquitectura implementa una superficie independiente para pruebas de campo
 del flujo de investigación logística con fixtures sintéticos. No cambia el gate
@@ -12,16 +12,18 @@ del flujo de investigación logística con fixtures sintéticos. No cambia el ga
 
 Permitir que una persona no técnica explore investigaciones globales,
 regionales y locales; inspeccione fuentes, claims, contradicciones e insights;
-compare estrategias; consulte watchlists; y ejecute vectores adversariales del
-runtime desde una herramienta diaria coherente.
+compare estrategias; consulte watchlists; ejecute vectores adversariales del
+runtime; y formule preguntas locales persistentes que permanecen explícitamente
+sin evidencia desde una herramienta diaria coherente.
 
 ## Topología implementada
 
 ```text
 Navegador local
   └─ Intelligence Workspace (HTML/CSS/JS sin dependencias externas)
-      └─ adapter HTTP 127.0.0.1 / API de solo lectura
+      └─ adapter HTTP 127.0.0.1 / API acotada
           ├─ catálogo defensivo de investigaciones sintéticas
+          ├─ Research Intake local con reemplazo atómico
           ├─ comparador Pareto de estrategias observadas
           └─ Validation Deck
               └─ runtime operacional existente E01 → E08 + SQLite efímero
@@ -29,7 +31,8 @@ Navegador local
 
 El adapter sirve únicamente una allowlist de tres assets. No expone rutas del
 sistema de archivos, no acepta uploads, credenciales, consultas arbitrarias ni
-URLs. El catálogo entrega copias defensivas para impedir mutación compartida.
+URLs para consultar. El intake acepta una referencia declarativa, no la abre ni
+la procesa. El catálogo entrega copias defensivas para impedir mutación compartida.
 El límite HTTP valida `Host`, `Origin` y Fetch Metadata para contener DNS
 rebinding y activación cross-site del servicio local.
 
@@ -38,7 +41,7 @@ rebinding y activación cross-site del servicio local.
 | Componente | Propiedad | No posee |
 | --- | --- | --- |
 | Scope Lens | Filtro visual global/regional/local | Fusión o inferencia de scopes |
-| Research Desk | Lectura de expedientes acotados | Captura de datos reales |
+| Research Desk | Lectura de expedientes y declaración local de preguntas | Captura de datos reales o evidencia |
 | Evidence Spine | Trazabilidad fuente→claim→red team→disposición | Declaración de verdad |
 | Strategy Lab | Comparación Pareto explicable | Ranking universal o autorización |
 | Watchlists | Observables 7/30/90 | Predicción automática |
@@ -48,8 +51,9 @@ rebinding y activación cross-site del servicio local.
 ## Inputs, outputs e invariantes
 
 Inputs implementados: selección de vista, escala, investigación, par de
-estrategias y vector de validación. Outputs: snapshots JSON, expediente visual,
-comparación multiobjetivo y reporte técnico del fixture.
+estrategias, vector de validación y un intake local con pregunta/acotación.
+Outputs: snapshots JSON, expediente visual, comparación multiobjetivo, reporte
+técnico del fixture y borrador persistente sin evidencia.
 
 Invariantes:
 
@@ -60,7 +64,9 @@ Invariantes:
 - Red team distinto de `PASS` o estabilidad distinta de `STABLE` impiden
   preferencia.
 - `DELIVERABLE_BOUNDED != FACT != GLOBAL ACCEPTANCE`.
-- El navegador no recibe autoridad de runtime ni acceso al store.
+- El navegador no recibe autoridad de runtime ni acceso directo al store.
+- `OPERATOR_RESEARCH_DRAFT != SOURCE != CLAIM != INSIGHT`; una referencia
+  declarada permanece no consultada y no es evidencia.
 
 ## Comparador formal
 
@@ -78,9 +84,9 @@ sustituye, las pruebas Python.
 
 ## Autoridad, dependencia y seguridad
 
-La API de workspace es una proyección de lectura sin autoridad. La única ruta
-que ejecuta el runtime conserva el flujo protegido existente y usa store
-efímero. CSP bloquea scripts, estilos y conexiones externas; el proceso solo
+La API de workspace conserva autoridad acotada: puede guardar una pregunta
+local, pero no emitir evidencia ni autoridad. La única ruta que ejecuta el
+runtime conserva el flujo protegido existente y usa store efímero. CSP bloquea scripts, estilos y conexiones externas; el proceso solo
 puede enlazarse a `127.0.0.1`. GitHub continúa como fuente técnica canónica;
 Notion registra plan; Slack conserva memoria contextual.
 
@@ -88,14 +94,14 @@ Notion registra plan; Slack conserva memoria contextual.
 
 Rutas, investigaciones y estrategias desconocidas fallan de forma explícita.
 Un error del workspace no se interpreta como bloqueo correcto. Refrescar la
-página reconstruye el snapshot desde fixtures inmutables; no hay estado de
-usuario que recuperar en v0.1. `/health` declara scope y clase de fixture.
+página reconstruye el snapshot desde fixtures inmutables y borradores locales
+validados; un store alterado falla cerrado. `/health` declara scope y clase de fixture.
 
 ## Evolución de infraestructura
 
 1. **v0.1 — actual:** producto local, dataset sintético, comparación y pruebas.
-2. **v0.2 — siguiente gate:** importación manual de source bundles con schema,
-   cuarentena y atestación; todavía sin navegación autónoma.
+2. **v0.2 — actual (parcial):** intake de preguntas local y Source Gateway de
+   bundles manuales; todavía sin navegación autónoma ni fuente admitida.
 3. **v0.3 — conectores gobernados:** gateway de fuentes con allowlist,
    presupuesto, rate limits, caché, robots/licencia, auditoría y kill switch.
 4. **v1 — producción:** identidad y roles, tenancy, secret manager, workers,
@@ -118,7 +124,8 @@ fuera de alcance.
 
 - “Producto final” describe la calidad y coherencia de la superficie, mientras
   el runtime sigue siendo un producto de campo local, no producción.
-- La fuente real, autenticación y persistencia de investigaciones aún tienen
-  `INSUFFICIENT EVIDENCE`; implementarlas ahora violaría el diseño aprobado.
+- La fuente real, autenticación y persistencia de evidencia aún tienen
+  `INSUFFICIENT EVIDENCE`; solo existe persistencia local de preguntas, no de
+  investigaciones validadas.
 - Revisión humana independiente, CI del SHA final y decisión de merge siguen
   pendientes.

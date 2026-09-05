@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from http.client import HTTPConnection
 import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from threading import Thread
 import unittest
 
@@ -12,7 +14,9 @@ from sictra_block1.lab_web import UI_SCOPE, create_server
 
 class Block1LabWebTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.server = create_server(port=0)
+        self.temp = TemporaryDirectory()
+        self.store_path = Path(self.temp.name) / "research-intake.json"
+        self.server = create_server(port=0, intake_store_path=self.store_path)
         self.thread = Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
 
@@ -20,6 +24,7 @@ class Block1LabWebTests(unittest.TestCase):
         self.server.shutdown()
         self.server.server_close()
         self.thread.join(timeout=2)
+        self.temp.cleanup()
 
     def request(self, method: str, path: str, body=None, headers=None):
         connection = HTTPConnection("127.0.0.1", self.server.server_port, timeout=5)
@@ -49,6 +54,7 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertIn(b"renderEditorialDesk", body)
         self.assertIn(b"selectEditorialFlagship", body)
         self.assertIn(b"abstainEditorialFlagship", body)
+        self.assertIn(b"createResearchIntake", body)
         status, _, body = self.request("GET", "/health")
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)["scope"], UI_SCOPE)
@@ -84,6 +90,47 @@ class Block1LabWebTests(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)["comparison"]["verdict"], "PREFER_LEFT")
+
+    def test_operator_can_persist_an_evidence_free_research_draft(self):
+        intake = {
+            "title": "Riesgo de reposición electrónica",
+            "question": "¿Qué señales deben investigarse antes de revisar la reposición?",
+            "level": "REGIONAL",
+            "geography": "China a México",
+            "industry": "electronics",
+            "actor": "Importadores",
+            "mode": "Marítimo y terrestre",
+            "period": "30 días",
+            "topic_keys": ["supply_chain_resilience"],
+            "source_reference": "Informe para revisar manualmente",
+        }
+        status, _, body = self.request(
+            "POST", "/api/investigations", body=json.dumps(intake),
+            headers={"Content-Type": "application/json"},
+        )
+        draft = json.loads(body)
+        self.assertEqual(status, 201)
+        self.assertEqual(draft["status"], "DRAFT")
+        self.assertEqual(draft["sources"], [])
+        self.assertEqual(draft["operator_declaration"]["status"], "NOT_FETCHED_NOT_EVIDENCE")
+        status, _, body = self.request("GET", f"/api/investigations/{draft['investigation_id']}")
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["question"], intake["question"])
+        status, _, body = self.request("GET", "/api/workspace")
+        self.assertIn(draft["investigation_id"], {
+            item["investigation_id"] for item in json.loads(body)["investigations"]
+        })
+        self.assertIn("OPERATOR_DECLARED_NO_EVIDENCE", json.loads(body)["data_classes"])
+
+    def test_operator_intake_rejects_payloads_that_cannot_be_evidence_free(self):
+        status, _, body = self.request(
+            "POST", "/api/investigations", body=json.dumps({"title": "incomplete"}),
+            headers={"Content-Type": "application/json"},
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("fields", json.loads(body)["error"])
+        status, _, _ = self.request("POST", "/api/investigations", body=b"{}")
+        self.assertEqual(status, 400)
 
     def test_editorial_desk_exposes_shortlist_blocks_and_bounded_handoff(self):
         status, _, body = self.request("GET", "/api/editorial")

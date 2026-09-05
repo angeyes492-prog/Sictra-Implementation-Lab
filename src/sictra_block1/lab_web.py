@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 import webbrowser
 from typing import Any
 
+from .common import ContractViolation
 from .editorial import (
     EditorialContractViolation,
     abstain_from_flagship,
@@ -27,6 +28,7 @@ from .logistics import (
     workspace_catalog,
 )
 from .source_portfolio import source_readiness
+from .research_intake import ResearchIntakeStore, ResearchIntakeViolation
 
 UI_SCOPE = "BLOCK1_LOCAL_INTELLIGENCE_PRODUCT_UI"
 _WEB_ROOT = Path(__file__).with_name("web")
@@ -37,6 +39,7 @@ _STATIC_FILES = {
 }
 _MAX_REJECTED_PAYLOAD_BYTES = 65_536
 _MAX_EDITORIAL_PAYLOAD_BYTES = 4_096
+_MAX_RESEARCH_INTAKE_BYTES = 4_096
 
 
 def _summary(report: dict[str, Any]) -> dict[str, str]:
@@ -162,6 +165,40 @@ class LabWebHandler(BaseHTTPRequestHandler):
             return None
         return payload
 
+    def _read_research_intake(self) -> dict[str, Any] | None:
+        if self.headers.get("Transfer-Encoding") is not None:
+            self.close_connection = True
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Se requiere JSON acotado."})
+            return None
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if length < 1 or length > _MAX_RESEARCH_INTAKE_BYTES:
+            self.close_connection = length > _MAX_RESEARCH_INTAKE_BYTES
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "El payload JSON está vacío o excede el límite."})
+            return None
+        content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+        if content_type != "application/json":
+            self.rfile.read(length)
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Se requiere Content-Type JSON."})
+            return None
+        try:
+            payload = json.loads(self.rfile.read(length))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "El payload JSON no es válido."})
+            return None
+        if not isinstance(payload, dict):
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "El JSON de investigación debe ser un objeto."})
+            return None
+        return payload
+
+    def _operator_drafts(self) -> tuple[dict[str, Any], ...]:
+        return tuple(self.server.intake_store.list())
+
+    def _workspace(self) -> dict[str, Any]:
+        return workspace_catalog(operator_drafts=self._operator_drafts())
+
     def do_GET(self) -> None:
         if not self._guard_local_request():
             return
@@ -173,7 +210,10 @@ class LabWebHandler(BaseHTTPRequestHandler):
             })
             return
         if parsed.path == "/api/workspace":
-            self._send_json(HTTPStatus.OK, workspace_catalog())
+            try:
+                self._send_json(HTTPStatus.OK, self._workspace())
+            except (ResearchIntakeViolation, LogisticsContractViolation) as error:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(error)})
             return
         if parsed.path == "/api/source-readiness":
             query = parse_qs(parsed.query, strict_parsing=False)
@@ -226,11 +266,18 @@ class LabWebHandler(BaseHTTPRequestHandler):
             if set(query) != {"left", "right"} or len(left) != 1 or len(right) != 1:
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Se requieren left y right una sola vez."})
                 return
-            if get_investigation(investigation_id) is None:
+            try:
+                drafts = self._operator_drafts()
+            except ResearchIntakeViolation as error:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(error)})
+                return
+            if get_investigation(investigation_id, operator_drafts=drafts) is None:
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "Investigación no disponible."})
                 return
             try:
-                result = compare_investigation_strategies(investigation_id, left[0], right[0])
+                result = compare_investigation_strategies(
+                    investigation_id, left[0], right[0], operator_drafts=drafts,
+                )
             except LogisticsContractViolation as error:
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
             else:
@@ -242,7 +289,11 @@ class LabWebHandler(BaseHTTPRequestHandler):
             if not suffix or "/" in suffix:
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "Investigación no disponible."})
                 return
-            investigation = get_investigation(suffix)
+            try:
+                investigation = get_investigation(suffix, operator_drafts=self._operator_drafts())
+            except ResearchIntakeViolation as error:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(error)})
+                return
             if investigation is None:
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "Investigación no disponible."})
             else:
@@ -256,6 +307,20 @@ class LabWebHandler(BaseHTTPRequestHandler):
         if not self._guard_local_request():
             return
         parsed = urlsplit(self.path)
+        if parsed.path == "/api/investigations":
+            if parsed.query:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Ruta no disponible."})
+                return
+            payload = self._read_research_intake()
+            if payload is None:
+                return
+            try:
+                draft = self.server.intake_store.create(payload)
+            except ResearchIntakeViolation as error:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            else:
+                self._send_json(HTTPStatus.CREATED, draft)
+            return
         if parsed.path == "/api/editorial/abstentions":
             if parsed.query:
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "Ruta no disponible."})
@@ -329,18 +394,29 @@ class LabWebHandler(BaseHTTPRequestHandler):
     do_PUT = _method_not_allowed
 
 
-def create_server(*, host: str = "127.0.0.1", port: int = 8765) -> ThreadingHTTPServer:
+def create_server(
+    *, host: str = "127.0.0.1", port: int = 8765,
+    intake_store_path: str | Path | None = None,
+) -> ThreadingHTTPServer:
     if host != "127.0.0.1":
         raise ValueError("the product workspace may only bind to 127.0.0.1")
-    return ThreadingHTTPServer((host, port), LabWebHandler)
+    server = ThreadingHTTPServer((host, port), LabWebHandler)
+    server.intake_store = ResearchIntakeStore(
+        intake_store_path or Path.cwd() / ".sictra-intelligence" / "research-intake.json"
+    )
+    return server
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument(
+        "--intake-store", type=Path,
+        help="Ruta local para borradores de investigación del operador.",
+    )
     parser.add_argument("--open", action="store_true", help="Open the local workspace.")
     args = parser.parse_args()
-    server = create_server(port=args.port)
+    server = create_server(port=args.port, intake_store_path=args.intake_store)
     address = f"http://127.0.0.1:{server.server_port}/"
     print(f"Intelligence Workspace disponible en {address}")
     if args.open:
