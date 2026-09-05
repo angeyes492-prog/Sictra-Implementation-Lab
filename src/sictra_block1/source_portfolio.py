@@ -36,7 +36,7 @@ class SourceCandidate:
 _SOURCES = (
     SourceCandidate("cepal", "CEPAL", ("cepal.org",), frozenset(("AMERICAS",)), frozenset(("TRADE", "INFRASTRUCTURE", "MACRO")), "QUARTERLY"),
     SourceCandidate("sieca", "SIECA — Secretaría de Integración Económica Centroamericana", ("sieca.int", "www.sieca.int", "oie.sieca.int"), frozenset(("AMERICAS",)), frozenset(("TRADE", "CUSTOMS", "INFRASTRUCTURE")), "EVENT_DRIVEN"),
-    SourceCandidate("eurostat", "Eurostat", ("ec.europa.eu",), frozenset(("EUROPE",)), frozenset(("TRADE", "INFRASTRUCTURE", "MACRO")), "MONTHLY"),
+    SourceCandidate("eurostat", "Eurostat", ("ec.europa.eu",), frozenset(("EUROPE",)), frozenset(("TRADE", "MARITIME", "INFRASTRUCTURE", "MACRO")), "MONTHLY"),
     SourceCandidate("adb", "Asian Development Bank", ("adb.org",), frozenset(("ASIA_PACIFIC",)), frozenset(("TRADE", "INFRASTRUCTURE", "MACRO")), "QUARTERLY"),
     SourceCandidate("bitre", "BITRE", ("bitre.gov.au",), frozenset(("OCEANIA",)), frozenset(("PORTS", "AIR", "INFRASTRUCTURE")), "QUARTERLY"),
     SourceCandidate("uncomtrade", "UN Comtrade", ("comtradeapi.un.org",), frozenset(REGIONS), frozenset(("TRADE",)), "MONTHLY"),

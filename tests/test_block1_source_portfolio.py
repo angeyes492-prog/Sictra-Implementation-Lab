@@ -22,6 +22,13 @@ class SourcePortfolioTests(unittest.TestCase):
         self.assertNotIn("flexport", candidates)
         self.assertEqual(regional["admissible_source_count"], 0)
 
+    def test_eurostat_maritime_coverage_remains_proposed_only(self):
+        regional = source_readiness(region="EUROPE", domain="MARITIME")
+        candidates = {item["source_id"]: item for item in regional["candidates"]}
+        self.assertIn("eurostat", candidates)
+        self.assertEqual(candidates["eurostat"]["status"], "PROPOSED")
+        self.assertEqual(regional["admissible_source_count"], 0)
+
     def test_unknown_query_fails_closed(self):
         with self.assertRaises(ContractViolation):
             source_readiness(region="MOON", domain="TRADE")
