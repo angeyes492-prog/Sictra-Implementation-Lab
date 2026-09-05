@@ -78,6 +78,15 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertEqual(payload["admissible_source_count"], 0)
         self.assertEqual(payload["status"], "RESEARCH_BLOCKED_PENDING_SOURCE_BINDING")
         self.assertIn("cepal", {item["source_id"] for item in payload["candidates"]})
+        status, _, body = self.request("GET", "/api/source-readiness?region=EUROPE&domain=MARITIME")
+        eurostat = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(eurostat["admissible_source_count"], 0)
+        self.assertEqual(eurostat["status"], "RESEARCH_BLOCKED_PENDING_SOURCE_BINDING")
+        self.assertEqual(
+            {item["source_id"] for item in eurostat["candidates"]},
+            {"eurostat"},
+        )
         status, _, _ = self.request("GET", "/api/source-readiness?region=AMERICAS")
         self.assertEqual(status, 400)
 
