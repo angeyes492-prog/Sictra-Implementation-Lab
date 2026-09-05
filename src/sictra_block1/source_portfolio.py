@@ -9,6 +9,7 @@ from .common import ContractViolation
 
 REGIONS = frozenset(("AMERICAS", "EUROPE", "ASIA_PACIFIC", "OCEANIA"))
 DOMAINS = frozenset(("TRADE", "MARITIME", "AIR", "PORTS", "CUSTOMS", "INFRASTRUCTURE", "MACRO"))
+SOURCE_CLASSES = frozenset(("PUBLIC_INSTITUTIONAL", "CORPORATE_FIRST_PARTY"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,20 +20,22 @@ class SourceCandidate:
     regions: frozenset[str]
     domains: frozenset[str]
     cadence: str
+    source_class: str = "PUBLIC_INSTITUTIONAL"
     status: str = "PROPOSED"
 
     def __post_init__(self) -> None:
-        if not self.source_id or not self.publisher or not self.hosts or self.status != "PROPOSED":
+        if not self.source_id or not self.publisher or not self.hosts or self.source_class not in SOURCE_CLASSES or self.status != "PROPOSED":
             raise ContractViolation("source candidate is invalid")
         if not self.regions <= REGIONS or not self.domains <= DOMAINS or not self.regions or not self.domains:
             raise ContractViolation("source candidate coverage is invalid")
 
     def snapshot(self) -> dict[str, object]:
-        return {"source_id": self.source_id, "publisher": self.publisher, "candidate_hosts": list(self.hosts), "regions": sorted(self.regions), "domains": sorted(self.domains), "cadence": self.cadence, "status": self.status}
+        return {"source_id": self.source_id, "publisher": self.publisher, "candidate_hosts": list(self.hosts), "regions": sorted(self.regions), "domains": sorted(self.domains), "cadence": self.cadence, "source_class": self.source_class, "status": self.status}
 
 
 _SOURCES = (
     SourceCandidate("cepal", "CEPAL", ("cepal.org",), frozenset(("AMERICAS",)), frozenset(("TRADE", "INFRASTRUCTURE", "MACRO")), "QUARTERLY"),
+    SourceCandidate("sieca", "SIECA — Secretaría de Integración Económica Centroamericana", ("sieca.int", "www.sieca.int", "oie.sieca.int"), frozenset(("AMERICAS",)), frozenset(("TRADE", "CUSTOMS", "INFRASTRUCTURE")), "EVENT_DRIVEN"),
     SourceCandidate("eurostat", "Eurostat", ("ec.europa.eu",), frozenset(("EUROPE",)), frozenset(("TRADE", "INFRASTRUCTURE", "MACRO")), "MONTHLY"),
     SourceCandidate("adb", "Asian Development Bank", ("adb.org",), frozenset(("ASIA_PACIFIC",)), frozenset(("TRADE", "INFRASTRUCTURE", "MACRO")), "QUARTERLY"),
     SourceCandidate("bitre", "BITRE", ("bitre.gov.au",), frozenset(("OCEANIA",)), frozenset(("PORTS", "AIR", "INFRASTRUCTURE")), "QUARTERLY"),
@@ -42,6 +45,7 @@ _SOURCES = (
     SourceCandidate("wco", "World Customs Organization", ("wcoomd.org",), frozenset(REGIONS), frozenset(("CUSTOMS", "TRADE")), "EVENT_DRIVEN"),
     SourceCandidate("world-bank", "World Bank", ("worldbank.org",), frozenset(REGIONS), frozenset(("PORTS", "INFRASTRUCTURE", "MACRO")), "ANNUAL"),
     SourceCandidate("iata", "IATA", ("iata.org",), frozenset(REGIONS), frozenset(("AIR",)), "EVENT_DRIVEN"),
+    SourceCandidate("flexport", "Flexport", ("flexport.com", "www.flexport.com"), frozenset(REGIONS), frozenset(("TRADE", "MARITIME", "AIR")), "EVENT_DRIVEN", source_class="CORPORATE_FIRST_PARTY"),
 )
 
 
