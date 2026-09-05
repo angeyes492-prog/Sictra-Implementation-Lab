@@ -15,6 +15,7 @@ from .runtime import IntelligenceRuntime
 from .storage import OperationalStore
 from .source_portfolio import SourceCandidate, source_readiness
 from .source_gateway import SourceApprovalRecord, SourceBindingIssuer, SourceGateway, SourceRegistration
+from .manual_source_preflight import ManualSourcePreflightViolation, preflight_manual_source_file
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -39,6 +40,8 @@ __all__ = [
     "SourceApprovalRecord",
     "SourceGateway",
     "SourceRegistration",
+    "ManualSourcePreflightViolation",
+    "preflight_manual_source_file",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",
