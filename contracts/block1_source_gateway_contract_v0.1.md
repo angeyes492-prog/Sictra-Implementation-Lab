@@ -1,0 +1,21 @@
+# Contract — Source Gateway v0.1
+
+E02 accepts only manual bundles from a `BOUND` registration whose signed HMAC
+binding is current and matches identity, scope, hosts, claims and byte limit.
+Binding emission requires an `APPROVED` record with reviewer identity, date,
+terms reference, source identity, hosts, claims and byte limit exactly matching
+the registration, including its `MANUAL_SOURCE_BUNDLE` access method. A
+rejected, future or mismatched review fails closed.
+The signed binding includes the SHA-256 fingerprint of the complete normalized
+approval record (reviewer, review time, terms reference, decision and bounded
+source fields). The emitted observed record carries both that approval
+fingerprint and a fingerprint of the signed binding, so durable evidence can
+be traced to the exact authorization rather than merely to a compatible scope.
+The output is an `OBSERVED` source attested by the existing evidence issuer.
+The same registered source always has one provenance root.
+
+No binding means no ingress. URLs must be HTTPS and in the registered DNS
+allowlist; local/IP hosts, credentials, ports and fragments are rejected. The
+gateway has no HTTP client, scraper, credential store or scheduling capability.
+Attestation proves only controlled normalization, not truth, licensing,
+independence, freshness beyond downstream validation, production or a gate.

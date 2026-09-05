@@ -1,0 +1,22 @@
+{
+  "schema_version": "0.1",
+  "retrieved_at": "2026-09-05",
+  "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+  "commit_sha": "24fabd68bf5b3511d2c415c137b8ff4f8ccd05aa",
+  "workflow_run": {
+    "id": 33992985995,
+    "name": "Block 1 bounded-slice validation",
+    "run_number": 314,
+    "status": "completed",
+    "conclusion": "success",
+    "workflow_id": 341702332,
+    "jobs_url": "https://api.github.com/repos/angeyes492-prog/Sictra-Implementation-Lab/actions/runs/33992985995/jobs",
+    "logs_url": "https://api.github.com/repos/angeyes492-prog/Sictra-Implementation-Lab/actions/runs/33992985995/logs"
+  },
+  "scope": "LOCAL_IMPLEMENTATION_CI_ONLY",
+  "non_claims": [
+    "This CI result does not bind a source.",
+    "This CI result does not attest content or promote a gate.",
+    "This CI result is not an independent human review."
+  ]
+}

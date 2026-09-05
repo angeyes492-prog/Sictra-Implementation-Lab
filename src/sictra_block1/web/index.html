@@ -18,8 +18,10 @@
       <nav class="rail-nav">
         <button class="nav-item active" data-view="overview"><span>⌁</span> Panorama</button>
         <button class="nav-item" data-view="investigations"><span>◎</span> Investigaciones</button>
+        <button class="nav-item" data-view="editorial"><span>◇</span> Mesa editorial</button>
         <button class="nav-item" data-view="strategy"><span>⇄</span> Strategy Lab</button>
         <button class="nav-item" data-view="evidence"><span>⌇</span> Evidencia</button>
+        <button class="nav-item" data-view="sources"><span>⌘</span> Fuentes</button>
         <button class="nav-item" data-view="watchlists"><span>◌</span> Watchlists</button>
         <button class="nav-item" data-view="validation"><span>✓</span> Validación</button>
       </nav>
@@ -34,7 +36,7 @@
         <div><span class="crumb">Bloque 1 / <strong id="view-name">Panorama</strong></span><h1>Intelligence Workspace</h1></div>
         <div class="command-actions"><span class="fixture-badge">Campo sintético</span><button id="refresh" class="icon-button" type="button" aria-label="Actualizar workspace">↻</button></div>
       </header>
-      <section class="boundary-strip" aria-label="Límite del entorno"><strong>Entorno de pruebas trazable</strong><span>No consulta internet, no contiene empresas reales y no cambia gates.</span></section>
+      <section class="boundary-strip" aria-label="Límite del entorno"><strong>Entorno de pruebas trazable</strong><span>No consulta internet; un borrador local no es evidencia ni cambia gates.</span></section>
       <div id="loading" class="loading-state"><span></span>Cargando el tejido de inteligencia…</div>
       <div id="error" class="error-state" role="alert" hidden></div>
 
@@ -51,7 +53,25 @@
       </section>
 
       <section class="view" data-view-panel="investigations">
-        <div class="view-intro"><div><span class="section-kicker">Research desk</span><h2>Investigaciones acotadas</h2><p>Selecciona un expediente para recorrer su trazabilidad completa.</p></div><select id="investigation-select" aria-label="Seleccionar investigación"></select></div>
+        <div class="view-intro"><div><span class="section-kicker">Research desk</span><h2>Investigaciones acotadas</h2><p>Selecciona un expediente o formula una pregunta local que empiece sin evidencia.</p></div><select id="investigation-select" aria-label="Seleccionar investigación"></select></div>
+        <section class="panel intake-panel">
+          <div class="panel-head"><div><span class="section-kicker">Entrada local</span><h2>Formular investigación</h2></div><span class="fixture-badge">Siempre DRAFT</span></div>
+          <p>Guarda una pregunta y su alcance en esta computadora. Una referencia declarada no se consulta ni se convierte en evidencia; no ingreses secretos ni datos personales.</p>
+          <form id="research-intake-form" class="intake-form">
+            <label>Título<input name="title" required minlength="3" maxlength="160" placeholder="Ej.: Riesgo de reposición electrónica"></label>
+            <label>Pregunta<textarea name="question" required minlength="12" maxlength="600" placeholder="¿Qué debe investigarse y por qué?" rows="3"></textarea></label>
+            <label>Escala<select name="level"><option>GLOBAL</option><option>REGIONAL</option><option>LOCAL</option></select></label>
+            <label>Geografía<input name="geography" required minlength="2" maxlength="120" placeholder="China → México"></label>
+            <label>Industria<select name="industry"><option value="electronics">Electrónica</option><option value="automotive">Automotriz</option><option value="manufacturing">Manufactura</option><option value="retail">Retail</option><option value="food">Alimentos</option><option value="pharmaceuticals">Farmacéutica</option><option value="chemicals">Química</option></select></label>
+            <label>Actor<input name="actor" required minlength="2" maxlength="100" placeholder="Importadores"></label>
+            <label>Modalidad<input name="mode" required minlength="2" maxlength="100" placeholder="Marítimo + terrestre"></label>
+            <label>Período<input name="period" required minlength="2" maxlength="60" placeholder="30 días"></label>
+            <label>Tema principal<select name="topic_key"><option value="supply_chain_resilience">Resiliencia de cadena</option><option value="ocean_freight_rates">Flete marítimo</option><option value="port_congestion">Congestión portuaria</option><option value="tariff_change">Cambio arancelario</option><option value="customs_audits">Aduanas</option><option value="geopolitical_risk">Riesgo geopolítico</option><option value="electronics">Industria electrónica</option></select></label>
+            <label class="intake-wide">Referencia opcional, aún no verificada<input name="source_reference" maxlength="500" placeholder="URL, título de informe o nota para investigar"></label>
+            <button class="primary-button" type="submit">Guardar borrador local</button>
+          </form>
+          <div id="research-intake-result" aria-live="polite"></div>
+        </section>
         <div id="investigation-detail"></div>
       </section>
 
@@ -64,6 +84,23 @@
       <section class="view" data-view-panel="evidence">
         <div class="view-intro"><div><span class="section-kicker">E02 + E04 + E05</span><h2>Evidence Spine</h2><p>La firma visual del Bloque 1: cada conclusión conserva su camino de evidencia.</p></div><select id="evidence-select" aria-label="Seleccionar investigación para evidencia"></select></div>
         <div id="evidence-spine"></div>
+      </section>
+
+      <section class="view" data-view-panel="sources">
+        <div class="view-intro"><div><span class="section-kicker">E02 · Source Gateway</span><h2>Readiness de fuentes</h2><p>Candidatos de investigación; ninguno ingresa evidencia hasta completar revisión y binding.</p></div></div>
+        <div class="strategy-controls panel"><label>Región<select id="source-region"><option>AMERICAS</option><option>EUROPE</option><option>ASIA_PACIFIC</option><option>OCEANIA</option></select></label><label>Dominio<select id="source-domain"><option>TRADE</option><option>MARITIME</option><option>AIR</option><option>PORTS</option><option>CUSTOMS</option><option>INFRASTRUCTURE</option><option>MACRO</option></select></label><button id="source-refresh" class="primary-button" type="button">Consultar candidatos</button></div>
+        <div id="source-readiness-result" aria-live="polite"></div>
+      </section>
+
+      <section class="view" data-view-panel="editorial">
+        <div class="view-intro"><div><span class="section-kicker">E01–E08 · Editorial Engine</span><h2>Mesa editorial</h2><p>De señales gobernadas a una interpretación ejecutiva, sin ranking universal ni publicación automática.</p></div><span class="fixture-badge">Ciclo semanal sintético</span></div>
+        <div id="editorial-summary" class="editorial-summary"></div>
+        <div class="editorial-layout">
+          <section class="panel"><div class="panel-head"><div><span class="section-kicker">Frontera Pareto</span><h2>Lista corta</h2></div><span id="editorial-method" class="method-code"></span></div><div id="editorial-shortlist" class="editorial-shortlist"></div></section>
+          <aside id="editorial-blocked" class="panel editorial-blocked"></aside>
+        </div>
+        <div id="editorial-detail" class="editorial-detail"></div>
+        <div id="editorial-handoff" class="editorial-handoff" aria-live="polite"></div>
       </section>
 
       <section class="view" data-view-panel="watchlists">
