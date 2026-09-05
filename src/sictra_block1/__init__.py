@@ -20,6 +20,7 @@ from .source_gateway import (
     SourceGateway,
     SourceRegistration,
     source_approval_fingerprint,
+    validate_source_binding,
 )
 from .manual_source_preflight import ManualSourcePreflightViolation, preflight_manual_source_file
 from .eurostat_maritime_mapper import (
@@ -42,6 +43,7 @@ from .eurostat_maritime_delta import (
     compare_eurostat_maritime_workbooks,
 )
 from .manual_watchlist_cycle import ManualWatchlistCycle, ManualWatchlistCycleViolation
+from .source_control_store import SourceControlStore, SourceControlStoreViolation
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -67,6 +69,7 @@ __all__ = [
     "SourceGateway",
     "SourceRegistration",
     "source_approval_fingerprint",
+    "validate_source_binding",
     "ManualSourcePreflightViolation",
     "preflight_manual_source_file",
     "EurostatMaritimeMappingViolation",
@@ -82,6 +85,8 @@ __all__ = [
     "compare_eurostat_maritime_workbooks",
     "ManualWatchlistCycle",
     "ManualWatchlistCycleViolation",
+    "SourceControlStore",
+    "SourceControlStoreViolation",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",

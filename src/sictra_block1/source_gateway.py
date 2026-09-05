@@ -18,6 +18,11 @@ from .evidence import EvidenceIssuer
 MAX_REGISTERED_SOURCES = 50
 _FIELDS = frozenset(("source_id", "source_url", "content", "observed_at", "claim_key", "polarity", "correlation_id"))
 _ACCESS_METHOD = "MANUAL_SOURCE_BUNDLE"
+_BINDING_FIELDS = frozenset((
+    "issuer", "source_id", "scope", "allowed_hosts", "claim_keys",
+    "access_method", "max_content_bytes", "approval_fingerprint",
+    "issued_at", "expires_at", "signature",
+))
 
 
 def _text(name: str, value: object) -> str:
@@ -133,6 +138,54 @@ class SourceBindingIssuer:
         return payload
 
 
+def validate_source_binding(
+    registration: SourceRegistration,
+    binding: Mapping[str, Any],
+    binding_keys: Mapping[str, bytes],
+    *,
+    now: int,
+    require_current: bool = True,
+) -> dict[str, Any]:
+    """Verify exact binding shape, signature, registration and time semantics."""
+
+    if (
+        not isinstance(registration, SourceRegistration)
+        or not isinstance(binding, Mapping)
+        or not isinstance(binding_keys, Mapping)
+        or not isinstance(now, int) or isinstance(now, bool) or now < 0
+        or not isinstance(require_current, bool)
+    ):
+        raise ContractViolation("source binding validation input is invalid")
+    token = dict(binding)
+    if set(token) != _BINDING_FIELDS or not isinstance(token.get("issuer"), str) or not isinstance(token.get("signature"), str):
+        raise ContractViolation("source binding shape is invalid")
+    try:
+        key = bytes(binding_keys[token["issuer"]])
+    except (KeyError, TypeError, ValueError) as error:
+        raise ContractViolation("source binding issuer is untrusted") from error
+    if len(key) < 32 or not hmac.compare_digest(
+        hmac.new(key, _material(token), sha256).hexdigest(), token["signature"]
+    ):
+        raise ContractViolation("source binding signature is invalid")
+    issued_at, expires_at = token["issued_at"], token["expires_at"]
+    matches = (
+        token["source_id"] == registration.source_id
+        and token["scope"] == registration.scope
+        and tuple(token["allowed_hosts"]) == registration.allowed_hosts
+        and frozenset(token["claim_keys"]) == registration.claim_keys
+        and token["access_method"] == registration.access_method
+        and token["max_content_bytes"] == registration.max_content_bytes
+        and isinstance(token["approval_fingerprint"], str)
+        and re.fullmatch(r"[0-9a-f]{64}", token["approval_fingerprint"]) is not None
+        and isinstance(issued_at, int) and not isinstance(issued_at, bool)
+        and isinstance(expires_at, int) and not isinstance(expires_at, bool)
+        and 0 <= issued_at < expires_at
+    )
+    if not matches or (require_current and not issued_at <= now <= expires_at):
+        raise ContractViolation("source binding does not match active registration")
+    return token
+
+
 class SourceGateway:
     def __init__(self, *, registrations: tuple[SourceRegistration, ...], issuer: EvidenceIssuer,
                  binding_keys: Mapping[str, bytes], bindings: Mapping[str, Mapping[str, Any]], now: int) -> None:
@@ -152,14 +205,7 @@ class SourceGateway:
     def _assert_bindings(self, now: int) -> None:
         for source_id, binding in self._bindings.items():
             registration = self._registrations[source_id]
-            required = {"issuer", "source_id", "scope", "allowed_hosts", "claim_keys", "access_method", "max_content_bytes", "approval_fingerprint", "issued_at", "expires_at", "signature"}
-            if set(binding) != required or not isinstance(binding.get("issuer"), str) or not isinstance(binding.get("signature"), str):
-                raise ContractViolation("source binding shape is invalid")
-            key = self._keys.get(binding["issuer"])
-            if key is None or len(key) < 32 or not hmac.compare_digest(hmac.new(key, _material(binding), sha256).hexdigest(), binding["signature"]):
-                raise ContractViolation("source binding signature is invalid")
-            if binding["source_id"] != registration.source_id or binding["scope"] != registration.scope or tuple(binding["allowed_hosts"]) != registration.allowed_hosts or frozenset(binding["claim_keys"]) != registration.claim_keys or binding["access_method"] != registration.access_method or binding["max_content_bytes"] != registration.max_content_bytes or not isinstance(binding["approval_fingerprint"], str) or re.fullmatch(r"[0-9a-f]{64}", binding["approval_fingerprint"]) is None or not isinstance(binding["issued_at"], int) or isinstance(binding["issued_at"], bool) or not isinstance(binding["expires_at"], int) or isinstance(binding["expires_at"], bool) or not binding["issued_at"] <= now <= binding["expires_at"]:
-                raise ContractViolation("source binding does not match active registration")
+            validate_source_binding(registration, binding, self._keys, now=now)
 
     def attest_manual_bundle(self, bundle: Mapping[str, Any], *, now: int) -> dict[str, Any]:
         if not isinstance(bundle, Mapping) or frozenset(bundle) != _FIELDS or not isinstance(now, int) or isinstance(now, bool) or now < 0:

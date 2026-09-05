@@ -11,6 +11,9 @@ promovible a fuente real ni a cierre global.
 
 ## Evidence
 
+- `evidence/block1_source_control_store_preflight_v0.1.md`: durable local
+  registration/approval/binding reconstruction and one ephemeral observed
+  Eurostat record, with no secret persisted; 245/245 local tests.
 - `evidence/block1_source_binding_approval_lineage_v0.1.md`: repair `HIGH`
   linking each signed source binding and observed record to the exact
   normalized human approval; 240/240 local tests.
@@ -33,7 +36,7 @@ promovible a fuente real ni a cierre global.
   (`#201`), terminado en `success` sobre ese SHA exacto.
 - `evidence/ci-run-33325016910.json`: antecedente verificable de la
   vinculación del método de acceso, CI #197 sobre `829f5a3`.
-- Ejecución local del current source-governance state: 240 pruebas, 0 fallos,
+- Ejecución local del current source-governance state: 245 pruebas, 0 fallos,
   0 errores.
 - El binding HMAC exige coincidencia exacta de identidad, scope, hosts,
   claims, límite de bytes y `MANUAL_SOURCE_BUNDLE`; la aprobación rechazada,
