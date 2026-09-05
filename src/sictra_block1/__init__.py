@@ -25,6 +25,7 @@ from .eurostat_manual_bundle import (
     EurostatManualBundleViolation,
     build_eurostat_manual_bundle,
 )
+from .manual_bundle_ledger import ManualBundleLedger, ManualBundleLedgerViolation
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -56,6 +57,8 @@ __all__ = [
     "select_eurostat_geography_level",
     "EurostatManualBundleViolation",
     "build_eurostat_manual_bundle",
+    "ManualBundleLedger",
+    "ManualBundleLedgerViolation",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",
