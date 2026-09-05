@@ -11,12 +11,18 @@ promovible a fuente real ni a cierre global.
 
 ## Evidence
 
-- SHA canónico de implementación actual: `a35c372668b53308e1d5a3a7b0b0e42eec2748bc`.
+- SHA canónico del incremento de implementación Eurostat: `844f16c15ed855e150ae7de0a6ec58ba63a8d881`.
+- `evidence/ci-run-33943023301.json`: GitHub Actions run `33943023301`
+  (`#298`), terminado en `success` sobre ese SHA exacto. Verifica que el
+  candidato marítimo de Eurostat sigue bloqueado mientras sea `PROPOSED`.
+- `evidence/block1_source_dossier_eurostat_maritime_v0.1.md`: dossier con
+  términos oficiales, alcance `tran_r_mago_nm`, exclusiones y el límite de
+  admisión; no es una autorización ni una ingesta.
 - `evidence/ci-run-33325180999.json`: GitHub Actions run `33325180999`
   (`#201`), terminado en `success` sobre ese SHA exacto.
 - `evidence/ci-run-33325016910.json`: antecedente verificable de la
   vinculación del método de acceso, CI #197 sobre `829f5a3`.
-- Ejecución local del mismo estado: 181 pruebas, 0 fallos, 0 errores.
+- Ejecución local del mismo estado: 210 pruebas, 0 fallos, 0 errores.
 - El binding HMAC exige coincidencia exacta de identidad, scope, hosts,
   claims, límite de bytes y `MANUAL_SOURCE_BUNDLE`; la aprobación rechazada,
   futura o incongruente falla cerrada. Los campos temporales booleanos se
@@ -24,8 +30,11 @@ promovible a fuente real ni a cierre global.
 
 ## Test
 
-- `PYTHONPATH=src python -m unittest discover -s tests -q` — 181 pruebas,
-  resultado `OK`, ejecutado localmente el 2026-08-30.
+- `PYTHONPATH=src python -m unittest discover -s tests -q` — 210 pruebas,
+  resultado `OK`, ejecutado localmente el 2026-09-04.
+- `tests/test_block1_eurostat_maritime_draft.py` — la propuesta de Eurostat
+  declara host, límite, método y claims acotados, pero falla cerrada ante todo
+  intento de atestar un bundle mientras su estado sea `PROPOSED`.
 - CI #197: pruebas del repositorio, manifest local acotado y runtime de
   referencia de ocho motores, todos `success`.
 - Red-team contractual: binding ausente, vencido o alterado; aprobación
@@ -47,13 +56,17 @@ promovible a fuente real ni a cierre global.
 - Contrato: `contracts/block1_source_gateway_contract_v0.1.md`
 - Implementación: `src/sictra_block1/source_gateway.py`
 - Pruebas: `tests/test_block1_source_gateway.py`,
-  `tests/test_block1_source_portfolio.py`, `tests/test_block1_lab_web.py`
+  `tests/test_block1_source_portfolio.py`,
+  `tests/test_block1_eurostat_maritime_draft.py`,
+  `tests/test_block1_lab_web.py`
 - Revisión propuesta: PR #10 (permanece draft).
 
 ## Contradictions and blockers
 
-1. `INSUFFICIENT EVIDENCE / A` — no existe una fuente real `BOUND`, ni
-   evidencia de términos, licencia o acceso real aprobada por una persona.
+1. `INSUFFICIENT EVIDENCE / A` — no existe una fuente real `BOUND`, ni un
+   registro de acceso y términos aprobado por una persona. El dossier de
+   Eurostat acredita el texto de los términos y sus límites, pero no sustituye
+   esa decisión para el activo concreto.
 2. `INSUFFICIENT EVIDENCE / A` — la clave HMAC y el reviewer son mecanismos
    locales de referencia, no identidad de producción ni KMS.
 3. `INSUFFICIENT EVIDENCE / A` — falta revisión humana independiente sobre
@@ -71,7 +84,8 @@ promovible a fuente real ni a cierre global.
 
 ## Reviewer / validator
 
-Pruebas y revisión adversarial: Codex. CI: GitHub Actions #197. Revisión
+Pruebas y revisión adversarial: Codex. CI: GitHub Actions #298 sobre el SHA
+actual (y #197 como antecedente). Revisión
 independiente humana: pendiente.
 
 ## Next reassessment
