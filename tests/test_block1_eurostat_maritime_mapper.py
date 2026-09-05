@@ -10,11 +10,11 @@ from sictra_block1 import (
 )
 
 
-def workbook(*, unit="Thousand tonnes [THS_T]", rows=(("BE", "Belgium", "12.5", None, "13.5"),)) -> bytes:
+def workbook(*, unit="Thousand tonnes [THS_T]", last_updated="05/09/2026 06:14", rows=(("BE", "Belgium", "12.5", None, "13.5"),)) -> bytes:
     content = [
         ("Data extracted on 05/09/2026 06:14:51 from [ESTAT]",),
         ("Dataset:", "Maritime transport of freight by NUTS 2 region [tran_r_mago_nm$defaultview]"),
-        ("Last updated:", "05/09/2026 06:14"),
+        ("Last updated:", last_updated),
         (),
         ("Time frequency [FREQ]", None, "Annual [A]"),
         ("Traffic and transport measurement [TRA_MEAS]", None, "Freight loaded and unloaded [FR_LD_NLD]"),
