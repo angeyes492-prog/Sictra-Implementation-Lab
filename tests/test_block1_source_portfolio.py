@@ -11,15 +11,14 @@ class SourcePortfolioTests(unittest.TestCase):
         source_ids = {item["source_id"] for item in result["candidates"]}
         self.assertIn("cepal", source_ids)
         self.assertIn("sieca", source_ids)
-        self.assertIn("flexport", source_ids)
+        self.assertNotIn("flexport", source_ids)
         self.assertTrue(all(item["status"] == "PROPOSED" for item in result["candidates"]))
 
-    def test_institutional_and_corporate_candidates_are_not_conflated(self):
+    def test_sieca_remains_available_after_flexport_withdrawal(self):
         regional = source_readiness(region="AMERICAS", domain="TRADE")
         candidates = {item["source_id"]: item for item in regional["candidates"]}
         self.assertEqual(candidates["sieca"]["source_class"], "PUBLIC_INSTITUTIONAL")
-        self.assertEqual(candidates["flexport"]["source_class"], "CORPORATE_FIRST_PARTY")
-        self.assertEqual(candidates["flexport"]["status"], "PROPOSED")
+        self.assertNotIn("flexport", candidates)
         self.assertEqual(regional["admissible_source_count"], 0)
 
     def test_unknown_query_fails_closed(self):

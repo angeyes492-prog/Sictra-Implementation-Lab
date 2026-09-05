@@ -104,7 +104,7 @@ class SourceBindingIssuer:
             raise ContractViolation("binding issuer requires a 32-byte key")
 
     def issue(self, registration: SourceRegistration, approval: SourceApprovalRecord, *, now: int, ttl: int) -> dict[str, Any]:
-        if registration.status != "BOUND" or not isinstance(now, int) or isinstance(now, bool) or now < 0 or not isinstance(ttl, int) or ttl < 1:
+        if registration.status != "BOUND" or not isinstance(now, int) or isinstance(now, bool) or now < 0 or not isinstance(ttl, int) or isinstance(ttl, bool) or ttl < 1:
             raise ContractViolation("binding requires BOUND registration, time, and ttl")
         if approval.decision != "APPROVED" or approval.reviewed_at > now or approval.source_id != registration.source_id or approval.allowed_hosts != registration.allowed_hosts or approval.claim_keys != registration.claim_keys or approval.access_method != registration.access_method or approval.max_content_bytes != registration.max_content_bytes:
             raise ContractViolation("binding requires a current matching approved source record")
@@ -157,10 +157,11 @@ class SourceGateway:
             raise ContractViolation("source URL is invalid") from error
         if parsed.scheme.lower() != "https" or parsed.username or parsed.password or port is not None or parsed.fragment or _host(parsed.hostname or "") not in registration.allowed_hosts:
             raise ContractViolation("source URL is not allowed")
-        content = _text("content", bundle["content"])
+        content = bundle["content"]
+        _text("content", content)
         observed_at, polarity = bundle["observed_at"], bundle["polarity"]
         claim_key, correlation = _text("claim_key", bundle["claim_key"]), _text("correlation_id", bundle["correlation_id"])
-        if len(content.encode()) > registration.max_content_bytes or not isinstance(observed_at, int) or isinstance(observed_at, bool) or not 0 <= observed_at <= now or claim_key not in registration.claim_keys or polarity not in {-1, 1} or isinstance(polarity, bool):
+        if len(content.encode()) > registration.max_content_bytes or not isinstance(observed_at, int) or isinstance(observed_at, bool) or not 0 <= observed_at <= now or claim_key not in registration.claim_keys or not isinstance(polarity, int) or isinstance(polarity, bool) or polarity not in {-1, 1}:
             raise ContractViolation("manual source bundle values are invalid")
         return self._issuer.attest({"source_id": source_id, "content": content, "observed_at": observed_at, "root_provenance": f"gateway-source:{source_id}", "evidence_class": "OBSERVED", "scope": registration.scope, "correlation_id": correlation, "claim_key": claim_key, "polarity": polarity, "source_url": url, "publisher": registration.publisher, "content_sha256": sha256(content.encode()).hexdigest(), "ingestion_method": registration.access_method})
 

@@ -35,6 +35,26 @@ def resign(binding):
 
 
 class SourceGatewayTests(unittest.TestCase):
+    def test_content_is_preserved_and_hashed_without_silent_trimming(self):
+        content = "  observation\n"
+        source = gateway().attest_manual_bundle(self.bundle(content=content), now=NOW)
+        self.assertEqual(source["content"], content)
+        self.assertEqual(source["content_sha256"], sha256(content.encode()).hexdigest())
+
+    def test_limit_applies_to_original_utf8_payload(self):
+        for content in (" " * 512 + "x", "é" * 257):
+            with self.subTest(content_bytes=len(content.encode())):
+                with self.assertRaises(ContractViolation):
+                    gateway().attest_manual_bundle(self.bundle(content=content), now=NOW)
+
+    def test_boolean_ttl_and_non_integer_polarities_are_rejected(self):
+        with self.assertRaises(ContractViolation):
+            SourceBindingIssuer("review-control", KEY).issue(registration(), approval(), now=NOW, ttl=True)
+        for polarity in (1.0, -1.0, [], {}):
+            with self.subTest(polarity=polarity):
+                with self.assertRaises(ContractViolation):
+                    gateway().attest_manual_bundle(self.bundle(polarity=polarity), now=NOW)
+
     def bundle(self, **changes):
         value = {"source_id": "unctad", "source_url": "https://unctad.org/report", "content": "observation", "observed_at": NOW - 1, "claim_key": "logistics-connectivity", "polarity": 1, "correlation_id": "report-1"}
         value.update(changes)

@@ -45,7 +45,6 @@ _SOURCES = (
     SourceCandidate("wco", "World Customs Organization", ("wcoomd.org",), frozenset(REGIONS), frozenset(("CUSTOMS", "TRADE")), "EVENT_DRIVEN"),
     SourceCandidate("world-bank", "World Bank", ("worldbank.org",), frozenset(REGIONS), frozenset(("PORTS", "INFRASTRUCTURE", "MACRO")), "ANNUAL"),
     SourceCandidate("iata", "IATA", ("iata.org",), frozenset(REGIONS), frozenset(("AIR",)), "EVENT_DRIVEN"),
-    SourceCandidate("flexport", "Flexport", ("flexport.com", "www.flexport.com"), frozenset(REGIONS), frozenset(("TRADE", "MARITIME", "AIR")), "EVENT_DRIVEN", source_class="CORPORATE_FIRST_PARTY"),
 )
 
 
