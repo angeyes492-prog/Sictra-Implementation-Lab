@@ -19,7 +19,7 @@ Neither label follows from a passing test suite alone.
 | 4. Evidence ledger | Preserve provenance and transformations for every admitted observation. | Unattested Eurostat assembly and HMAC-chained local ledger are implemented; no binding or attestation. | Signed binding, gateway attestation and immutable local record link file hash, filters and mapping. | Durable encrypted store, audit trail, retention and restore exercise. |
 | 5. Intelligence runtime | Form research questions, detect changes, contradictions and bounded insights. | E01–E08 completed one ephemeral local-reference run from the supplied workbook; no durable operational source. | A durably bound real-source run produces facts, interpretations and uncertainties separately. | Load/performance SLOs and continuous regression with real anonymised cases. |
 | 6. Editorial decisioning | Select only relevant, attributable insight candidates and hand off to Design. | Bounded editorial engine runs on fixtures. | One reviewed brief links every statement to evidence and abstains when weak. | Approval workflow, versioned outputs and publishing audit trail. |
-| 7. Watchlists and cadence | Recheck approved sources and surface meaningful change without noise. | Manual comparator and HMAC-ledger checkpoint path implemented; no scheduler or attested checkpoint. | Defined cadence and a manually triggered, attested delta report for one source. | Budgeted workers, rate limits, change detection, alerts, kill switch and incident runbook. |
+| 7. Watchlists and cadence | Recheck approved sources and surface meaningful change without noise. | Atomic manual cycle persists checkpoints and recomputable deltas; no scheduler or attested checkpoint. | Defined cadence and a manually triggered, attested delta report for one source. | Budgeted workers, rate limits, change detection, alerts, kill switch and incident runbook. |
 | 8. Operating plane | Make the system safe for multiple people and sustained use. | Local single-user service only. | Named operator, documented local backup and access boundary. | SSO/RBAC, tenancy, secret manager, deployment controls, observability, backups, security review and disaster recovery. |
 
 ## Required order
@@ -36,7 +36,8 @@ Neither label follows from a passing test suite alone.
 
 - The owner decision applies only to the selected Eurostat asset; it is not a
   reusable blanket license for the portfolio.
-- The supplied XLSX passed structural preflight but has not passed schema,
-  temporal, numerical, provenance or independent review.
+- The supplied XLSX passed local structural, schema, temporal and numerical
+  validation. Runtime source admission, independent provenance review and
+  operational acceptance remain incomplete.
 - No layer authorizes network scraping, automatic publication, production
   identity or global Block 1 acceptance.

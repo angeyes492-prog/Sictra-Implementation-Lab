@@ -35,6 +35,7 @@ from .eurostat_maritime_delta import (
     compare_eurostat_manual_bundles,
     compare_eurostat_maritime_workbooks,
 )
+from .manual_watchlist_cycle import ManualWatchlistCycle, ManualWatchlistCycleViolation
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -72,6 +73,8 @@ __all__ = [
     "EurostatMaritimeDeltaViolation",
     "compare_eurostat_manual_bundles",
     "compare_eurostat_maritime_workbooks",
+    "ManualWatchlistCycle",
+    "ManualWatchlistCycleViolation",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",
