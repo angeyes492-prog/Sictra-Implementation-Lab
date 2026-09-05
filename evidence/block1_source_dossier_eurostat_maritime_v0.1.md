@@ -7,7 +7,7 @@
 | Source identity | Eurostat / European Commission |
 | Source portfolio state | `PROPOSED` |
 | Runtime admission state | `NOT BOUND`; `NOT EXECUTED`; `NOT VALIDATED` |
-| Decision state | `INSUFFICIENT EVIDENCE` (admission); confidence `A` for the cited terms and dataset description |
+| Decision state | owner review `VERIFIED / A`; runtime admission `INSUFFICIENT EVIDENCE / A` |
 | Intended scope | `BLOCK1_EUROPE_MARITIME_INTELLIGENCE` |
 
 ## Bounded candidate asset
@@ -48,6 +48,14 @@ The proposed registration is intentionally manual-only and capped at 131,072 UTF
 
 The current test deliberately proves the inverse: a `PROPOSED` Eurostat draft cannot attest even a fixture bundle.  This is a contract regression, not evidence that Eurostat has been ingested or that Block 1 is operational.
 
-## Human decision required
+## Owner decision and remaining admission work
 
-The reviewer must record a decision against `evidence/block1_eurostat_maritime_registration_draft_v0.1.md`, including reviewer identity, review date, exact terms evidence reference, confirmation that the selected asset is not an exception, and `APPROVED` or `REJECTED`.  Until then, the correct state is `INSUFFICIENT EVIDENCE` / `NOT BOUND`.
+The project owner approved this bounded use on 2026-09-04 after reviewing the
+official notice reproduced in the task. The decision is preserved in
+`evidence/block1_eurostat_maritime_registration_draft_v0.1.md` and applies
+only to the precise asset and exclusions stated there.
+
+The decision does not create a signed binding, an ingested bundle or a
+validated claim. Until a trusted issuer binds a matching registration and a
+manually supplied bundle is reviewed, the correct runtime state remains
+`INSUFFICIENT EVIDENCE` / `NOT BOUND`.

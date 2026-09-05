@@ -1,6 +1,7 @@
 # Proposed registration: Eurostat maritime data
 
-This is a review template, not an authorization, binding, data ingest or runtime source.
+This record has an owner approval for the bounded asset below. It is not a
+binding, data ingest or validated runtime source.
 
 ```json
 {
@@ -19,15 +20,15 @@ This is a review template, not an authorization, binding, data ingest or runtime
 }
 ```
 
-## Required approval record
+## Owner approval record
 
 | Required field | Reviewer entry |
 | --- | --- |
-| Reviewer identity | `PENDING` |
-| Review timestamp | `PENDING` |
-| Terms evidence reference | `PENDING` |
-| Selected asset checked against exceptions | `PENDING` |
-| Attribution and change-notice method | `PENDING` |
-| Decision | `PENDING: APPROVED or REJECTED` |
+| Reviewer identity | `PROJECT_OWNER` (decision recorded in this Codex task) |
+| Review date | `2026-09-04` |
+| Terms evidence reference | `evidence/block1_source_dossier_eurostat_maritime_v0.1.md` |
+| Selected asset checked against exceptions | `APPROVED ONLY for Eurostat-owned statistical data and metadata in tran_r_mago_nm; exclusions remain blocked` |
+| Attribution and change-notice method | `Eurostat dataset DOI/datacode + access date; disclose any transformation` |
+| Decision | `APPROVED` |
 
 An approval is valid only when its source ID, hosts, claim keys, access method and content limit exactly match this draft.  Any changed asset, exception, host, or term requires a new review.  Approval alone is not a signed binding, source execution, validation or gate acceptance.
