@@ -12,6 +12,7 @@ class SourcePortfolioTests(unittest.TestCase):
         self.assertIn("cepal", source_ids)
         self.assertIn("sieca", source_ids)
         self.assertNotIn("flexport", source_ids)
+        self.assertNotIn("unctad", source_ids)
         self.assertTrue(all(item["status"] == "PROPOSED" for item in result["candidates"]))
 
     def test_sieca_remains_available_after_flexport_withdrawal(self):

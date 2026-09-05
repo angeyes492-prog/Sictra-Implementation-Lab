@@ -39,7 +39,6 @@ _SOURCES = (
     SourceCandidate("eurostat", "Eurostat", ("ec.europa.eu",), frozenset(("EUROPE",)), frozenset(("TRADE", "INFRASTRUCTURE", "MACRO")), "MONTHLY"),
     SourceCandidate("adb", "Asian Development Bank", ("adb.org",), frozenset(("ASIA_PACIFIC",)), frozenset(("TRADE", "INFRASTRUCTURE", "MACRO")), "QUARTERLY"),
     SourceCandidate("bitre", "BITRE", ("bitre.gov.au",), frozenset(("OCEANIA",)), frozenset(("PORTS", "AIR", "INFRASTRUCTURE")), "QUARTERLY"),
-    SourceCandidate("unctad", "UN Trade and Development", ("unctad.org",), frozenset(REGIONS), frozenset(("TRADE", "MARITIME", "PORTS")), "ANNUAL"),
     SourceCandidate("uncomtrade", "UN Comtrade", ("comtradeapi.un.org",), frozenset(REGIONS), frozenset(("TRADE",)), "MONTHLY"),
     SourceCandidate("wto", "World Trade Organization", ("wto.org",), frozenset(REGIONS), frozenset(("TRADE", "CUSTOMS")), "MONTHLY"),
     SourceCandidate("wco", "World Customs Organization", ("wcoomd.org",), frozenset(REGIONS), frozenset(("CUSTOMS", "TRADE")), "EVENT_DRIVEN"),

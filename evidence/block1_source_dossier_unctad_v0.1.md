@@ -2,18 +2,19 @@
 
 - `DOSSIER_ID`: `BLOCK1-SOURCE-UNCTAD-001`
 - `DATE`: `2026-09-05`
-- `STATE`: `INSUFFICIENT EVIDENCE`
+- `STATE`: `RETIRED_BY_OWNER_DECISION / CONTRADICTED`
 - `CONFIDENCE`: `A` for the recorded primary-source observations; `E` for runtime admissibility
 - `CANDIDATE`: `unctad` / UN Trade and Development
 - `INTENDED_SCOPE`: global maritime and trade intelligence
 - `PROPOSED_ACCESS_METHOD`: `MANUAL_SOURCE_BUNDLE`
-- `RUNTIME_STATUS`: no registration, binding, approval record, manual bundle or observed source exists
+- `RUNTIME_STATUS`: retired; no registration, binding, approval record, manual bundle or observed source exists
 
 ## Decision
 
-**Do not admit or ingest this source.** The dossier reduces uncertainty around
-candidate suitability but does not satisfy the Source Gateway contract. It is not
-evidence of a claim, a licence approval, or authorization to acquire data.
+**Do not admit, ingest or reconsider this source without a new owner decision.**
+The owner retired UNCTAD on 2026-09-04 after preserving the unresolved conflict
+between general site terms and the Data Hub FAQ. This dossier is historical
+evidence, not a candidate, licence approval or authorization to acquire data.
 
 ## Primary-source observations
 
@@ -28,7 +29,7 @@ evidence of a claim, a licence approval, or authorization to acquire data.
 
 | Required control | Result | Why |
 | --- | --- | --- |
-| Canonical source identity | `PROBABLE / B` | The candidate is in the bounded portfolio as `unctad`. |
+| Canonical source identity | `RETIRED / A` | The owner removed `unctad` from the bounded portfolio. |
 | Host allowlist | `CONTRADICTED / A` | The candidate currently lists `unctad.org`; the Data Hub pages are hosted at `unctadstat.unctad.org`. A host cannot be silently widened. |
 | Terms/licence reference | `INSUFFICIENT EVIDENCE / A` | The FAQ and copyright page have overlapping but not identical reuse wording. The intended material and use must be tied to one authoritative licence interpretation. |
 | Claim authorization | `INSUFFICIENT EVIDENCE / A` | No approved claim keys, temporal limits or allowed dataset/report slice exist. |
@@ -60,10 +61,8 @@ This dossier does **not** authorize:
 - using an UNCTAD statement in a newsletter, dashboard or customer output;
 - changing the Block 1 gate.
 
-## Next bounded action
+## No next action
 
-Prepare a **registration-and-approval draft** for one selected Data Hub dataset
-with: exact hostname, legal/terms reference, permitted claim keys, byte limit,
-freshness expectation, reviewer field and manual-bundle manifest. It remains
-`PROPOSED` until a person with source-governance authority records the
-decision.
+UNCTAD is retired from the source portfolio. Any future reconsideration requires
+a fresh owner decision and a new evidence dossier; this historical dossier may
+not be promoted or reused as an approval draft.

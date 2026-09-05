@@ -13,19 +13,19 @@ EVIDENCE_KEY = b"e" * 32
 
 
 def registration(**changes):
-    value = SourceRegistration("unctad", "UN Trade and Development", "intelligence", ("unctad.org",), frozenset(("logistics-connectivity",)), "MANUAL_SOURCE_BUNDLE", 512, "BOUND")
+    value = SourceRegistration("sample-public-source", "Sample public source", "intelligence", ("source.example",), frozenset(("logistics-connectivity",)), "MANUAL_SOURCE_BUNDLE", 512, "BOUND")
     return replace(value, **changes) if changes else value
 
 
 def approval(**changes):
-    value = SourceApprovalRecord("unctad", "reviewer-01", NOW - 1, "review://terms/unctad", ("unctad.org",), frozenset(("logistics-connectivity",)), "MANUAL_SOURCE_BUNDLE", 512, "APPROVED")
+    value = SourceApprovalRecord("sample-public-source", "reviewer-01", NOW - 1, "review://terms/sample-public-source", ("source.example",), frozenset(("logistics-connectivity",)), "MANUAL_SOURCE_BUNDLE", 512, "APPROVED")
     return replace(value, **changes) if changes else value
 
 
 def gateway(*, binding=None, now=NOW):
     value = registration()
     token = SourceBindingIssuer("review-control", KEY).issue(value, approval(), now=NOW, ttl=100) if binding is None else binding
-    return SourceGateway(registrations=(value,), issuer=EvidenceIssuer("gateway", EVIDENCE_KEY), binding_keys={"review-control": KEY}, bindings={"unctad": token}, now=now)
+    return SourceGateway(registrations=(value,), issuer=EvidenceIssuer("gateway", EVIDENCE_KEY), binding_keys={"review-control": KEY}, bindings={"sample-public-source": token}, now=now)
 
 
 def resign(binding):
@@ -56,13 +56,13 @@ class SourceGatewayTests(unittest.TestCase):
                     gateway().attest_manual_bundle(self.bundle(polarity=polarity), now=NOW)
 
     def bundle(self, **changes):
-        value = {"source_id": "unctad", "source_url": "https://unctad.org/report", "content": "observation", "observed_at": NOW - 1, "claim_key": "logistics-connectivity", "polarity": 1, "correlation_id": "report-1"}
+        value = {"source_id": "sample-public-source", "source_url": "https://source.example/report", "content": "observation", "observed_at": NOW - 1, "claim_key": "logistics-connectivity", "polarity": 1, "correlation_id": "report-1"}
         value.update(changes)
         return value
 
     def test_signed_bound_source_attests_manual_bundle(self):
         source = gateway().attest_manual_bundle(self.bundle(), now=NOW)
-        self.assertEqual(source["root_provenance"], "gateway-source:unctad")
+        self.assertEqual(source["root_provenance"], "gateway-source:sample-public-source")
         self.assertEqual(source["ingestion_method"], "MANUAL_SOURCE_BUNDLE")
 
     def test_missing_tampered_or_expired_binding_fails_closed(self):
@@ -92,12 +92,12 @@ class SourceGatewayTests(unittest.TestCase):
 
     def test_url_escape_bundle_mutation_and_network_are_rejected(self):
         guarded = gateway()
-        for bundle in (self.bundle(source_url="http://unctad.org/report"), self.bundle(source_url="https://127.0.0.1/report"), self.bundle(source_url="https://unctad.org:invalid/report"), self.bundle(claim_key="unknown"), self.bundle(observed_at=NOW + 1), {**self.bundle(), "extra": "x"}):
+        for bundle in (self.bundle(source_url="http://source.example/report"), self.bundle(source_url="https://127.0.0.1/report"), self.bundle(source_url="https://source.example:invalid/report"), self.bundle(claim_key="unknown"), self.bundle(observed_at=NOW + 1), {**self.bundle(), "extra": "x"}):
             with self.subTest(bundle=bundle):
                 with self.assertRaises(ContractViolation):
                     guarded.attest_manual_bundle(bundle, now=NOW)
         with self.assertRaises(ContractViolation):
-            guarded.fetch_network_source("https://unctad.org/report")
+            guarded.fetch_network_source("https://source.example/report")
 
 
 if __name__ == "__main__":

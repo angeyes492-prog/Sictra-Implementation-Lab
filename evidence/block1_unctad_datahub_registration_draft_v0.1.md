@@ -1,12 +1,12 @@
-# Proposed source registration and approval draft — UNCTAD Data Hub maritime v0.1
+# RETIRED historical registration draft — UNCTAD Data Hub maritime v0.1
 
 - `DRAFT_ID`: `BLOCK1-UNCTAD-DATAHUB-MARITIME-REG-001`
-- `STATE`: `PROPOSED / NOT BOUND / NOT APPROVED`
+- `STATE`: `RETIRED_BY_OWNER_DECISION / NOT BOUND / NOT APPROVED`
 - `RELATED_DOSSIER`: `BLOCK1-SOURCE-UNCTAD-001`
 - `PRODUCER`: Block 1 E02 Source Governance
 - `CONSUMER`: Source Gateway v0.1, manual bundles only
 
-## Proposed registration
+## Historical proposed registration
 
 ```json
 {
@@ -59,7 +59,7 @@ An empty field means the record is invalid and cannot issue a binding.
 }
 ```
 
-## Admission checklist
+## Retired checklist
 
 - [ ] Confirm that the Data Hub FAQ's CC BY 3 IGO statement governs the **exact**
       dataset, metadata and intended internal use.
@@ -74,6 +74,7 @@ An empty field means the record is invalid and cannot issue a binding.
 
 ## Explicit non-claims
 
-This draft has no legal effect and cannot be used as a source approval. It
-creates no binding, admits no real evidence, changes no gate, and does not
-authorize the system to contact UNCTAD or access the internet.
+This retired draft has no legal effect and cannot be used as a source approval.
+It creates no binding, admits no real evidence, changes no gate, and does not
+authorize the system to contact UNCTAD or access the internet. A fresh owner
+decision and a new dossier would be required before any reconsideration.
