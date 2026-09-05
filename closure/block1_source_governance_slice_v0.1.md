@@ -11,6 +11,14 @@ promovible a fuente real ni a cierre global.
 
 ## Evidence
 
+- SHA del incremento de ensamblaje manual Eurostat:
+  `24fabd68bf5b3511d2c415c137b8ff4f8ccd05aa`.
+- `evidence/ci-run-33992985995.json`: GitHub Actions run `33992985995`
+  (`#314`), terminado en `success` sobre ese SHA exacto. Valida el
+  ensamblaje local no atestado; no vincula una fuente ni promueve el gate.
+- `evidence/block1_eurostat_manual_bundle_preflight_v0.1.md`: perfil local
+  reproducible del archivo aportado y su selección `COUNTRY`, con hash,
+  cobertura, límite de bytes y límites de no-evidencia explícitos.
 - SHA canónico del incremento de implementación Eurostat: `844f16c15ed855e150ae7de0a6ec58ba63a8d881`.
 - `evidence/ci-run-33943023301.json`: GitHub Actions run `33943023301`
   (`#298`), terminado en `success` sobre ese SHA exacto. Verifica que el
@@ -22,7 +30,7 @@ promovible a fuente real ni a cierre global.
   (`#201`), terminado en `success` sobre ese SHA exacto.
 - `evidence/ci-run-33325016910.json`: antecedente verificable de la
   vinculación del método de acceso, CI #197 sobre `829f5a3`.
-- Ejecución local del mismo estado: 210 pruebas, 0 fallos, 0 errores.
+- Ejecución local del mismo estado: 224 pruebas, 0 fallos, 0 errores.
 - El binding HMAC exige coincidencia exacta de identidad, scope, hosts,
   claims, límite de bytes y `MANUAL_SOURCE_BUNDLE`; la aprobación rechazada,
   futura o incongruente falla cerrada. Los campos temporales booleanos se
@@ -30,8 +38,8 @@ promovible a fuente real ni a cierre global.
 
 ## Test
 
-- `PYTHONPATH=src python -m unittest discover -s tests -q` — 210 pruebas,
-  resultado `OK`, ejecutado localmente el 2026-09-04.
+- Suite local dividida por límite del terminal: grupo runtime 67 pruebas,
+  `OK`; todos los demás grupos 157 pruebas, `OK`; 224/224 el 2026-09-05.
 - `tests/test_block1_eurostat_maritime_draft.py` — la propuesta de Eurostat
   declara host, límite, método y claims acotados, pero falla cerrada ante todo
   intento de atestar un bundle mientras su estado sea `PROPOSED`.
@@ -63,10 +71,10 @@ promovible a fuente real ni a cierre global.
 
 ## Contradictions and blockers
 
-1. `INSUFFICIENT EVIDENCE / A` — no existe una fuente real `BOUND`, ni un
-   registro de acceso y términos aprobado por una persona. El dossier de
-   Eurostat acredita el texto de los términos y sus límites, pero no sustituye
-   esa decisión para el activo concreto.
+1. `INSUFFICIENT EVIDENCE / A` — no existe una fuente real `BOUND` en el
+   runtime, ni binding vigente configurado con una clave de producción. El
+   registro acotado del owner y el dossier describen la decisión local, pero
+   no sustituyen esa configuración ni una atestación durable.
 2. `INSUFFICIENT EVIDENCE / A` — la clave HMAC y el reviewer son mecanismos
    locales de referencia, no identidad de producción ni KMS.
 3. `INSUFFICIENT EVIDENCE / A` — falta revisión humana independiente sobre
@@ -84,8 +92,9 @@ promovible a fuente real ni a cierre global.
 
 ## Reviewer / validator
 
-Pruebas y revisión adversarial: Codex. CI: GitHub Actions #298 sobre el SHA
-actual (y #197 como antecedente). Revisión
+Pruebas y revisión adversarial: Codex. CI: GitHub Actions #314 sobre
+`24fabd68bf5b3511d2c415c137b8ff4f8ccd05aa` (y #298/#197 como antecedentes).
+Revisión
 independiente humana: pendiente.
 
 ## Next reassessment
