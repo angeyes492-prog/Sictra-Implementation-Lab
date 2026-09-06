@@ -50,6 +50,7 @@ from .attested_runtime_bridge import (
     AttestedRuntimeBridgeViolation,
     AttestedRuntimeResult,
 )
+from .attested_watchlist_bridge import AttestedWatchlistBridge, AttestedWatchlistBridgeViolation
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -98,6 +99,8 @@ __all__ = [
     "AttestedRuntimeBridge",
     "AttestedRuntimeBridgeViolation",
     "AttestedRuntimeResult",
+    "AttestedWatchlistBridge",
+    "AttestedWatchlistBridgeViolation",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",
