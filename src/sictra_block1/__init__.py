@@ -45,6 +45,11 @@ from .eurostat_maritime_delta import (
 from .manual_watchlist_cycle import ManualWatchlistCycle, ManualWatchlistCycleViolation
 from .source_control_store import SourceControlStore, SourceControlStoreViolation
 from .attested_evidence_store import AttestedEvidenceStore, AttestedEvidenceStoreViolation
+from .attested_runtime_bridge import (
+    AttestedRuntimeBridge,
+    AttestedRuntimeBridgeViolation,
+    AttestedRuntimeResult,
+)
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -90,6 +95,9 @@ __all__ = [
     "SourceControlStoreViolation",
     "AttestedEvidenceStore",
     "AttestedEvidenceStoreViolation",
+    "AttestedRuntimeBridge",
+    "AttestedRuntimeBridgeViolation",
+    "AttestedRuntimeResult",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",

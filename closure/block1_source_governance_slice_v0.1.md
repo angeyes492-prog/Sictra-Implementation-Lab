@@ -19,6 +19,10 @@ promovible a fuente real ni a cierre global.
   reopened and recovered as a current record; its temporary stores and keys
   were destroyed after the exercise. This demonstrates the local Layer 4
   boundary, not retained operational evidence.
+- `evidence/block1_attested_runtime_bridge_preflight_v0.1.md`: recovered
+  local evidence was the sole source input to a bounded E01–E08 run. Its
+  local `COMMITTED` effect and `CANDIDATE` assessment are expressly
+  non-promotional and were not retained after the temporary preflight.
 - `evidence/block1_source_binding_approval_lineage_v0.1.md`: repair `HIGH`
   linking each signed source binding and observed record to the exact
   normalized human approval; 240/240 local tests.
@@ -113,7 +117,8 @@ independiente humana: pendiente.
 ## Next reassessment
 
 Tras una revisión humana independiente de PR #10 y una integración retenida
-de la evidencia atestada con E01–E08, manteniendo el SHA/CI correspondiente.
+de la evidencia atestada con E01–E08, seguida de revisión editorial humana,
+manteniendo el SHA/CI correspondiente.
 
 ## Non-claims
 

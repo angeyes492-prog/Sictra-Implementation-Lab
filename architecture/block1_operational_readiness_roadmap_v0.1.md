@@ -17,7 +17,7 @@ Neither label follows from a passing test suite alone.
 | 2. Guided ingress | Accept operator-supplied files without arbitrary network access. | CSV/XLSX preflight implemented locally. | First file passes preflight and is mapped without data loss. | Authenticated upload, malware scanning, quotas and retention policy. |
 | 3. Schema and quality | Map source fields and reject ambiguous, invalid or incomplete values. | Eurostat mapper implemented; mixed geography requires selection. | Explicit geography-level selection and coverage report. | Versioned mappers, drift alerts, reconciliation and rollback. |
 | 4. Evidence ledger | Preserve provenance and transformations for every admitted observation. | Atomic local attested-evidence store verifies and retains gateway evidence across reopen; a temporary real-workbook exercise recovered one current record. | Signed binding, gateway attestation and immutable local record link file hash, filters and mapping. | Durable encrypted store, audit trail, retention and restore exercise. |
-| 5. Intelligence runtime | Form research questions, detect changes, contradictions and bounded insights. | E01–E08 completed one ephemeral local-reference run from the supplied workbook; its durable evidence store is not yet connected to the runtime. | A durably bound real-source run produces facts, interpretations and uncertainties separately. | Load/performance SLOs and continuous regression with real anonymised cases. |
+| 5. Intelligence runtime | Form research questions, detect changes, contradictions and bounded insights. | One temporary real-workbook record was recovered from the durable evidence store and handed to E01–E08 through the bounded bridge; no retained operator-run record exists. | A durably bound real-source run produces facts, interpretations and uncertainties separately. | Load/performance SLOs and continuous regression with real anonymised cases. |
 | 6. Editorial decisioning | Select only relevant, attributable insight candidates and hand off to Design. | Bounded editorial engine runs on fixtures. | One reviewed brief links every statement to evidence and abstains when weak. | Approval workflow, versioned outputs and publishing audit trail. |
 | 7. Watchlists and cadence | Recheck approved sources and surface meaningful change without noise. | Atomic manual cycle persists checkpoints and recomputable deltas; no scheduler or attested checkpoint. | Defined cadence and a manually triggered, attested delta report for one source. | Budgeted workers, rate limits, change detection, alerts, kill switch and incident runbook. |
 | 8. Operating plane | Make the system safe for multiple people and sustained use. | Local single-user service only. | Named operator, documented local backup and access boundary. | SSO/RBAC, tenancy, secret manager, deployment controls, observability, backups, security review and disaster recovery. |
@@ -26,8 +26,8 @@ Neither label follows from a passing test suite alone.
 
 1. Bind the already approved Eurostat scope locally.
 2. Assemble one explicitly selected Layer 3 result without changing its non-evidentiary state.
-3. Connect the Layer 4 durable evidence retrieval to a bounded E01–E08 run.
-4. Run Layers 5 and 6 on that evidence, with an explicit human review.
+3. Retain and review one bounded Layer 4 → E01–E08 operator run.
+4. Run Layer 6 editorial decisioning on that evidence, with an explicit human review.
 5. Add a manual watchlist cycle before any scheduler.
 6. Promote to an internal pilot only after a clean independent review; start
    Layer 8 only when sustained multi-user use is actually required.
