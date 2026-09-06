@@ -14,6 +14,11 @@ promovible a fuente real ni a cierre global.
 - `evidence/block1_source_control_store_preflight_v0.1.md`: durable local
   registration/approval/binding reconstruction and one ephemeral observed
   Eurostat record, with no secret persisted; 245/245 local tests.
+- `evidence/block1_attested_evidence_store_preflight_v0.1.md`: one real
+  workbook bundle was signed by a locally reconstructed gateway, persisted,
+  reopened and recovered as a current record; its temporary stores and keys
+  were destroyed after the exercise. This demonstrates the local Layer 4
+  boundary, not retained operational evidence.
 - `evidence/block1_source_binding_approval_lineage_v0.1.md`: repair `HIGH`
   linking each signed source binding and observed record to the exact
   normalized human approval; 240/240 local tests.
@@ -36,7 +41,7 @@ promovible a fuente real ni a cierre global.
   (`#201`), terminado en `success` sobre ese SHA exacto.
 - `evidence/ci-run-33325016910.json`: antecedente verificable de la
   vinculación del método de acceso, CI #197 sobre `829f5a3`.
-- Ejecución local del current source-governance state: 245 pruebas, 0 fallos,
+- Ejecución local del current source-governance state: 250 pruebas, 0 fallos,
   0 errores.
 - El binding HMAC exige coincidencia exacta de identidad, scope, hosts,
   claims, límite de bytes y `MANUAL_SOURCE_BUNDLE`; la aprobación rechazada,
@@ -46,7 +51,7 @@ promovible a fuente real ni a cierre global.
 ## Test
 
 - Suite local dividida por límite del terminal: grupo runtime 67 pruebas,
-  `OK`; todos los demás grupos 157 pruebas, `OK`; 224/224 el 2026-09-05.
+  `OK`; todos los demás grupos 183 pruebas, `OK`; 250/250 el 2026-09-06.
 - `tests/test_block1_eurostat_maritime_draft.py` — la propuesta de Eurostat
   declara host, límite, método y claims acotados, pero falla cerrada ante todo
   intento de atestar un bundle mientras su estado sea `PROPOSED`.
@@ -59,7 +64,7 @@ promovible a fuente real ni a cierre global.
 
 ## Date
 
-2026-08-30.
+2026-09-06.
 
 ## Version
 
@@ -79,9 +84,10 @@ promovible a fuente real ni a cierre global.
 ## Contradictions and blockers
 
 1. `INSUFFICIENT EVIDENCE / A` — no existe una fuente real `BOUND` en el
-   runtime, ni binding vigente configurado con una clave de producción. El
-   registro acotado del owner y el dossier describen la decisión local, pero
-   no sustituyen esa configuración ni una atestación durable.
+   runtime, ni binding vigente configurado con una clave de producción. La
+   atestación durable se ejercitó solo en almacenamiento temporal; el registro
+   acotado del owner y el dossier no sustituyen configuración operacional ni
+   evidencia retenida.
 2. `INSUFFICIENT EVIDENCE / A` — la clave HMAC y el reviewer son mecanismos
    locales de referencia, no identidad de producción ni KMS.
 3. `INSUFFICIENT EVIDENCE / A` — falta revisión humana independiente sobre
@@ -92,7 +98,7 @@ promovible a fuente real ni a cierre global.
 
 ## Confidence
 
-- Contrato y comportamiento local: `VERIFIED / B`.
+- Contrato, persistencia y comportamiento local: `VERIFIED / B`.
 - Ejecución CI sobre SHA exacto: `VERIFIED / A` para los pasos observados.
 - Preparación para fuentes reales: `INSUFFICIENT EVIDENCE / A`.
 - Gate local: `YELLOW / B`.
@@ -106,8 +112,8 @@ independiente humana: pendiente.
 
 ## Next reassessment
 
-Tras una revisión humana independiente de PR #10 y un registro real,
-aprobado y firmado para una fuente, manteniendo el SHA/CI correspondiente.
+Tras una revisión humana independiente de PR #10 y una integración retenida
+de la evidencia atestada con E01–E08, manteniendo el SHA/CI correspondiente.
 
 ## Non-claims
 
