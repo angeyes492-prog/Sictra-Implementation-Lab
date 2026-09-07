@@ -18,6 +18,14 @@ from .editorial import (
     editorial_fixture_cycle,
     select_flagship,
 )
+from .dossier_editorial_bridge import (
+    DossierEditorialBridge,
+    DossierEditorialBridgeViolation,
+)
+from .intelligence_dossier import (
+    IntelligenceDossierStore,
+    IntelligenceDossierViolation,
+)
 from .lab import LAB_SCOPE, SCENARIOS, execute_scenario
 from .logistics import (
     FIXTURE_CLASS,
@@ -199,14 +207,74 @@ class LabWebHandler(BaseHTTPRequestHandler):
     def _workspace(self) -> dict[str, Any]:
         return workspace_catalog(operator_drafts=self._operator_drafts())
 
+    def _dossier_snapshot(self) -> dict[str, Any]:
+        store = self.server.dossier_store
+        if store is None:
+            return {
+                "scope": "BLOCK1_LOCAL_DOSSIER_READER",
+                "status": "NOT_CONFIGURED",
+                "integrity_state": "NOT_EVALUATED",
+                "dossier_count": 0,
+                "dossiers": [],
+                "publication_authority": "NONE",
+            }
+        dossiers = store.list_dossiers()
+        return {
+            "scope": "BLOCK1_LOCAL_DOSSIER_READER",
+            "status": "AVAILABLE",
+            "integrity_state": "VERIFIED_ON_READ",
+            "dossier_count": len(dossiers),
+            "dossiers": [
+                {
+                    "dossier_id": item["dossier_id"],
+                    "source_id": item["source"]["source_id"],
+                    "observed_at": item["source"]["observed_at"],
+                    "fact_count": len(item["facts"]),
+                    "interpretation_count": len(item["interpretations"]),
+                    "hypothesis_count": len(item["hypotheses"]),
+                    "certainty": item["certainty"],
+                    "confidence": item["confidence"],
+                    "review_state": item["review_state"],
+                    "publication_state": item["publication_state"],
+                }
+                for item in dossiers
+            ],
+            "publication_authority": "NONE",
+        }
+
+    def _dossier_detail(self, dossier_id: str) -> dict[str, Any] | None:
+        store = self.server.dossier_store
+        if store is None:
+            return None
+        matches = [item for item in store.list_dossiers()
+                   if item["dossier_id"] == dossier_id]
+        if len(matches) != 1:
+            return None
+        editorial = DossierEditorialBridge(store).candidate(dossier_id)
+        return {
+            "scope": "BLOCK1_LOCAL_DOSSIER_READER",
+            "integrity_state": "VERIFIED_ON_READ",
+            "dossier": matches[0],
+            "editorial": editorial,
+            "publication_authority": "NONE",
+        }
+
     def do_GET(self) -> None:
         if not self._guard_local_request():
             return
         parsed = urlsplit(self.path)
         if parsed.path == "/health":
+            dossier_reader = "NOT_CONFIGURED"
+            if self.server.dossier_store is not None:
+                try:
+                    self.server.dossier_store.list_dossiers()
+                    dossier_reader = "AVAILABLE"
+                except IntelligenceDossierViolation:
+                    dossier_reader = "INTEGRITY_ERROR"
             self._send_json(HTTPStatus.OK, {
                 "status": "ok", "scope": UI_SCOPE,
                 "workspace_scope": WORKSPACE_SCOPE, "fixture_class": FIXTURE_CLASS,
+                "dossier_reader": dossier_reader,
             })
             return
         if parsed.path == "/api/workspace":
@@ -231,6 +299,35 @@ class LabWebHandler(BaseHTTPRequestHandler):
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta query string."})
                 return
             self._send_json(HTTPStatus.OK, editorial_fixture_cycle())
+            return
+        if parsed.path == "/api/dossiers":
+            if parsed.query:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta query string."})
+                return
+            try:
+                self._send_json(HTTPStatus.OK, self._dossier_snapshot())
+            except IntelligenceDossierViolation:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {
+                    "error": "El almacén de dossiers no superó la verificación de integridad."
+                })
+            return
+        dossier_prefix = "/api/dossiers/"
+        if parsed.path.startswith(dossier_prefix):
+            dossier_id = unquote(parsed.path[len(dossier_prefix):])
+            if not dossier_id or "/" in dossier_id or parsed.query:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Dossier no disponible."})
+                return
+            try:
+                detail = self._dossier_detail(dossier_id)
+            except (IntelligenceDossierViolation, DossierEditorialBridgeViolation):
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {
+                    "error": "El dossier no superó la verificación de integridad y bloqueo editorial."
+                })
+                return
+            if detail is None:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Dossier no disponible."})
+            else:
+                self._send_json(HTTPStatus.OK, detail)
             return
         editorial_candidate_prefix = "/api/editorial/candidates/"
         if parsed.path.startswith(editorial_candidate_prefix):
@@ -397,6 +494,7 @@ class LabWebHandler(BaseHTTPRequestHandler):
 def create_server(
     *, host: str = "127.0.0.1", port: int = 8765,
     intake_store_path: str | Path | None = None,
+    dossier_store: IntelligenceDossierStore | None = None,
 ) -> ThreadingHTTPServer:
     if host != "127.0.0.1":
         raise ValueError("the product workspace may only bind to 127.0.0.1")
@@ -404,6 +502,10 @@ def create_server(
     server.intake_store = ResearchIntakeStore(
         intake_store_path or Path.cwd() / ".sictra-intelligence" / "research-intake.json"
     )
+    if dossier_store is not None and not isinstance(dossier_store, IntelligenceDossierStore):
+        server.server_close()
+        raise ValueError("dossier_store must be an IntelligenceDossierStore")
+    server.dossier_store = dossier_store
     return server
 
 

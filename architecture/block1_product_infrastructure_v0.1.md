@@ -24,6 +24,7 @@ Navegador local
       └─ adapter HTTP 127.0.0.1 / API acotada
           ├─ catálogo defensivo de investigaciones sintéticas
           ├─ Research Intake local con reemplazo atómico
+          ├─ lector opcional de dossiers con verificación por lectura
           ├─ comparador Pareto de estrategias observadas
           └─ Validation Deck
               └─ runtime operacional existente E01 → E08 + SQLite efímero
@@ -45,6 +46,7 @@ rebinding y activación cross-site del servicio local.
 | Evidence Spine | Trazabilidad fuente→claim→red team→disposición | Declaración de verdad |
 | Strategy Lab | Comparación Pareto explicable | Ranking universal o autorización |
 | Watchlists | Observables 7/30/90 | Predicción automática |
+| Dossier Reader | Hechos firmados y bloqueo editorial recomputado | Claves, escritura, publicación o fallback sintético |
 | Validation Deck | Ejecución de cuatro fixtures del runtime | Evidencia de producción |
 | HTTP adapter | Entrega local y rutas allowlisted | Identidad, auth o acceso remoto |
 
@@ -124,8 +126,8 @@ fuera de alcance.
 
 - “Producto final” describe la calidad y coherencia de la superficie, mientras
   el runtime sigue siendo un producto de campo local, no producción.
-- La fuente real, autenticación y persistencia de evidencia aún tienen
-  `INSUFFICIENT EVIDENCE`; solo existe persistencia local de preguntas, no de
-  investigaciones validadas.
+- La fuente real y autenticación aún tienen `INSUFFICIENT EVIDENCE`; existen
+  stores locales de evidencia/dossiers, pero el launcher ordinario todavía no
+  configura sus claves ni ejecuta una investigación real retenida.
 - Revisión humana independiente, CI del SHA final y decisión de merge siguen
   pendientes.

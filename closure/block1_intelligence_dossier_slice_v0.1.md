@@ -18,8 +18,8 @@ editorial candidate exists.
 - Adversarial cases: forged/tampered bridge result, wrong bridge or store key,
   malformed configuration, broken delta linkage, non-delta input, atomic write
   failure, unknown dossier and mutated durable dossier.
-- Exact implementation SHA and CI: pending commit at the time of this ledger
-  entry; no CI claim is made here yet.
+- Exact implementation SHA `f6d1b3930df6575bb4bc19cec9a56f486f6a0f3b`;
+  GitHub Actions run #344 completed successfully.
 
 ## Date and version
 

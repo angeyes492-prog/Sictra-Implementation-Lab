@@ -19,6 +19,9 @@ runtime laboratory. It now also includes governed source readiness, the
 Global → Segment → Account interpretation model, and a weekly Editorial Engine
 with evidence eligibility, Pareto shortlist, reasoned human selection,
 explicit abstention, and a bounded Block 2 handoff candidate.
+The backend also has an optional read-only bridge for durable signed dossiers;
+the ordinary launcher leaves it explicitly unconfigured until operator-safe
+key and store configuration is completed.
 
 ## Run the Intelligence Workspace
 

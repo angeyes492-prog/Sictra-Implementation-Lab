@@ -21,6 +21,7 @@
         <button class="nav-item" data-view="editorial"><span>◇</span> Mesa editorial</button>
         <button class="nav-item" data-view="strategy"><span>⇄</span> Strategy Lab</button>
         <button class="nav-item" data-view="evidence"><span>⌇</span> Evidencia</button>
+        <button class="nav-item" data-view="dossiers"><span>▤</span> Dossiers</button>
         <button class="nav-item" data-view="sources"><span>⌘</span> Fuentes</button>
         <button class="nav-item" data-view="watchlists"><span>◌</span> Watchlists</button>
         <button class="nav-item" data-view="validation"><span>✓</span> Validación</button>
@@ -86,6 +87,14 @@
         <div id="evidence-spine"></div>
       </section>
 
+      <section class="view" data-view-panel="dossiers">
+        <div class="view-intro"><div><span class="section-kicker">Cadena firmada · lectura local</span><h2>Dossiers verificables</h2><p>Separa cambios observados, interpretación pendiente y bloqueo editorial. Cada lectura vuelve a verificar la integridad del almacén.</p></div><span id="dossier-reader-state" class="fixture-badge">Comprobando…</span></div>
+        <section class="dossier-reader-grid">
+          <aside class="panel"><div class="panel-head"><div><span class="section-kicker">Registro durable</span><h2>Expedientes disponibles</h2></div><span id="dossier-count" class="method-code">0</span></div><div id="durable-dossier-list" class="durable-dossier-list"></div></aside>
+          <div id="durable-dossier-detail" class="durable-dossier-detail" aria-live="polite"><section class="panel empty-dossier"><span class="section-kicker">Sin selección</span><h2>Selecciona un expediente verificado</h2><p>Si el lector aún no está configurado, la herramienta explicará el límite sin sustituirlo con contenido sintético.</p></section></div>
+        </section>
+      </section>
+
       <section class="view" data-view-panel="sources">
         <div class="view-intro"><div><span class="section-kicker">E02 · Source Gateway</span><h2>Readiness de fuentes</h2><p>Candidatos de investigación; ninguno ingresa evidencia hasta completar revisión y binding.</p></div></div>
         <div class="strategy-controls panel"><label>Región<select id="source-region"><option>AMERICAS</option><option>EUROPE</option><option>ASIA_PACIFIC</option><option>OCEANIA</option></select></label><label>Dominio<select id="source-domain"><option>TRADE</option><option>MARITIME</option><option>AIR</option><option>PORTS</option><option>CUSTOMS</option><option>INFRASTRUCTURE</option><option>MACRO</option></select></label><button id="source-refresh" class="primary-button" type="button">Consultar candidatos</button></div>
@@ -93,7 +102,7 @@
       </section>
 
       <section class="view" data-view-panel="editorial">
-        <div class="view-intro"><div><span class="section-kicker">E01–E08 · Editorial Engine</span><h2>Mesa editorial</h2><p>De señales gobernadas a una interpretación ejecutiva, sin ranking universal ni publicación automática.</p></div><span class="fixture-badge">Ciclo semanal sintético</span></div>
+        <div class="view-intro"><div><span class="section-kicker">E01–E08 · Editorial Engine</span><h2>Mesa editorial</h2><p>Simula la selección editorial con candidatos sintéticos. Los dossiers firmados reales o de prueba permanecen separados en su propia pestaña.</p></div><span class="fixture-badge">Ciclo semanal sintético</span></div>
         <div id="editorial-summary" class="editorial-summary"></div>
         <div class="editorial-layout">
           <section class="panel"><div class="panel-head"><div><span class="section-kicker">Frontera Pareto</span><h2>Lista corta</h2></div><span id="editorial-method" class="method-code"></span></div><div id="editorial-shortlist" class="editorial-shortlist"></div></section>

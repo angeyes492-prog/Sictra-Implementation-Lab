@@ -9,7 +9,9 @@ from tempfile import TemporaryDirectory
 from threading import Thread
 import unittest
 
+from sictra_block1 import IntelligenceDossierStore
 from sictra_block1.lab_web import UI_SCOPE, create_server
+from test_block1_intelligence_dossier import BRIDGE_KEY, KEY, reviewable_delta
 
 
 class Block1LabWebTests(unittest.TestCase):
@@ -42,6 +44,7 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertIn(b"No consulta internet", body)
         self.assertIn(b"Readiness de fuentes", body)
         self.assertIn(b"Mesa editorial", body)
+        self.assertIn(b"Dossiers verificables", body)
         status, content_type, body = self.request("GET", "/app.css")
         self.assertEqual(status, 200)
         self.assertIn("text/css", content_type)
@@ -55,9 +58,24 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertIn(b"selectEditorialFlagship", body)
         self.assertIn(b"abstainEditorialFlagship", body)
         self.assertIn(b"createResearchIntake", body)
+        self.assertIn(b"renderDurableDossiers", body)
+        self.assertIn(b"openDurableDossier", body)
         status, _, body = self.request("GET", "/health")
         self.assertEqual(status, 200)
-        self.assertEqual(json.loads(body)["scope"], UI_SCOPE)
+        health = json.loads(body)
+        self.assertEqual(health["scope"], UI_SCOPE)
+        self.assertEqual(health["dossier_reader"], "NOT_CONFIGURED")
+
+    def test_unconfigured_dossier_reader_is_explicit_and_empty(self):
+        status, _, body = self.request("GET", "/api/dossiers")
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["status"], "NOT_CONFIGURED")
+        self.assertEqual(payload["integrity_state"], "NOT_EVALUATED")
+        self.assertEqual(payload["dossiers"], [])
+        self.assertEqual(payload["publication_authority"], "NONE")
+        status, _, _ = self.request("GET", "/api/dossiers/arbitrary")
+        self.assertEqual(status, 404)
 
     def test_workspace_exposes_traceable_synthetic_investigations(self):
         status, content_type, body = self.request("GET", "/api/workspace")
@@ -268,6 +286,80 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertIn("payload", json.loads(body)["error"])
         with self.assertRaises(ValueError):
             create_server(host="0.0.0.0", port=0)
+        with self.assertRaises(ValueError):
+            create_server(port=0, dossier_store=object())
+
+
+class Block1LabWebDossierTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp = TemporaryDirectory()
+        root = Path(self.temp.name)
+        self.dossier_path = root / "dossiers.json"
+        self.dossier_store = IntelligenceDossierStore(
+            self.dossier_path,
+            integrity_key=KEY,
+            bridge_keys={"watchlist-bridge": BRIDGE_KEY},
+            clock=lambda: 10_001,
+        )
+        self.receipt = self.dossier_store.persist(reviewable_delta())
+        self.server = create_server(
+            port=0,
+            intake_store_path=root / "research-intake.json",
+            dossier_store=self.dossier_store,
+        )
+        self.thread = Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+
+    def tearDown(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+        self.temp.cleanup()
+
+    def request(self, method: str, path: str):
+        connection = HTTPConnection("127.0.0.1", self.server.server_port, timeout=5)
+        connection.request(method, path)
+        response = connection.getresponse()
+        body = response.read()
+        connection.close()
+        return response.status, body
+
+    def test_verified_dossier_and_blocked_editorial_candidate_are_exposed(self):
+        status, body = self.request("GET", "/api/dossiers")
+        snapshot = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(snapshot["status"], "AVAILABLE")
+        self.assertEqual(snapshot["integrity_state"], "VERIFIED_ON_READ")
+        self.assertEqual(snapshot["dossier_count"], 1)
+        self.assertEqual(snapshot["dossiers"][0]["fact_count"], 1)
+        self.assertEqual(snapshot["dossiers"][0]["interpretation_count"], 0)
+        self.assertEqual(snapshot["dossiers"][0]["publication_state"], "BLOCKED")
+
+        dossier_id = self.receipt["dossier_id"]
+        status, body = self.request("GET", f"/api/dossiers/{dossier_id}")
+        detail = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(detail["dossier"]["dossier_id"], dossier_id)
+        self.assertEqual(detail["dossier"]["interpretations"], [])
+        self.assertEqual(detail["editorial"]["assessment"]["editorial_readiness"], "BLOCKED")
+        self.assertEqual(detail["editorial"]["publication_state"], "BLOCKED")
+        self.assertIsNone(detail["editorial"]["handoff"])
+        self.assertEqual(detail["publication_authority"], "NONE")
+
+    def test_tampered_dossier_store_fails_closed_without_fixture_fallback(self):
+        document = json.loads(self.dossier_path.read_text(encoding="utf-8"))
+        document["records"][0]["dossier"]["interpretations"] = ["forged"]
+        self.dossier_path.write_text(json.dumps(document), encoding="utf-8")
+
+        status, body = self.request("GET", "/api/dossiers")
+        self.assertEqual(status, 500)
+        self.assertIn("integridad", json.loads(body)["error"])
+        status, body = self.request("GET", f"/api/dossiers/{self.receipt['dossier_id']}")
+        self.assertEqual(status, 500)
+        self.assertIn("integridad", json.loads(body)["error"])
+        status, body = self.request("GET", "/health")
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["dossier_reader"], "INTEGRITY_ERROR")
 
 
 if __name__ == "__main__":
