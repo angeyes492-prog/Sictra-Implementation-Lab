@@ -54,6 +54,7 @@ from .attested_watchlist_bridge import AttestedWatchlistBridge, AttestedWatchlis
 from .intelligence_dossier import (
     IntelligenceDossierStore, IntelligenceDossierViolation, build_intelligence_dossier,
 )
+from .dossier_editorial_bridge import DossierEditorialBridge, DossierEditorialBridgeViolation
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -107,6 +108,8 @@ __all__ = [
     "IntelligenceDossierStore",
     "IntelligenceDossierViolation",
     "build_intelligence_dossier",
+    "DossierEditorialBridge",
+    "DossierEditorialBridgeViolation",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",

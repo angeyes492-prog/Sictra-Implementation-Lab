@@ -23,6 +23,7 @@ _INPUT_FIELDS = frozenset((
     "scope", "source_id", "observed_at", "content_sha256",
     "source_approval_fingerprint", "source_binding_fingerprint",
     "watchlist_receipt", "delta", "next_state", "evidence_state",
+    "schema_version", "attestation_issuer", "attestation",
 ))
 _RECORD_FIELDS = frozenset((
     "dossier_id", "recorded_at", "previous_hash", "record_hash", "input", "dossier",
@@ -54,10 +55,19 @@ def _fingerprint(value: object) -> str:
     return sha256(_encoded(value).encode("utf-8")).hexdigest()
 
 
-def _validated_input(value: object) -> dict[str, Any]:
+def _validated_input(value: object, bridge_keys: Mapping[str, bytes]) -> dict[str, Any]:
     if not isinstance(value, Mapping) or frozenset(value) != _INPUT_FIELDS:
         raise IntelligenceDossierViolation("attested watchlist result shape is invalid")
     item = deepcopy(dict(value))
+    issuer = item.get("attestation_issuer")
+    try:
+        bridge_key = bytes(bridge_keys[issuer])
+    except (KeyError, TypeError, ValueError) as error:
+        raise IntelligenceDossierViolation("watchlist bridge issuer is untrusted") from error
+    unsigned = {key: data for key, data in item.items() if key != "attestation"}
+    expected_attestation = hmac.new(
+        bridge_key, _encoded(unsigned).encode("utf-8"), sha256,
+    ).hexdigest()
     receipt, delta = item["watchlist_receipt"], item["delta"]
     if (not isinstance(receipt, Mapping) or frozenset(receipt) != _RECEIPT_FIELDS
             or not isinstance(delta, Mapping) or frozenset(delta) != _DELTA_FIELDS):
@@ -69,6 +79,10 @@ def _validated_input(value: object) -> dict[str, Any]:
     changes = delta.get("changes")
     if (
         item["scope"] != "BLOCK1_LOCAL_ATTESTED_WATCHLIST_BRIDGE"
+        or item["schema_version"] != "0.1.0"
+        or not isinstance(issuer, str) or not issuer.strip() or len(bridge_key) < 32
+        or not isinstance(item["attestation"], str)
+        or not hmac.compare_digest(item["attestation"], expected_attestation)
         or item["source_id"] != "eurostat"
         or not isinstance(item["observed_at"], int) or isinstance(item["observed_at"], bool)
         or item["observed_at"] < 0
@@ -117,10 +131,10 @@ def _validated_input(value: object) -> dict[str, Any]:
     return item
 
 
-def build_intelligence_dossier(value: object) -> dict[str, Any]:
+def build_intelligence_dossier(value: object, *, bridge_keys: Mapping[str, bytes]) -> dict[str, Any]:
     """Extract literal facts while deliberately abstaining from interpretation."""
 
-    item = _validated_input(value)
+    item = _validated_input(value, bridge_keys)
     delta, receipt = item["delta"], item["watchlist_receipt"]
     facts = []
     for index, change in enumerate(delta["changes"], start=1):
@@ -187,13 +201,19 @@ def build_intelligence_dossier(value: object) -> dict[str, Any]:
 
 
 class IntelligenceDossierStore:
-    def __init__(self, path: str | Path, *, integrity_key: bytes,
+    def __init__(self, path: str | Path, *, integrity_key: bytes, bridge_keys: Mapping[str, bytes],
                  clock: Callable[[], int], max_dossiers: int = _MAX_DOSSIERS) -> None:
         self.path = Path(path)
         if (not self.path.name or not isinstance(integrity_key, bytes) or len(integrity_key) < 32
                 or not isinstance(max_dossiers, int) or isinstance(max_dossiers, bool)
                 or not 1 <= max_dossiers <= _MAX_DOSSIERS):
             raise IntelligenceDossierViolation("dossier store configuration is invalid")
+        try:
+            self._bridge_keys = {issuer: bytes(key) for issuer, key in bridge_keys.items()}
+        except (AttributeError, TypeError, ValueError) as error:
+            raise IntelligenceDossierViolation("dossier bridge-key configuration is invalid") from error
+        if not self._bridge_keys or any(not issuer or len(key) < 32 for issuer, key in self._bridge_keys.items()):
+            raise IntelligenceDossierViolation("dossier bridge-key configuration is invalid")
         self._key, self._clock, self._capacity = bytes(integrity_key), clock, max_dossiers
         self._lock = Lock()
         self.failure_injector: Callable[[str], None] | None = None
@@ -202,7 +222,7 @@ class IntelligenceDossierStore:
         return hmac.new(self._key, value.encode("utf-8"), sha256).hexdigest()
 
     def _config(self) -> str:
-        return self._mac(f"intelligence-dossier-v{_VERSION}:{self._capacity}")
+        return self._mac(f"intelligence-dossier-v{_VERSION}:{self._capacity}:{','.join(sorted(self._bridge_keys))}")
 
     def _record_hash(self, record: Mapping[str, Any]) -> str:
         return self._mac("dossier-record-v1:" + _encoded({
@@ -226,7 +246,7 @@ class IntelligenceDossierStore:
         for record in document["records"]:
             if not isinstance(record, Mapping) or frozenset(record) != _RECORD_FIELDS:
                 raise IntelligenceDossierViolation("dossier record shape is invalid")
-            dossier = build_intelligence_dossier(record["input"])
+            dossier = build_intelligence_dossier(record["input"], bridge_keys=self._bridge_keys)
             if (record["dossier"] != dossier or record["dossier_id"] != dossier["dossier_id"]
                     or record["dossier_id"] in identities
                     or not isinstance(record["recorded_at"], int) or isinstance(record["recorded_at"], bool)
@@ -257,7 +277,8 @@ class IntelligenceDossierStore:
             raise IntelligenceDossierViolation("dossier store cannot be written") from error
 
     def persist(self, value: object) -> dict[str, Any]:
-        source, dossier = _validated_input(value), build_intelligence_dossier(value)
+        source = _validated_input(value, self._bridge_keys)
+        dossier = build_intelligence_dossier(value, bridge_keys=self._bridge_keys)
         now = self._clock()
         if not isinstance(now, int) or isinstance(now, bool) or now < 0:
             raise IntelligenceDossierViolation("dossier store clock is invalid")

@@ -14,6 +14,8 @@ from test_block1_attested_evidence_store import (
 )
 from test_block1_eurostat_maritime_mapper import workbook
 
+BRIDGE_KEY = b"g" * 32
+
 
 class AttestedWatchlistBridgeTests(unittest.TestCase):
     def setUp(self):
@@ -29,7 +31,9 @@ class AttestedWatchlistBridgeTests(unittest.TestCase):
             Path(self.temp.name) / "watchlist.json", integrity_key=b"w" * 32,
             clock=lambda: self.now, id_factory=lambda: next(cycle_ids),
         )
-        self.bridge = AttestedWatchlistBridge(self.store, self.cycle)
+        self.bridge = AttestedWatchlistBridge(
+            self.store, self.cycle, receipt_issuer="watchlist-bridge", receipt_key=BRIDGE_KEY,
+        )
 
     def tearDown(self):
         self.temp.cleanup()
@@ -93,7 +97,7 @@ class AttestedWatchlistBridgeTests(unittest.TestCase):
         self.assertEqual(receipt["watchlist_receipt"]["status"], "DELTA_DETECTED_NOT_EVIDENCE")
         self.assertEqual(receipt["watchlist_receipt"]["change_count"], 2)
         self.assertEqual(receipt["next_state"], "REQUIRES_REVIEW")
-        dossier = build_intelligence_dossier(receipt)
+        dossier = build_intelligence_dossier(receipt, bridge_keys={"watchlist-bridge": BRIDGE_KEY})
         self.assertEqual(len(dossier["facts"]), 2)
         self.assertEqual(dossier["interpretations"], [])
         self.assertEqual(dossier["publication_state"], "BLOCKED")

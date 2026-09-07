@@ -3,6 +3,8 @@
 `IMPLEMENTED CANDIDATE / LOCAL-TESTED / B`. This adapter accepts one and only
 one current source record from the Layer 4 attested evidence store and submits
 its reconstructed manual bundle to the existing durable watchlist cycle.
+Its output is signed by a separately configured bridge issuer so downstream
+stores can reject fabricated or altered receipts.
 
 It owns admission to the watchlist, not delta storage, source truth, change
 interpretation, human review, insight generation or publication. No current

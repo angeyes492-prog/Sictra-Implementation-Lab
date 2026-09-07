@@ -9,6 +9,8 @@ Input must be the exact `AttestedWatchlistBridge` result for one
 `DELTA_DETECTED_NOT_EVIDENCE` cycle with `REQUIRES_REVIEW`. Source, change
 count, status and canonical delta SHA-256 must match the watchlist receipt;
 approval, binding, content and delta fingerprints must be lowercase SHA-256.
+The exact bridge result, issuer identity and schema version must verify against
+a configured 32-byte-or-longer bridge key.
 
 Every delta change becomes one literal fact with the complete before/after
 measurement and source/delta lineage. Interpretations and hypotheses are empty.

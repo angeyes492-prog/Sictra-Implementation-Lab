@@ -1,5 +1,6 @@
 import json
 from hashlib import sha256
+import hmac
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -11,6 +12,15 @@ from sictra_block1 import (
 
 
 KEY = b"d" * 32
+BRIDGE_KEY = b"g" * 32
+
+
+def resign(value):
+    unsigned = {key: item for key, item in value.items() if key != "attestation"}
+    value["attestation"] = hmac.new(
+        BRIDGE_KEY, json.dumps(unsigned, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode(), sha256,
+    ).hexdigest()
+    return value
 
 
 def reviewable_delta():
@@ -29,8 +39,9 @@ def reviewable_delta():
         "evidence_state": "NOT_EVIDENCE", "next_state": "REQUIRES_SOURCE_ATTESTATION_AND_REVIEW",
     }
     digest = sha256(json.dumps(delta, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()).hexdigest()
-    return {
+    result = {
         "scope": "BLOCK1_LOCAL_ATTESTED_WATCHLIST_BRIDGE", "source_id": "eurostat",
+        "schema_version": "0.1.0", "attestation_issuer": "watchlist-bridge",
         "observed_at": 10_000, "content_sha256": "2" * 64,
         "source_approval_fingerprint": "3" * 64, "source_binding_fingerprint": "4" * 64,
         "watchlist_receipt": {
@@ -43,6 +54,7 @@ def reviewable_delta():
         "delta": delta, "next_state": "REQUIRES_REVIEW",
         "evidence_state": "ATTESTED_INPUT_DELTA_NOT_EVIDENCE",
     }
+    return resign(result)
 
 
 class IntelligenceDossierTests(unittest.TestCase):
@@ -51,14 +63,17 @@ class IntelligenceDossierTests(unittest.TestCase):
         self.path = Path(self.temp.name) / "dossiers.json"
         self.now = 10_001
         self.store = IntelligenceDossierStore(
-            self.path, integrity_key=KEY, clock=lambda: self.now,
+            self.path, integrity_key=KEY, bridge_keys={"watchlist-bridge": BRIDGE_KEY},
+            clock=lambda: self.now,
         )
 
     def tearDown(self):
         self.temp.cleanup()
 
     def test_builds_literal_facts_and_abstains_from_interpretation(self):
-        dossier = build_intelligence_dossier(reviewable_delta())
+        dossier = build_intelligence_dossier(
+            reviewable_delta(), bridge_keys={"watchlist-bridge": BRIDGE_KEY},
+        )
         self.assertEqual(len(dossier["facts"]), 1)
         self.assertEqual(dossier["facts"][0]["observed_change"]["absolute_delta_thousand_tonnes"], 1.5)
         self.assertEqual(dossier["interpretations"], [])
@@ -72,7 +87,8 @@ class IntelligenceDossierTests(unittest.TestCase):
         self.assertFalse(receipt["replay"])
         self.assertTrue(self.store.persist(reviewable_delta())["replay"])
         reopened = IntelligenceDossierStore(
-            self.path, integrity_key=KEY, clock=lambda: self.now,
+            self.path, integrity_key=KEY, bridge_keys={"watchlist-bridge": BRIDGE_KEY},
+            clock=lambda: self.now,
         )
         dossiers = reopened.list_dossiers()
         self.assertEqual(len(dossiers), 1)
@@ -87,7 +103,11 @@ class IntelligenceDossierTests(unittest.TestCase):
         broken = reviewable_delta()
         broken["watchlist_receipt"]["delta_sha256"] = "0" * 64
         with self.assertRaises(IntelligenceDossierViolation):
-            self.store.persist(broken)
+            self.store.persist(resign(broken))
+        forged = reviewable_delta()
+        forged["observed_at"] += 1
+        with self.assertRaises(IntelligenceDossierViolation):
+            self.store.persist(forged)
         self.assertFalse(self.path.exists())
 
     def test_tamper_wrong_key_and_atomic_failure_fail_closed(self):
@@ -101,18 +121,25 @@ class IntelligenceDossierTests(unittest.TestCase):
             changed["delta"], ensure_ascii=False, separators=(",", ":"), sort_keys=True,
         ).encode()).hexdigest()
         with self.assertRaises(IntelligenceDossierViolation):
-            self.store.persist(changed)
+            self.store.persist(resign(changed))
         self.assertEqual(self.path.read_bytes(), prior)
         with self.assertRaises(IntelligenceDossierViolation):
             IntelligenceDossierStore(
-                self.path, integrity_key=b"z" * 32, clock=lambda: self.now,
+                self.path, integrity_key=b"z" * 32, bridge_keys={"watchlist-bridge": BRIDGE_KEY},
+                clock=lambda: self.now,
+            ).list_dossiers()
+        with self.assertRaises(IntelligenceDossierViolation):
+            IntelligenceDossierStore(
+                self.path, integrity_key=KEY, bridge_keys={"watchlist-bridge": b"z" * 32},
+                clock=lambda: self.now,
             ).list_dossiers()
         malformed = json.loads(self.path.read_text(encoding="utf-8"))
         malformed["config"] = 7
         self.path.write_text(json.dumps(malformed), encoding="utf-8")
         with self.assertRaises(IntelligenceDossierViolation):
             IntelligenceDossierStore(
-                self.path, integrity_key=KEY, clock=lambda: self.now,
+                self.path, integrity_key=KEY, bridge_keys={"watchlist-bridge": BRIDGE_KEY},
+                clock=lambda: self.now,
             ).list_dossiers()
         self.path.write_bytes(prior)
         document = json.loads(self.path.read_text(encoding="utf-8"))
@@ -120,7 +147,8 @@ class IntelligenceDossierTests(unittest.TestCase):
         self.path.write_text(json.dumps(document), encoding="utf-8")
         with self.assertRaises(IntelligenceDossierViolation):
             IntelligenceDossierStore(
-                self.path, integrity_key=KEY, clock=lambda: self.now,
+                self.path, integrity_key=KEY, bridge_keys={"watchlist-bridge": BRIDGE_KEY},
+                clock=lambda: self.now,
             ).list_dossiers()
 
 

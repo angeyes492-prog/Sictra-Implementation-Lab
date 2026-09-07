@@ -2,7 +2,8 @@
 
 `IMPLEMENTED CANDIDATE / LOCAL-TESTED / B`. This Layer 3 component converts a
 review-required, attested-input watchlist delta into an immutable local dossier
-and preserves it in an atomic HMAC-chained ledger.
+and preserves it in an atomic HMAC-chained ledger. Admission verifies a
+separately signed watchlist-bridge result before extracting any fact.
 
 The generated dossier separates literal change facts from empty
 interpretation and hypothesis sections. It records uncertainty, limitations,
