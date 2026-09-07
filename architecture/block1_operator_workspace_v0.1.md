@@ -18,6 +18,9 @@ stops if validation fails.
 This provides reproducible single-user integrity configuration, not a secret
 manager. Files are excluded from Git and created with restrictive mode where
 the operating system honors it, but v0.1 does not prove Windows ACL isolation,
-encryption at rest, credential recovery, backup/restore, multi-user identity or
-production security. Losing either key makes the corresponding ledger
+encryption at rest, credential recovery, multi-user identity or production
+security. A data-only local backup copies a stable, verified dossier ledger
+with a digest but never its keys; restore refuses overwrite and re-verifies the
+ledger with the original local keys. It protects against accidental dossier
+loss, not disk/key loss. Losing either key makes the corresponding ledger
 unverifiable by design.

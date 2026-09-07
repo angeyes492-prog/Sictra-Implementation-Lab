@@ -44,6 +44,19 @@ this is local integrity configuration, not production secret management.
 Mantén abierta la ventana de inicio mientras utilizas la herramienta. Para
 detenerla, ciérrala o presiona `Ctrl+C`.
 
+### Respaldo y restauración local
+
+1. Cierra Intelligence Workspace antes de respaldar.
+2. Haz doble clic en `backup_intelligence.cmd`; se crea una carpeta fechada en
+   `%LOCALAPPDATA%\TelecareOS\Intelligence\backups`.
+3. El respaldo contiene el ledger de dossiers y su digest, nunca las claves.
+4. Para restaurar después de perder únicamente `dossiers.json`, arrastra la
+   carpeta fechada sobre `restore_intelligence.cmd`.
+
+La restauración no reemplaza datos actuales y solo funciona con las claves
+originales. Por eso es recuperación local ante pérdida accidental, no un
+respaldo de desastre ni recuperación de claves.
+
 ### PowerShell
 
 On Windows PowerShell, from the repository root:
