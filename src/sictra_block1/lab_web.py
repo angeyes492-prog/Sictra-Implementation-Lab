@@ -37,6 +37,7 @@ from .logistics import (
 )
 from .source_portfolio import source_readiness
 from .research_intake import ResearchIntakeStore, ResearchIntakeViolation
+from .operator_workspace import OperatorWorkspaceViolation, load_operator_dossier_store
 
 UI_SCOPE = "BLOCK1_LOCAL_INTELLIGENCE_PRODUCT_UI"
 _WEB_ROOT = Path(__file__).with_name("web")
@@ -516,9 +517,23 @@ def main() -> int:
         "--intake-store", type=Path,
         help="Ruta local para borradores de investigación del operador.",
     )
+    parser.add_argument(
+        "--operator-state", type=Path,
+        help="Directorio local ya inicializado con claves y almacén de dossiers.",
+    )
     parser.add_argument("--open", action="store_true", help="Open the local workspace.")
     args = parser.parse_args()
-    server = create_server(port=args.port, intake_store_path=args.intake_store)
+    try:
+        dossier_store = (
+            load_operator_dossier_store(args.operator_state)
+            if args.operator_state is not None else None
+        )
+    except OperatorWorkspaceViolation as error:
+        parser.error(str(error))
+    server = create_server(
+        port=args.port, intake_store_path=args.intake_store,
+        dossier_store=dossier_store,
+    )
     address = f"http://127.0.0.1:{server.server_port}/"
     print(f"Intelligence Workspace disponible en {address}")
     if args.open:

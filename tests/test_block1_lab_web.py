@@ -65,6 +65,11 @@ class Block1LabWebTests(unittest.TestCase):
         health = json.loads(body)
         self.assertEqual(health["scope"], UI_SCOPE)
         self.assertEqual(health["dossier_reader"], "NOT_CONFIGURED")
+        launcher = Path("start_intelligence.cmd").read_text(encoding="utf-8")
+        self.assertIn("sictra_block1.operator_workspace init", launcher)
+        self.assertIn("--operator-state", launcher)
+        self.assertIn("%LOCALAPPDATA%\\TelecareOS\\Intelligence\\operator", launcher)
+        self.assertNotIn("%CD%\\.sictra-intelligence\\operator", launcher)
 
     def test_unconfigured_dossier_reader_is_explicit_and_empty(self):
         status, _, body = self.request("GET", "/api/dossiers")

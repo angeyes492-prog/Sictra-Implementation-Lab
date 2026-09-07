@@ -19,9 +19,9 @@ runtime laboratory. It now also includes governed source readiness, the
 Global → Segment → Account interpretation model, and a weekly Editorial Engine
 with evidence eligibility, Pareto shortlist, reasoned human selection,
 explicit abstention, and a bounded Block 2 handoff candidate.
-The backend also has an optional read-only bridge for durable signed dossiers;
-the ordinary launcher leaves it explicitly unconfigured until operator-safe
-key and store configuration is completed.
+The backend also has a read-only bridge for durable signed dossiers. The
+ordinary Windows launcher initializes its ignored single-user key/store layout;
+this is local integrity configuration, not production secret management.
 
 ## Run the Intelligence Workspace
 
@@ -29,11 +29,15 @@ key and store configuration is completed.
 
 1. Abre la carpeta del proyecto.
 2. Haz doble clic en `start_intelligence.cmd`.
-3. Espera a que el navegador abra `http://127.0.0.1:8765/`.
-4. Entra en **Mesa editorial** para revisar la lista corta.
-5. Escribe tu razonamiento y elige una pieza insignia, o registra que ninguna
+3. La primera ejecución crea claves locales aleatorias fuera del proyecto, en
+   `%LOCALAPPDATA%\TelecareOS\Intelligence\operator`; no las compartas.
+4. Espera a que el navegador abra `http://127.0.0.1:8765/`.
+5. Entra en **Dossiers** para comprobar el lector firmado. Un almacén válido
+   pero vacío es el resultado esperado hasta registrar dos versiones.
+6. Entra en **Mesa editorial** para revisar la lista corta sintética.
+7. Escribe tu razonamiento y elige una pieza insignia, o registra que ninguna
    debe avanzar esa semana.
-6. Entra en **Investigaciones** para guardar una pregunta propia como
+8. Entra en **Investigaciones** para guardar una pregunta propia como
    **borrador local**. No pegues secretos ni datos personales: la referencia
    opcional no se consulta ni se convierte en evidencia.
 
