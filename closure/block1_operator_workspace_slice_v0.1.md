@@ -14,8 +14,8 @@ disaster/key recovery remain incomplete.
   `block1_operator_workspace_v0.1.md`, and
   `evidence/block1_operator_workspace_preflight_v0.1.md`.
 - Focused tests: 22/22; full regression: 270/270. Startup/key configuration SHA
-  `7849ac66aff882c180b62ea7ffa4473688ea5f3d`, CI #348 success. Exact SHA/CI for
-  the data-backup extension: pending.
+  `7849ac66aff882c180b62ea7ffa4473688ea5f3d`, CI #348 success. Data-backup SHA
+  `1458fc0d1618c62f3f6ef16663d177b88e48d01f`, CI #350 success.
 - `VERIFIED / B`: data-only backup/restore detects tamper, preserves original
   keys and refuses overwrite. It is local accidental-loss recovery only.
 - `INSUFFICIENT EVIDENCE / A`: no second real Eurostat release has generated a

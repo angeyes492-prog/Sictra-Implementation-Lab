@@ -15,6 +15,7 @@ tamper rejection without residual restored data.
 
 Focused result: 22/22 tests; full local regression: 270/270. Startup/key
 configuration is on SHA `7849ac66aff882c180b62ea7ffa4473688ea5f3d`
-with successful GitHub Actions run #348. Exact-SHA CI for the backup extension
-is pending. Concurrent online backup, off-device/key recovery and ACL
-validation remain outside this slice.
+with successful GitHub Actions run #348. Data-only recovery is on SHA
+`1458fc0d1618c62f3f6ef16663d177b88e48d01f` with successful run #350.
+Concurrent online backup, off-device/key recovery and ACL validation remain
+outside this slice.
