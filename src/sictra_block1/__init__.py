@@ -51,6 +51,9 @@ from .attested_runtime_bridge import (
     AttestedRuntimeResult,
 )
 from .attested_watchlist_bridge import AttestedWatchlistBridge, AttestedWatchlistBridgeViolation
+from .intelligence_dossier import (
+    IntelligenceDossierStore, IntelligenceDossierViolation, build_intelligence_dossier,
+)
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -101,6 +104,9 @@ __all__ = [
     "AttestedRuntimeResult",
     "AttestedWatchlistBridge",
     "AttestedWatchlistBridgeViolation",
+    "IntelligenceDossierStore",
+    "IntelligenceDossierViolation",
+    "build_intelligence_dossier",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",

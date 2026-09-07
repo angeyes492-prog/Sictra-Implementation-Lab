@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from hashlib import sha256
+import json
 from typing import Any
 
 from .attested_evidence_store import AttestedEvidenceStore
@@ -38,6 +40,14 @@ class AttestedWatchlistBridge:
             "polarity", "correlation_id",
         )}
         receipt = self._watchlist.ingest(bundle)
+        delta = self._watchlist.latest_delta()
+        if delta is None:
+            raise AttestedWatchlistBridgeViolation("watchlist did not retain the admitted delta")
+        delta_sha256 = sha256(json.dumps(
+            delta, ensure_ascii=False, separators=(",", ":"), sort_keys=True,
+        ).encode("utf-8")).hexdigest()
+        if delta_sha256 != receipt["delta_sha256"]:
+            raise AttestedWatchlistBridgeViolation("watchlist delta does not match its receipt")
         return {
             "scope": "BLOCK1_LOCAL_ATTESTED_WATCHLIST_BRIDGE",
             "source_id": evidence["source_id"],
@@ -46,6 +56,7 @@ class AttestedWatchlistBridge:
             "source_approval_fingerprint": evidence["source_approval_fingerprint"],
             "source_binding_fingerprint": evidence["source_binding_fingerprint"],
             "watchlist_receipt": deepcopy(receipt),
+            "delta": deepcopy(delta),
             "next_state": "REQUIRES_REVIEW" if receipt["change_count"] else "AWAIT_NEWER_SOURCE",
             "evidence_state": "ATTESTED_INPUT_DELTA_NOT_EVIDENCE",
         }

@@ -6,7 +6,7 @@ from sictra_block1 import (
     AttestedEvidenceStore, AttestedWatchlistBridge,
     AttestedWatchlistBridgeViolation, EvidenceIssuer, ManualWatchlistCycle,
     SourceApprovalRecord, SourceBindingIssuer, SourceGateway, SourceRegistration,
-    build_eurostat_manual_bundle,
+    build_eurostat_manual_bundle, build_intelligence_dossier,
 )
 from test_block1_attested_evidence_store import (
     BINDING_KEY, CLAIM, EVIDENCE_KEY, INTEGRITY_KEY, NOW, SCOPE, URL,
@@ -93,6 +93,10 @@ class AttestedWatchlistBridgeTests(unittest.TestCase):
         self.assertEqual(receipt["watchlist_receipt"]["status"], "DELTA_DETECTED_NOT_EVIDENCE")
         self.assertEqual(receipt["watchlist_receipt"]["change_count"], 2)
         self.assertEqual(receipt["next_state"], "REQUIRES_REVIEW")
+        dossier = build_intelligence_dossier(receipt)
+        self.assertEqual(len(dossier["facts"]), 2)
+        self.assertEqual(dossier["interpretations"], [])
+        self.assertEqual(dossier["publication_state"], "BLOCKED")
 
 
 if __name__ == "__main__":

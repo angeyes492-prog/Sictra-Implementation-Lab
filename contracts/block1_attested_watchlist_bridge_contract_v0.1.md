@@ -9,7 +9,8 @@ attested source into a manual watchlist checkpoint.
 integer time. It reads current records from `AttestedEvidenceStore`; exactly
 one must match. The bridge reconstructs the strict seven-field manual bundle
 from signed evidence and invokes `ManualWatchlistCycle.ingest`. Its receipt
-retains signed approval/binding fingerprints and the watchlist receipt.
+retains signed approval/binding fingerprints, the watchlist receipt and the
+defensive delta only after its canonical SHA-256 matches the stored receipt.
 
 An empty, stale or ambiguous matching set rejects before the cycle can append.
 The output never elevates the watchlist delta beyond
