@@ -32,12 +32,19 @@ this is local integrity configuration, not production secret management.
 3. La primera ejecución crea claves locales aleatorias fuera del proyecto, en
    `%LOCALAPPDATA%\TelecareOS\Intelligence\operator`; no las compartas.
 4. Espera a que el navegador abra `http://127.0.0.1:8765/`.
-5. Entra en **Dossiers** para comprobar el lector firmado. Un almacén válido
-   pero vacío es el resultado esperado hasta registrar dos versiones.
-6. Entra en **Mesa editorial** para revisar la lista corta sintética.
-7. Escribe tu razonamiento y elige una pieza insignia, o registra que ninguna
+5. Entra en **Evidencia** para comprobar la cadena local: binding, evidencia
+   vigente y estado de watchlist. La interfaz nunca descarga fuentes por sí
+   misma.
+6. Para importar un XLSX autorizado de Eurostat, arrástralo sobre
+   `import_eurostat_workbook.cmd`. La primera versión crea una línea base;
+   no crea un insight ni un dossier.
+7. Entra en **Dossiers** para comprobar el lector firmado. Un almacén válido
+   pero vacío es el resultado esperado hasta registrar una segunda versión
+   distinta y válida.
+8. Entra en **Mesa editorial** para revisar la lista corta sintética.
+9. Escribe tu razonamiento y elige una pieza insignia, o registra que ninguna
    debe avanzar esa semana.
-8. Entra en **Investigaciones** para guardar una pregunta propia como
+10. Entra en **Investigaciones** para guardar una pregunta propia como
    **borrador local**. No pegues secretos ni datos personales: la referencia
    opcional no se consulta ni se convierte en evidencia.
 
@@ -57,6 +64,17 @@ La restauración no reemplaza datos actuales y solo funciona con las claves
 originales. Por eso es recuperación local ante pérdida accidental, no un
 respaldo de desastre ni recuperación de claves.
 
+### Cadena Eurostat: respaldo y recuperación
+
+1. Cierra Intelligence Workspace antes de respaldar la cadena.
+2. Haz doble clic en `backup_eurostat_pipeline.cmd`.
+3. Para reponer una cadena cuyo conjunto completo de ledgers ya no exista,
+   arrastra la carpeta creada sobre `restore_eurostat_pipeline.cmd`.
+
+Este respaldo contiene los ledgers de fuente, evidencia, watchlist y dossiers.
+No contiene claves ni el historial SQLite de ejecución; no reemplaza ningún
+ledger actual y requiere las claves locales originales.
+
 ### PowerShell
 
 On Windows PowerShell, from the repository root:
@@ -71,7 +89,9 @@ and no third-party runtime dependencies.
 
 ## Evidence boundary
 
-The included investigations are synthetic. The Workspace can persist a local
-operator-declared research question, but it does not access the internet,
-ingest company data, prove source truth, provide production security, operate
-Blocks 2–4, or imply global gate acceptance.
+The included investigations are synthetic, except for an explicitly supplied
+and governed local Eurostat workbook retained by the operator pipeline. The
+Workspace can persist a local operator-declared research question, but it does
+not access the internet, ingest company data automatically, prove source truth,
+provide production security, operate Blocks 2–4, or imply global gate
+acceptance.

@@ -55,16 +55,6 @@ from .intelligence_dossier import (
     IntelligenceDossierStore, IntelligenceDossierViolation, build_intelligence_dossier,
 )
 from .dossier_editorial_bridge import DossierEditorialBridge, DossierEditorialBridgeViolation
-from .operator_pipeline import (
-    OperatorPipeline,
-    OperatorPipelineViolation,
-    initialize_operator_pipeline,
-    ingest_eurostat_workbook,
-    load_operator_pipeline,
-    pipeline_snapshot,
-    create_pipeline_data_backup,
-    restore_pipeline_data_backup,
-)
 from .intelligence_layers import KNOWN_TOPICS, TOPIC_CATALOG, normalize_research_frame, validate_research_frame_bundle
 
 __all__ = [
@@ -120,14 +110,6 @@ __all__ = [
     "build_intelligence_dossier",
     "DossierEditorialBridge",
     "DossierEditorialBridgeViolation",
-    "OperatorPipeline",
-    "OperatorPipelineViolation",
-    "initialize_operator_pipeline",
-    "ingest_eurostat_workbook",
-    "load_operator_pipeline",
-    "pipeline_snapshot",
-    "create_pipeline_data_backup",
-    "restore_pipeline_data_backup",
     "KNOWN_TOPICS",
     "TOPIC_CATALOG",
     "normalize_research_frame",

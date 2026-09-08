@@ -1,5 +1,7 @@
+from http.client import HTTPConnection
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from threading import Thread
 import unittest
 
 from sictra_block1.operator_pipeline import (
@@ -107,7 +109,6 @@ class Block1OperatorPipelineTests(unittest.TestCase):
         self.assertIn("niega a reemplazar", restore_launcher)
         with self.assertRaises(OperatorPipelineViolation):
             restore_pipeline_data_backup(self.root, backup, clock=self.clock)
-
         for name in ("source-control.json", "evidence.json", "watchlist.json", "dossiers.json"):
             (self.root / name).unlink(missing_ok=True)
         restored = restore_pipeline_data_backup(self.root, backup, clock=self.clock)
@@ -119,6 +120,31 @@ class Block1OperatorPipelineTests(unittest.TestCase):
             (self.root / name).unlink(missing_ok=True)
         with self.assertRaises(OperatorPipelineViolation):
             restore_pipeline_data_backup(self.root, backup, clock=self.clock)
+
+    def test_local_ui_exposes_sanitized_pipeline_state_without_source_content(self):
+        initialize_operator_pipeline(self.root, clock=self.clock)
+        source = self.write_workbook("eurostat.xlsx", workbook())
+        ingest_eurostat_workbook(self.root, source, clock=self.clock)
+        pipeline = load_operator_pipeline(self.root, clock=self.clock)
+        from sictra_block1.lab_web import create_server
+        server = create_server(port=0, dossier_store=pipeline.dossiers, pipeline_root=self.root)
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            connection = HTTPConnection("127.0.0.1", server.server_port, timeout=5)
+            connection.request("GET", "/api/pipeline")
+            response = connection.getresponse()
+            payload = response.read().decode("utf-8")
+            connection.close()
+            self.assertEqual(response.status, 200)
+            self.assertIn('"status":"READY"', payload)
+            self.assertIn('"latest_status":"BASELINE_ESTABLISHED_NOT_EVIDENCE"', payload)
+            self.assertNotIn("source-control-integrity", payload)
+            self.assertNotIn("content_sha256", payload)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
 
 
 if __name__ == "__main__":
