@@ -24,9 +24,10 @@ or independent-review gate.
 
 ## Test
 
-`python -m unittest discover -s tests -q`: 275 tests passed locally before
-this gate candidate was recorded. The exact final CI result is an external
-binding, not a statement embedded by this file.
+`python -m unittest discover -s tests -q`: 276 tests passed locally. CI #358
+passed on the preceding UI/operator-flow SHA
+`35af84cfb63f2febf20180346a0150de452388d8`; CI on the exact ledger SHA is
+still required before it becomes closure evidence.
 
 ## Remaining limitations and promotion boundary
 

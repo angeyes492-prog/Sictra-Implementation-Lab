@@ -14,9 +14,9 @@ acceptance.
 | 3. Intelligence dossier | Atomic HMAC dossier store separates literal facts from empty interpretations/hypotheses; second-release pipeline integration tested. | `VERIFIED / B` synthetic delta | A real dossier cannot exist until a second governed release changes. |
 | 4. E01–E08 integration | Current attested evidence reaches the runtime; stale, ambiguous and altered evidence rejects. | `VERIFIED / B` | No open local implementation blocker. |
 | 5. Editorial bridge | Verified dossier composes only as `RESEARCH_NEEDED` / `BLOCKED`, no handoff. | `VERIFIED / B` | Independent root and human interpretation remain external inputs, not bypassable code tasks. |
-| 6. Laboratory UI | Signed dossier reader plus sanitized retained-pipeline status expose evidence/watchlist state without keys or production claims. | `VERIFIED / B` | No open local implementation blocker. |
+| 6. Laboratory UI | Signed dossier reader plus sanitized retained-pipeline status expose evidence/watchlist state without keys or production claims. The navigation now names each workspace action and its storage boundary, with a four-step route from local draft through retained evidence and dossier to editorial review. | `VERIFIED / B` | No open local implementation blocker. |
 | 7. Local operation | Windows launch/import/backup/restore commands initialize keys outside OneDrive/Git and recover all pipeline ledgers only under original keys. | `VERIFIED / B` | Not a cross-device key recovery or production backup. |
-| 8. Closure | 275 local tests passed; CI #354 passed on pipeline SHA `9929805e02306fb3f10e4210c036f555140855be`. Final candidate requires CI on the exact ledger SHA. | `YELLOW` | Exact final CI and deferred independent review boundary. |
+| 8. Closure | 276 local tests passed. UI/operator-flow SHA `35af84cfb63f2febf20180346a0150de452388d8` passed CI #358; the next ledger-only SHA requires its own CI before it is closure evidence. | `YELLOW` | Exact final CI and deferred independent review boundary. |
 
 ## Completed technical chain
 
@@ -26,6 +26,16 @@ E01–E08 check → baseline/delta watchlist → optional dossier → UI`
 The first real release returned `BASELINE_ESTABLISHED_NOT_EVIDENCE`; this is
 the required safe behavior. It does not create an interpretation, dossier or
 publication candidate without a real controlled change.
+
+## Latest closure delta — 2026-09-07
+
+The laboratory now has an operator-facing route and persistent guide text:
+`Investigaciones → Evidencia → Dossiers → Mesa editorial`. It distinguishes a
+local question draft, retained source/evidence chain, verifiable dossier and
+review-or-abstention decision. Browser inspection confirmed the research view
+shows its draft-only form while the dossier view remains hidden; no browser
+console errors were present. This is usability evidence for the local
+laboratory only, not a source, insight, gate promotion or production claim.
 
 ## External, non-code dependencies
 
