@@ -13,8 +13,11 @@ contains the ordinary runtime envelope plus defensive receipt summaries for
 the exact admitted evidence set.
 
 Invariants: at least one record must be current; every supplied runtime source
-is from the current durable-store read; receipts must also report `CURRENT`;
-and a clock disagreement rejects before the runtime request or durable effect.
+is from the current durable-store read; the returned receipt subset must also
+report `CURRENT` and match the current evidence count; and a clock disagreement
+rejects before the runtime request or durable effect. Expired records remain in
+the durable history for lineage and cannot enter the subset or block a current
+release.
 The runtime remains owner of E01–E08 behavior, authority enforcement and its
 own durable effect. The store remains owner of evidence retention and
 freshness. The bridge owns only the boundary between them.

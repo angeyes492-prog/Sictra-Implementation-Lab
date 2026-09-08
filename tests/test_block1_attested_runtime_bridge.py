@@ -101,6 +101,44 @@ class AttestedRuntimeBridgeTests(unittest.TestCase):
             )
         self.assertEqual(self.runtime.memory.history("stale-task"), ())
 
+    def test_expired_history_does_not_block_one_new_current_release(self):
+        self.now = NOW + 11
+        registration = SourceRegistration(
+            "eurostat", "Eurostat / European Commission", SCOPE, ("ec.europa.eu",),
+            frozenset((CLAIM,)), "MANUAL_SOURCE_BUNDLE", 131_072, "BOUND",
+        )
+        approval = SourceApprovalRecord(
+            "eurostat", "PROJECT_OWNER", NOW - 1,
+            "evidence/block1_eurostat_maritime_registration_draft_v0.1.md",
+            registration.allowed_hosts, registration.claim_keys,
+            registration.access_method, registration.max_content_bytes, "APPROVED",
+        )
+        binding = SourceBindingIssuer("review-control", BINDING_KEY).issue(
+            registration, approval, now=NOW, ttl=100,
+        )
+        controls = SourceControlStore(
+            Path(self.temp.name) / "next-control.json", binding_keys={"review-control": BINDING_KEY},
+            integrity_key=CONTROL_KEY, clock=lambda: self.now,
+        )
+        controls.persist(registration, approval, binding)
+        newer = controls.build_gateway(
+            "eurostat", evidence_issuer=EvidenceIssuer("gateway", EVIDENCE_KEY), now=self.now,
+        ).attest_manual_bundle(build_eurostat_manual_bundle(
+            "eurostat-new.xlsx", workbook(last_updated="06/09/2026 06:14"), "COUNTRY",
+            source_url=URL, observed_at=self.now, correlation_id="attested-runtime-new",
+        ), now=self.now)
+        self.store.persist(newer)
+        authority = AuthorityIssuer("governance", AUTHORITY_KEY, "block1-runtime", 1).issue(
+            task_id="next-task", run_id="next-run", actions=("store_candidate",),
+            now=self.now, ttl=20, nonce="attested-bridge-next",
+        )
+        result = self.bridge.run(
+            task_id="next-task", run_id="next-run", objective="analyse newer maritime release",
+            authority=authority, now=self.now,
+        )
+        self.assertEqual(result.envelope.payload["enforcement"]["status"], "COMMITTED")
+        self.assertEqual([item["status"] for item in result.evidence_receipts], ["CURRENT"])
+
     def test_clock_disagreement_fails_before_e01(self):
         with self.assertRaises(AttestedRuntimeBridgeViolation):
             self.bridge.run(

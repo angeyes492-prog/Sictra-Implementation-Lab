@@ -52,9 +52,10 @@ class AttestedRuntimeBridge:
             raise AttestedRuntimeBridgeViolation("runtime and evidence-store clocks disagree")
         evidence = self._evidence_store.runtime_records(now=trusted_now)
         receipts = self._evidence_store.list_receipts(now=trusted_now)
+        current_receipts = [receipt for receipt in receipts if receipt["status"] == "CURRENT"]
         if not evidence:
             raise AttestedRuntimeBridgeViolation("no current attested evidence is available")
-        if len(evidence) != len(receipts) or any(receipt["status"] != "CURRENT" for receipt in receipts):
+        if len(evidence) != len(current_receipts):
             raise AttestedRuntimeBridgeViolation("evidence-store current receipt set is inconsistent")
         envelope = self._runtime.run(
             task_id=self._text("task_id", task_id), run_id=self._text("run_id", run_id),
@@ -62,5 +63,5 @@ class AttestedRuntimeBridge:
         )
         return AttestedRuntimeResult(
             envelope=envelope,
-            evidence_receipts=tuple(plain_copy(receipt) for receipt in receipts),
+            evidence_receipts=tuple(plain_copy(receipt) for receipt in current_receipts),
         )

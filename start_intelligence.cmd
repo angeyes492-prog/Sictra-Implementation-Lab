@@ -17,6 +17,7 @@ if "%LOCALAPPDATA%"=="" (
   exit /b 1
 )
 set "SICTRA_OPERATOR_STATE=%LOCALAPPDATA%\TelecareOS\Intelligence\operator"
+set "SICTRA_PIPELINE_STATE=%LOCALAPPDATA%\TelecareOS\Intelligence\pipeline"
 echo Verificando el estado local firmado...
 python -m sictra_block1.operator_workspace init "%SICTRA_OPERATOR_STATE%"
 if errorlevel 1 (
@@ -25,12 +26,19 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
+python -m sictra_block1.operator_pipeline init "%SICTRA_PIPELINE_STATE%"
+if errorlevel 1 (
+  echo.
+  echo No se pudo preparar la cadena local de fuentes de Intelligence.
+  pause
+  exit /b 1
+)
 
 echo Iniciando Intelligence Workspace en modo local...
 if "%~1"=="" (
-  python -m sictra_block1.lab_web --operator-state "%SICTRA_OPERATOR_STATE%" --open
+  python -m sictra_block1.lab_web --operator-state "%SICTRA_OPERATOR_STATE%" --pipeline-state "%SICTRA_PIPELINE_STATE%" --open
 ) else (
-  python -m sictra_block1.lab_web --operator-state "%SICTRA_OPERATOR_STATE%" %*
+  python -m sictra_block1.lab_web --operator-state "%SICTRA_OPERATOR_STATE%" --pipeline-state "%SICTRA_PIPELINE_STATE%" %*
 )
 
 if errorlevel 1 (

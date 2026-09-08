@@ -38,6 +38,7 @@ from .logistics import (
 from .source_portfolio import source_readiness
 from .research_intake import ResearchIntakeStore, ResearchIntakeViolation
 from .operator_workspace import OperatorWorkspaceViolation, load_operator_dossier_store
+from .operator_pipeline import OperatorPipelineViolation, load_operator_pipeline, pipeline_snapshot
 
 UI_SCOPE = "BLOCK1_LOCAL_INTELLIGENCE_PRODUCT_UI"
 _WEB_ROOT = Path(__file__).with_name("web")
@@ -260,6 +261,17 @@ class LabWebHandler(BaseHTTPRequestHandler):
             "publication_authority": "NONE",
         }
 
+    def _pipeline_snapshot(self) -> dict[str, Any]:
+        root = self.server.pipeline_root
+        if root is None:
+            return {
+                "scope": "BLOCK1_LOCAL_EUROSTAT_OPERATOR_PIPELINE",
+                "status": "NOT_CONFIGURED",
+                "network_acquisition": "DISABLED",
+                "publication_authority": "NONE",
+            }
+        return pipeline_snapshot(root)
+
     def do_GET(self) -> None:
         if not self._guard_local_request():
             return
@@ -276,7 +288,19 @@ class LabWebHandler(BaseHTTPRequestHandler):
                 "status": "ok", "scope": UI_SCOPE,
                 "workspace_scope": WORKSPACE_SCOPE, "fixture_class": FIXTURE_CLASS,
                 "dossier_reader": dossier_reader,
+                "pipeline_reader": "AVAILABLE" if self.server.pipeline_root is not None else "NOT_CONFIGURED",
             })
+            return
+        if parsed.path == "/api/pipeline":
+            if parsed.query:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Este endpoint no acepta query string."})
+                return
+            try:
+                self._send_json(HTTPStatus.OK, self._pipeline_snapshot())
+            except OperatorPipelineViolation:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {
+                    "error": "La cadena local de fuente no superó la verificación de integridad."
+                })
             return
         if parsed.path == "/api/workspace":
             try:
@@ -496,6 +520,7 @@ def create_server(
     *, host: str = "127.0.0.1", port: int = 8765,
     intake_store_path: str | Path | None = None,
     dossier_store: IntelligenceDossierStore | None = None,
+    pipeline_root: str | Path | None = None,
 ) -> ThreadingHTTPServer:
     if host != "127.0.0.1":
         raise ValueError("the product workspace may only bind to 127.0.0.1")
@@ -507,6 +532,7 @@ def create_server(
         server.server_close()
         raise ValueError("dossier_store must be an IntelligenceDossierStore")
     server.dossier_store = dossier_store
+    server.pipeline_root = Path(pipeline_root) if pipeline_root is not None else None
     return server
 
 
@@ -521,6 +547,10 @@ def main() -> int:
         "--operator-state", type=Path,
         help="Directorio local ya inicializado con claves y almacén de dossiers.",
     )
+    parser.add_argument(
+        "--pipeline-state", type=Path,
+        help="Directorio local de la cadena Eurostat retenida y verificable.",
+    )
     parser.add_argument("--open", action="store_true", help="Open the local workspace.")
     args = parser.parse_args()
     try:
@@ -528,11 +558,18 @@ def main() -> int:
             load_operator_dossier_store(args.operator_state)
             if args.operator_state is not None else None
         )
-    except OperatorWorkspaceViolation as error:
+        pipeline = (
+            load_operator_pipeline(args.pipeline_state)
+            if args.pipeline_state is not None else None
+        )
+        if pipeline is not None:
+            dossier_store = pipeline.dossiers
+    except (OperatorWorkspaceViolation, OperatorPipelineViolation) as error:
         parser.error(str(error))
     server = create_server(
         port=args.port, intake_store_path=args.intake_store,
         dossier_store=dossier_store,
+        pipeline_root=args.pipeline_state,
     )
     address = f"http://127.0.0.1:{server.server_port}/"
     print(f"Intelligence Workspace disponible en {address}")
