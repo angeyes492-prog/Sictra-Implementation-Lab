@@ -284,11 +284,18 @@ class LabWebHandler(BaseHTTPRequestHandler):
                     dossier_reader = "AVAILABLE"
                 except IntelligenceDossierViolation:
                     dossier_reader = "INTEGRITY_ERROR"
+            pipeline_reader = "NOT_CONFIGURED"
+            if self.server.pipeline_root is not None:
+                try:
+                    pipeline_snapshot(self.server.pipeline_root)
+                    pipeline_reader = "AVAILABLE"
+                except OperatorPipelineViolation:
+                    pipeline_reader = "INTEGRITY_ERROR"
             self._send_json(HTTPStatus.OK, {
                 "status": "ok", "scope": UI_SCOPE,
                 "workspace_scope": WORKSPACE_SCOPE, "fixture_class": FIXTURE_CLASS,
                 "dossier_reader": dossier_reader,
-                "pipeline_reader": "AVAILABLE" if self.server.pipeline_root is not None else "NOT_CONFIGURED",
+                "pipeline_reader": pipeline_reader,
             })
             return
         if parsed.path == "/api/pipeline":

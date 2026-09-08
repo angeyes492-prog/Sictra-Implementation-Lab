@@ -48,6 +48,22 @@ this is local integrity configuration, not production secret management.
    **borrador local**. No pegues secretos ni datos personales: la referencia
    opcional no se consulta ni se convierte en evidencia.
 
+### Mapa rápido de pestañas
+
+La interfaz sigue siempre esta ruta, visible también en la parte superior de
+la aplicación:
+
+| Pestaña | Aquí se hace | Aquí se guarda o consulta |
+| --- | --- | --- |
+| **Investigaciones** | Formular una pregunta con alcance. | Borradores locales sin claims ni evidencia. |
+| **Evidencia** | Revisar una importación ya ejecutada. | La cadena retenida: binding, versiones, watchlist y límites. |
+| **Dossiers** | Examinar cambios que sí superaron la cadena. | Expedientes firmados; una línea base o un archivo inválido no crea uno. |
+| **Mesa editorial** | Seleccionar o abstenerse ante una lista corta. | La decisión y su razonamiento; nunca publica ni envía contenido. |
+| **Watchlists** | Consultar qué observable espera cada horizonte. | Señales de comparación; no realiza descargas. |
+| **Strategy Lab** | Comparar estrategias de indagación. | El resultado de comparación, no evidencia nueva. |
+| **Fuentes** | Evaluar candidatos bajo las reglas locales. | Estado de preparación, no una descarga, binding ni autorización. |
+| **Validación** | Ejecutar escenarios controlados. | Resultados de pruebas, incluidos bloqueos correctos. |
+
 Mantén abierta la ventana de inicio mientras utilizas la herramienta. Para
 detenerla, ciérrala o presiona `Ctrl+C`.
 
