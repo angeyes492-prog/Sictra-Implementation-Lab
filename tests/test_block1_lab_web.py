@@ -49,6 +49,7 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertIn(b"Aqu\xc3\xad empiezan las investigaciones", body)
         self.assertIn(b"Aqu\xc3\xad se almacenan los cambios verificables", body)
         self.assertIn(b"data-view-label", body)
+        self.assertIn(b"REGULATION", body)
         status, content_type, body = self.request("GET", "/app.css")
         self.assertEqual(status, 200)
         self.assertIn("text/css", content_type)
@@ -113,17 +114,25 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertEqual(payload["admissible_source_count"], 0)
         self.assertEqual(payload["status"], "RESEARCH_BLOCKED_PENDING_SOURCE_BINDING")
         self.assertIn("cepal", {item["source_id"] for item in payload["candidates"]})
+        sat = next(item for item in payload["candidates"] if item["source_id"] == "sat-guatemala")
+        self.assertEqual(sat["allowed_actions"], ["DISCOVER", "REVIEW"])
+        self.assertEqual(sat["license_status"], "PUBLIC_TERMS_UNCLEAR")
         status, _, body = self.request("GET", "/api/source-readiness?region=EUROPE&domain=MARITIME")
         eurostat = json.loads(body)
         self.assertEqual(status, 200)
         self.assertEqual(eurostat["admissible_source_count"], 0)
         self.assertEqual(eurostat["status"], "RESEARCH_BLOCKED_PENDING_SOURCE_BINDING")
-        self.assertEqual(
-            {item["source_id"] for item in eurostat["candidates"]},
-            {"eurostat"},
-        )
+        candidate_ids = {item["source_id"] for item in eurostat["candidates"]}
+        self.assertIn("eurostat", candidate_ids)
+        self.assertIn("puertos-del-estado", candidate_ids)
+        self.assertTrue(all(item["status"] == "PROPOSED" for item in eurostat["candidates"]))
         status, _, _ = self.request("GET", "/api/source-readiness?region=AMERICAS")
         self.assertEqual(status, 400)
+        status, _, body = self.request("GET", "/api/source-readiness?region=AMERICAS&domain=REGULATION")
+        self.assertEqual(status, 200)
+        regulation = json.loads(body)
+        self.assertIn("wto-eping", {item["source_id"] for item in regulation["candidates"]})
+        self.assertEqual(regulation["admissible_source_count"], 0)
 
     def test_investigation_and_strategy_comparison_endpoints(self):
         status, _, body = self.request("GET", "/api/investigations/global-components-001")

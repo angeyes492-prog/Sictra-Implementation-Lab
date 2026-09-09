@@ -6,8 +6,9 @@
 
 ## Status
 
-`YELLOW` — implementación y CI verificadas para el alcance local; no
-promovible a fuente real ni a cierre global.
+`YELLOW` — una ruta local retenida de Eurostat está verificada para el alcance
+de laboratorio; el registro ampliado conserva 18 candidatos sin promoverlos a
+fuente real ni a cierre global.
 
 ## Evidence
 
@@ -45,8 +46,11 @@ promovible a fuente real ni a cierre global.
   (`#201`), terminado en `success` sobre ese SHA exacto.
 - `evidence/ci-run-33325016910.json`: antecedente verificable de la
   vinculación del método de acceso, CI #197 sobre `829f5a3`.
-- Ejecución local del current source-governance state: 250 pruebas, 0 fallos,
+- Ejecución local del current source-governance state: 279 pruebas, 0 fallos,
   0 errores.
+- `docs/source_master_registry_v1.md`: 18 candidatos con rol propuesto,
+  licencia/acceso/revisión explícitos, referencia oficial y cero admisibles.
+  No añade conectores ni permisos de adquisición.
 - El binding HMAC exige coincidencia exacta de identidad, scope, hosts,
   claims, límite de bytes y `MANUAL_SOURCE_BUNDLE`; la aprobación rechazada,
   futura o incongruente falla cerrada. Los campos temporales booleanos se
@@ -54,8 +58,8 @@ promovible a fuente real ni a cierre global.
 
 ## Test
 
-- Suite local dividida por límite del terminal: grupo runtime 67 pruebas,
-  `OK`; todos los demás grupos 183 pruebas, `OK`; 250/250 el 2026-09-06.
+- Suite local actual: 279 pruebas, `OK`, el 2026-09-08. Incluye contrato y
+  rechazo de rol/referencia del Source Master Registry.
 - `tests/test_block1_eurostat_maritime_draft.py` — la propuesta de Eurostat
   declara host, límite, método y claims acotados, pero falla cerrada ante todo
   intento de atestar un bundle mientras su estado sea `PROPOSED`.
@@ -68,7 +72,7 @@ promovible a fuente real ni a cierre global.
 
 ## Date
 
-2026-09-06.
+2026-09-08.
 
 ## Version
 
@@ -87,24 +91,27 @@ promovible a fuente real ni a cierre global.
 
 ## Contradictions and blockers
 
-1. `INSUFFICIENT EVIDENCE / A` — no existe una fuente real `BOUND` en el
-   runtime, ni binding vigente configurado con una clave de producción. La
-   atestación durable se ejercitó solo en almacenamiento temporal; el registro
-   acotado del owner y el dossier no sustituyen configuración operacional ni
-   evidencia retenida.
-2. `INSUFFICIENT EVIDENCE / A` — la clave HMAC y el reviewer son mecanismos
+1. `VERIFIED / B` — el pipeline local retiene una única ruta Eurostat `BOUND`
+   bajo claves locales, con binding y evidencia actual verificables. Esto no
+   habilita a ningún candidato del registro, no es una configuración de
+   producción y no sustituye una revisión independiente.
+2. `INSUFFICIENT EVIDENCE / A` — para los otros 17 candidatos faltan revisión
+   de términos, approval record, allowlist, claims acotados y binding; una
+   página pública o una API registrada no es autorización de reutilización.
+3. `INSUFFICIENT EVIDENCE / A` — la clave HMAC y el reviewer son mecanismos
    locales de referencia, no identidad de producción ni KMS.
-3. `INSUFFICIENT EVIDENCE / A` — falta revisión humana independiente sobre
+4. `INSUFFICIENT EVIDENCE / A` — falta revisión humana independiente sobre
    este SHA o uno posterior; la revisión adversarial de Codex no es
    independiente.
-4. `VERIFIED / A` — el gateway no tiene cliente HTTP, scraper, credenciales
+5. `VERIFIED / A` — el gateway no tiene cliente HTTP, scraper, credenciales
    ni scheduler; por diseño no puede investigar Internet por sí mismo.
 
 ## Confidence
 
 - Contrato, persistencia y comportamiento local: `VERIFIED / B`.
 - Ejecución CI sobre SHA exacto: `VERIFIED / A` para los pasos observados.
-- Preparación para fuentes reales: `INSUFFICIENT EVIDENCE / A`.
+- Ruta Eurostat retenida: `VERIFIED / B`; preparación de los demás candidatos:
+  `INSUFFICIENT EVIDENCE / A`.
 - Gate local: `YELLOW / B`.
 
 ## Reviewer / validator
@@ -116,9 +123,10 @@ independiente humana: pendiente.
 
 ## Next reassessment
 
-Tras una revisión humana independiente de PR #10 y una integración retenida
-de la evidencia atestada con E01–E08, seguida de revisión editorial humana,
-manteniendo el SHA/CI correspondiente.
+Tras una revisión independiente del SHA final y, para cualquier candidato
+nuevo, una revisión de términos seguida de approval/binding y una comparación
+de versión retenida. La revisión editorial humana solo aplica cuando exista
+un dossier real con corroboración suficiente.
 
 ## Non-claims
 
