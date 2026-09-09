@@ -487,7 +487,10 @@ def ingest_eurostat_workbook(
         raise OperatorPipelineViolation("operator workbook failed controlled preflight") from error
     if preflight["status"] != "READY_FOR_SCHEMA_REVIEW":
         raise OperatorPipelineViolation(f"operator workbook rejected: {preflight['reason']}")
-    pipeline = load_operator_pipeline(root, clock=trusted_clock)
+    # Every component in this ingestion must assess freshness against the same
+    # verified instant.  Calling a wall clock again at a second boundary could
+    # otherwise make the runtime reject evidence just admitted by this call.
+    pipeline = load_operator_pipeline(root, clock=lambda: now)
     gateway = pipeline.gateway(now=now)
     correlation = f"eurostat:{sha256(payload).hexdigest()}"
     try:

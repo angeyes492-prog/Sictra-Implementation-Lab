@@ -53,12 +53,12 @@ class Block1OperatorPipelineTests(unittest.TestCase):
         self.assertEqual(snapshot["watchlist"]["latest_status"], "BASELINE_ESTABLISHED_NOT_EVIDENCE")
         self.assertEqual(snapshot["dossiers"]["count"], 0)
 
-    def test_new_release_after_old_evidence_expires_creates_literal_fact_dossier(self):
+    def test_new_release_immediately_supersedes_current_evidence_and_creates_literal_fact_dossier(self):
         initialize_operator_pipeline(self.root, clock=self.clock)
         first = self.write_workbook("eurostat-first.xlsx", workbook())
         ingest_eurostat_workbook(self.root, first, clock=self.clock)
 
-        self.now += 86_401
+        self.now += 1
         second = self.write_workbook(
             "eurostat-second.xlsx",
             workbook(last_updated="07/09/2026 06:14", rows=(("BE", "Belgium", "14", None, "15"),)),
@@ -74,6 +74,7 @@ class Block1OperatorPipelineTests(unittest.TestCase):
         self.assertTrue(dossier["facts"])
         self.assertEqual(dossier["interpretations"], [])
         self.assertEqual(dossier["publication_state"], "BLOCKED")
+        self.assertEqual(pipeline_snapshot(self.root, clock=self.clock)["evidence"], {"retained_count": 2, "current_count": 1})
 
     def test_rejection_and_tamper_fail_before_state_or_runtime_effect(self):
         initialize_operator_pipeline(self.root, clock=self.clock)
@@ -90,6 +91,12 @@ class Block1OperatorPipelineTests(unittest.TestCase):
         key.write_bytes(b"x" * 32)
         with self.assertRaises(OperatorPipelineViolation):
             load_operator_pipeline(self.root, clock=self.clock)
+
+    def test_ingest_uses_one_trusted_time_across_runtime_and_evidence(self):
+        initialize_operator_pipeline(self.root, clock=self.clock)
+        source = self.write_workbook("eurostat-one-clock.xlsx", workbook())
+        result = ingest_eurostat_workbook(self.root, source, clock=self.clock)
+        self.assertEqual(result["runtime"]["enforcement"], "COMMITTED")
 
     def test_data_backup_restores_only_missing_ledgers_under_original_keys(self):
         initialize_operator_pipeline(self.root, clock=self.clock)

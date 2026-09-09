@@ -47,7 +47,7 @@ class AttestedWatchlistBridgeTests(unittest.TestCase):
         self.assertEqual(receipt["next_state"], "AWAIT_NEWER_SOURCE")
         self.assertEqual(receipt["source_approval_fingerprint"], source["source_approval_fingerprint"])
 
-    def test_stale_or_ambiguous_current_source_fails_before_watchlist_advance(self):
+    def test_stale_source_fails_and_duplicate_same_release_does_not_advance(self):
         self.store.persist(observed_source())
         self.now = NOW + 11
         with self.assertRaises(AttestedWatchlistBridgeViolation):
@@ -56,9 +56,9 @@ class AttestedWatchlistBridgeTests(unittest.TestCase):
 
         self.now = NOW
         self.store.persist(observed_source(correlation="watchlist-second"))
-        with self.assertRaises(AttestedWatchlistBridgeViolation):
-            self.bridge.ingest("eurostat", now=self.now)
-        self.assertEqual(self.cycle.list_cycles(), [])
+        receipt = self.bridge.ingest("eurostat", now=self.now)
+        self.assertEqual(receipt["watchlist_receipt"]["status"], "BASELINE_ESTABLISHED_NOT_EVIDENCE")
+        self.assertEqual(len(self.cycle.list_cycles()), 1)
 
     def test_new_attested_version_after_baseline_expiry_generates_reviewable_delta(self):
         baseline = observed_source(observed=NOW)

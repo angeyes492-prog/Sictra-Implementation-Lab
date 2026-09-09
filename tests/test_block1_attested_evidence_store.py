@@ -93,6 +93,18 @@ class AttestedEvidenceStoreTests(unittest.TestCase):
         self.assertEqual(receipt["verification_reason"], "SOURCE_STALE")
         self.assertEqual(self.store.runtime_records(now=NOW + 10), [])
 
+    def test_conflicting_content_for_one_declared_release_is_not_current(self):
+        self.store.persist(observed_source())
+        changed = observed_source(correlation="conflicting-release")
+        unsigned = {key: value for key, value in changed.items() if key != "attestation"}
+        content = json.loads(unsigned["content"])
+        content["provenance"]["source_file_sha256"] = "f" * 64
+        unsigned["content"] = json.dumps(content, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+        unsigned["content_sha256"] = __import__("hashlib").sha256(unsigned["content"].encode()).hexdigest()
+        self.store.persist(EvidenceIssuer("gateway", EVIDENCE_KEY).attest(unsigned))
+        self.assertEqual(self.store.runtime_records(now=NOW), [])
+        self.assertEqual([item["status"] for item in self.store.list_receipts(now=NOW)], ["NOT_CURRENT", "NOT_CURRENT"])
+
     def test_resigned_bad_content_hash_lineage_and_bundle_fail_closed(self):
         issuer = EvidenceIssuer("gateway", EVIDENCE_KEY)
         source = observed_source()

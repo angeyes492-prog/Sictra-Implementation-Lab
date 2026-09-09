@@ -194,8 +194,42 @@ class AttestedEvidenceStore:
                 Path(temporary_name).unlink(missing_ok=True)
             raise AttestedEvidenceStoreViolation("evidence store cannot be written") from error
 
+    def _current_ids(self, records: list[dict[str, Any]], *, now: int) -> set[str]:
+        """Return one unambiguous newest valid record per source.
+
+        Retention is historical, but a versioned source may contribute only its
+        newest observed release to a live run.  Equal observation times with
+        different signed content fail closed rather than making an arbitrary
+        version current.
+        """
+        selected: dict[str, tuple[str, str, int, str]] = {}
+        ambiguous: set[str] = set()
+        for record in records:
+            evidence = record["evidence"]
+            if not self._verifier.verify(evidence, now=now)[0]:
+                continue
+            source_id, observed_at, evidence_id = (
+                evidence["source_id"], evidence["observed_at"], record["evidence_id"],
+            )
+            provenance = json.loads(evidence["content"])["provenance"]
+            release_time, source_hash = provenance["dataset_last_updated"], provenance["source_file_sha256"]
+            prior = selected.get(source_id)
+            if prior is None or release_time > prior[0]:
+                selected[source_id] = (release_time, source_hash, observed_at, evidence_id)
+                ambiguous.discard(source_id)
+            elif release_time == prior[0]:
+                if source_hash != prior[1]:
+                    ambiguous.add(source_id)
+                elif observed_at > prior[2]:
+                    selected[source_id] = (release_time, source_hash, observed_at, evidence_id)
+        return {entry[3] for source_id, entry in selected.items() if source_id not in ambiguous}
+
     def _receipt(self, record: Mapping[str, Any], *, now: int, replay: bool = False) -> dict[str, Any]:
         valid, reason = self._verifier.verify(record["evidence"], now=now)
+        current_ids = self._current_ids(self._load_unlocked(), now=now)
+        status = "CURRENT" if record["evidence_id"] in current_ids else "NOT_CURRENT"
+        if valid and status != "CURRENT":
+            reason = "SOURCE_SUPERSEDED_OR_AMBIGUOUS"
         return {
             "scope": "BLOCK1_LOCAL_ATTESTED_EVIDENCE_STORE",
             "evidence_id": record["evidence_id"],
@@ -203,7 +237,7 @@ class AttestedEvidenceStore:
             "admitted_at": record["admitted_at"],
             "observed_at": record["evidence"]["observed_at"],
             "record_hash": record["record_hash"],
-            "status": "CURRENT" if valid else "NOT_CURRENT",
+            "status": status,
             "verification_reason": reason,
             "replay": replay,
         }
@@ -246,7 +280,8 @@ class AttestedEvidenceStore:
             raise AttestedEvidenceStoreViolation("evidence runtime time is invalid")
         with self._lock:
             records = self._load_unlocked()
+            current_ids = self._current_ids(records, now=now)
             return [
                 deepcopy(record["evidence"]) for record in records
-                if self._verifier.verify(record["evidence"], now=now)[0]
+                if record["evidence_id"] in current_ids
             ]
