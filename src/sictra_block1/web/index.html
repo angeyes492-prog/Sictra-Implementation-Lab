@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Intelligence Workspace · Telecare OS</title>
+  <title>SICTrA Intelligence · Telecare OS</title>
   <link rel="stylesheet" href="/app.css">
 </head>
 <body>
@@ -12,18 +12,22 @@
   <div class="app-shell">
     <aside class="rail" aria-label="Navegación principal">
       <div class="identity">
-        <span class="identity-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-        <div><strong>Telecare OS</strong><span>Intelligence / 01</span></div>
+        <div class="brand-plate"><img src="/brand-mark.png" alt="SICTrA"></div>
+        <div class="identity-copy"><strong>Intelligence</strong><span>Bloque 1 · Operational</span></div>
       </div>
       <nav class="rail-nav">
+        <p class="nav-group">Inicio</p>
         <button class="nav-item active" data-view="overview" data-view-label="Panorama" data-view-copy="Orientación y estado general del laboratorio."><span>⌁</span><b>Panorama</b><small>Orientación</small></button>
+        <p class="nav-group">Investigación</p>
         <button class="nav-item" data-view="investigations" data-view-label="Investigaciones" data-view-copy="Aquí se formulan y guardan preguntas locales como borradores."><span>◎</span><b>Investigaciones</b><small>Crear preguntas</small></button>
-        <button class="nav-item" data-view="evidence" data-view-label="Evidencia" data-view-copy="Aquí se consulta la cadena retenida y el estado de cada fuente."><span>⌇</span><b>Evidencia</b><small>Ver cadena retenida</small></button>
-        <button class="nav-item" data-view="dossiers" data-view-label="Dossiers" data-view-copy="Aquí se almacenan y leen cambios verificables que requieren interpretación."><span>▤</span><b>Dossiers</b><small>Guardar cambios verificados</small></button>
-        <button class="nav-item" data-view="watchlists" data-view-label="Watchlists" data-view-copy="Aquí se consulta cuándo comparar una fuente con su próxima versión."><span>◌</span><b>Watchlists</b><small>Esperar y comparar</small></button>
-        <button class="nav-item" data-view="strategy" data-view-label="Strategy Lab" data-view-copy="Aquí se comparan métodos de investigación sin modificar evidencia."><span>⇄</span><b>Strategy Lab</b><small>Comparar métodos</small></button>
         <button class="nav-item" data-view="sources" data-view-label="Fuentes" data-view-copy="Aquí se evalúan candidatos; no se importan ni se convierten en evidencia."><span>⌘</span><b>Fuentes</b><small>Evaluar candidatos</small></button>
+        <button class="nav-item" data-view="strategy" data-view-label="Strategy Lab" data-view-copy="Aquí se comparan métodos de investigación sin modificar evidencia."><span>⇄</span><b>Strategy Lab</b><small>Comparar métodos</small></button>
+        <p class="nav-group">Inteligencia</p>
+        <button class="nav-item" data-view="evidence" data-view-label="Evidencia" data-view-copy="Aquí se consulta la cadena retenida y el estado de cada fuente."><span>⌇</span><b>Evidencia</b><small>Ver cadena retenida</small></button>
+        <button class="nav-item" data-view="dossiers" data-view-label="Dossiers" data-view-copy="Aquí se almacenan y leen cambios verificables que requieren interpretación."><span>▤</span><b>Dossiers</b><small>Cambios verificados</small></button>
+        <button class="nav-item" data-view="watchlists" data-view-label="Watchlists" data-view-copy="Aquí se consulta cuándo comparar una fuente con su próxima versión."><span>◌</span><b>Watchlists</b><small>Esperar y comparar</small></button>
         <button class="nav-item" data-view="editorial" data-view-label="Mesa editorial" data-view-copy="Aquí se revisan candidatos y se permite abstenerse; no se publica contenido."><span>◇</span><b>Mesa editorial</b><small>Revisar, no publicar</small></button>
+        <p class="nav-group">Control</p>
         <button class="nav-item" data-view="validation" data-view-label="Validación" data-view-copy="Aquí se prueban los límites técnicos del laboratorio."><span>✓</span><b>Validación</b><small>Probar límites</small></button>
       </nav>
       <div class="rail-foot">
@@ -34,8 +38,8 @@
 
     <main id="workspace" class="workspace" tabindex="-1">
       <header class="command-bar">
-        <div><span class="crumb">Bloque 1 / <strong id="view-name">Panorama</strong></span><h1>Intelligence Workspace</h1><p id="view-guide" class="view-guide">Orientación y estado general del laboratorio.</p></div>
-        <div class="command-actions"><span class="fixture-badge">Campo sintético</span><button id="refresh" class="icon-button" type="button" aria-label="Actualizar workspace">↻</button></div>
+        <div><span class="crumb">SICTrA Intelligence / <strong id="view-name">Panorama</strong></span><h1>Centro de inteligencia logística</h1><p id="view-guide" class="view-guide">Orientación y estado general del laboratorio.</p></div>
+        <div class="command-actions"><div class="system-chip"><span class="local-dot online"></span><div><small>Entorno</small><strong>Supervisado</strong></div></div><span class="fixture-badge">Campo sintético</span><button id="refresh" class="refresh-button" type="button" aria-label="Actualizar workspace"><span>↻</span> Actualizar</button></div>
       </header>
       <section class="boundary-strip" aria-label="Límite del entorno"><strong>Entorno de pruebas trazable</strong><span>No consulta internet; un borrador local no es evidencia ni cambia gates.</span></section>
       <section class="work-route" aria-label="Ruta de trabajo de Intelligence">

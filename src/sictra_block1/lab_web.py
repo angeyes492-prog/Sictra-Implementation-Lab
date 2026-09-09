@@ -46,6 +46,7 @@ _STATIC_FILES = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/app.css": ("app.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+    "/brand-mark.png": ("brand-mark.png", "image/png"),
 }
 _MAX_REJECTED_PAYLOAD_BYTES = 65_536
 _MAX_EDITORIAL_PAYLOAD_BYTES = 4_096
