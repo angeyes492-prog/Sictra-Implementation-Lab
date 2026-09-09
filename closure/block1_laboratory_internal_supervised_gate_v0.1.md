@@ -21,13 +21,16 @@ or independent-review gate.
 - Synthetic second-release integration test proves the delta → literal-fact
   dossier path while keeping interpretation/publication blocked.
 - Backup/restore test proves data-only recovery under original local keys.
+- Source Master Registry exposes 18 candidates with `PROPOSED` status,
+  explicit license/access/revision fields, and `admissible_source_count=0`.
+  It has no network acquisition or automatic import path.
 
 ## Test
 
-`python -m unittest discover -s tests -q`: 276 tests passed locally. CI #358
-passed on the preceding UI/operator-flow SHA
-`35af84cfb63f2febf20180346a0150de452388d8`; CI on the exact ledger SHA is
-still required before it becomes closure evidence.
+`python -m unittest discover -s tests -q`: 279 tests passed locally. CI #362
+passed on the preceding source-registry SHA
+`2becf73806e5ae72bad6e747283b1850cfe37c79`; CI on the exact final preflight
+SHA is still required before it becomes closure evidence.
 
 ## Remaining limitations and promotion boundary
 
