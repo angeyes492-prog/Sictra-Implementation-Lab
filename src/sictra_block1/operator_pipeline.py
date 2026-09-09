@@ -285,15 +285,23 @@ def pipeline_snapshot(root: str | Path, *, clock: Callable[[], int] | None = Non
     now = _clock_value(pipeline.clock)
     source = pipeline.source_control.active_record(_SOURCE_ID, now=now)
     evidence = pipeline.evidence_store.list_receipts(now=now)
+    current_evidence_count = sum(item["status"] == "CURRENT" for item in evidence)
+    source_review_required = any(
+        item["verification_reason"] == "SOURCE_SUPERSEDED_OR_AMBIGUOUS" for item in evidence
+    )
     cycles = pipeline.watchlist.list_cycles()
     dossiers = pipeline.dossiers.list_dossiers()
     latest = pipeline.watchlist.latest_delta()
     return {
         "scope": _SCOPE,
-        "status": "READY" if source is not None else "BINDING_RENEWAL_REQUIRED",
+        "status": (
+            "BINDING_RENEWAL_REQUIRED" if source is None
+            else "SOURCE_REVIEW_REQUIRED" if source_review_required
+            else "READY"
+        ),
         "network_acquisition": "DISABLED",
         "source": {"source_id": _SOURCE_ID, "binding_active": source is not None},
-        "evidence": {"retained_count": len(evidence), "current_count": sum(item["status"] == "CURRENT" for item in evidence)},
+        "evidence": {"retained_count": len(evidence), "current_count": current_evidence_count},
         "watchlist": {
             "cycle_count": len(cycles),
             "latest_status": None if latest is None else latest["status"],

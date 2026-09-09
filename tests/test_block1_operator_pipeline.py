@@ -76,6 +76,19 @@ class Block1OperatorPipelineTests(unittest.TestCase):
         self.assertEqual(dossier["publication_state"], "BLOCKED")
         self.assertEqual(pipeline_snapshot(self.root, clock=self.clock)["evidence"], {"retained_count": 2, "current_count": 1})
 
+    def test_conflicting_declared_release_is_visible_as_source_review_required(self):
+        initialize_operator_pipeline(self.root, clock=self.clock)
+        ingest_eurostat_workbook(self.root, self.write_workbook("first.xlsx", workbook()), clock=self.clock)
+        self.now += 1
+        conflicting = self.write_workbook(
+            "conflicting.xlsx", workbook(rows=(("BE", "Belgium", "99", None, "15"),)),
+        )
+        with self.assertRaises(OperatorPipelineViolation):
+            ingest_eurostat_workbook(self.root, conflicting, clock=self.clock)
+        snapshot = pipeline_snapshot(self.root, clock=self.clock)
+        self.assertEqual(snapshot["status"], "SOURCE_REVIEW_REQUIRED")
+        self.assertEqual(snapshot["evidence"], {"retained_count": 2, "current_count": 0})
+
     def test_rejection_and_tamper_fail_before_state_or_runtime_effect(self):
         initialize_operator_pipeline(self.root, clock=self.clock)
         invalid = self.write_workbook("not-eurostat.xlsx", b"not a workbook")
