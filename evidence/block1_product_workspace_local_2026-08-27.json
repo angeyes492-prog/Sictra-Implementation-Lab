@@ -1,0 +1,53 @@
+{
+  "artifact": "block1_product_workspace_local_2026-08-27",
+  "scope": "Telecare OS / Block 1 Intelligence Workspace field-test slice",
+  "classification": "LOCAL_FIXTURE_AND_REGRESSION_EVIDENCE",
+  "certainty": "VERIFIED",
+  "confidence": "B",
+  "executed_at": "2026-08-28T03:42:54.8290026Z",
+  "command": "python -m unittest discover -s tests -q",
+  "environment": {
+    "runtime": "Python 3.11+",
+    "host_scope": "local Windows worktree",
+    "data_class": "SYNTHETIC_FIELD_TEST"
+  },
+  "result": {
+    "tests_run": 174,
+    "failures": 0,
+    "errors": 0,
+    "unittest_duration_seconds": 11.237,
+    "process_duration_seconds": 11.686,
+    "status": "OK"
+  },
+  "covers": [
+    "logistics catalog and defensive snapshots",
+    "correlated-source independence",
+    "Pareto dominance, incomparability, scope mismatch and insufficient evidence",
+    "local HTTP API and static allowlist",
+    "DNS-rebinding, cross-origin and cross-site rejection",
+    "non-finite metric and bidirectional lineage rejection",
+    "four adversarial UI scenarios",
+    "full existing Block 1 regression suite"
+  ],
+  "visual_review": {
+    "desktop_viewport": "1440x1000",
+    "result": "PASS_AFTER_REVIEW",
+    "repair": "mobile overflow containment added after visual red-team"
+  },
+  "independent_read_only_review": {
+    "reviewer": "Codex subagent Kepler",
+    "critical_open": 0,
+    "high_open": 0,
+    "repairs_verified": [
+      "local Host/Origin/Fetch-Metadata boundary",
+      "non-finite metric rejection",
+      "bidirectional lineage and root-count integrity"
+    ]
+  },
+  "limitations": [
+    "Fixtures are synthetic and are not source-truth evidence.",
+    "The final Git SHA and external CI run are not yet bound to this artifact.",
+    "No independent human review has accepted the product slice.",
+    "This evidence cannot promote the bounded-operational or global gate."
+  ]
+}

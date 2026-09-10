@@ -56,3 +56,4 @@ contrato común.
 
 `CANDIDATE / REFERENCE RUNTIME`. La aceptación exige ejecución, CI externa,
 revisión independiente y evidencia real para cualquier claim de producción.
+

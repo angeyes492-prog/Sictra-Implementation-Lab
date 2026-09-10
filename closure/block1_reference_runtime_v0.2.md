@@ -47,3 +47,4 @@ gate posterior y separado.
   `54116aa569180cf790aa9c69a2237e00310e625f5daaf273d6cf0bb07589bd48`.
 - La manifestación declara `decision_is_enforcement=false` y
   `runtime_effect_observed=false`; por tanto no se eleva el gate de runtime real.
+

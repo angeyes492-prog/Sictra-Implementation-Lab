@@ -34,3 +34,4 @@ preservarse. Compatibilidad sintáctica no demuestra compatibilidad semántica.
 
 Conformidad del sobre no prueba ejecución, validez, promoción, enforcement ni
 aceptación global.
+

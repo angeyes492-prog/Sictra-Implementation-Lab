@@ -187,3 +187,4 @@ class IntelligenceRuntime:
 
     def close(self) -> None:
         self.store.close()
+

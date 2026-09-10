@@ -73,3 +73,4 @@ class EvidenceVerifier:
             if not valid:
                 return False, reason
         return True, "SOURCE_VERIFIED"
+

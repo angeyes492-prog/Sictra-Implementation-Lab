@@ -17,3 +17,4 @@ Los revisores independientes son agentes distintos del constructor. La primera
 pasada bloqueó el gate; la segunda encontró defectos de atomicidad y dispatch.
 La promoción requiere una tercera pasada independiente sobre el SHA exacto,
 sin hallazgos críticos o altos dentro del perfil operacional acotado.
+

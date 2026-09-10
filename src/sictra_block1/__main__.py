@@ -9,42 +9,13 @@ from pathlib import Path
 
 from .context import ContextRecord, build_context_pack
 from .reassessment import reassess
-from .source_portfolio import DOMAINS, REGIONS, default_source_portfolio
-
-
-def source_readiness(*, region: str, domain: str) -> dict[str, object]:
-    """Return a planning snapshot; never sources, bindings, or network data."""
-    portfolio = default_source_portfolio()
-    candidates = portfolio.candidates_for(regions=(region,), domains=(domain,))
-    return {
-        "scope": "BLOCK1_SOURCE_PORTFOLIO_READINESS",
-        "query": {"region": region, "domain": domain},
-        "portfolio": portfolio.summary(),
-        "candidates": candidates,
-        "admissible_source_count": 0,
-        "status": "RESEARCH_BLOCKED_PENDING_SOURCE_BINDING",
-        "non_claims": [
-            "network acquisition", "source truth", "license verification",
-            "bound source", "runtime evidence", "gate acceptance",
-        ],
-    }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("fixture", type=Path, nargs="?")
+    parser.add_argument("fixture", type=Path)
     parser.add_argument("--agent", default="Intelligence")
-    parser.add_argument("--source-readiness", action="store_true")
-    parser.add_argument("--region", choices=sorted(REGIONS - {"GLOBAL"}))
-    parser.add_argument("--domain", choices=sorted(DOMAINS))
     args = parser.parse_args()
-    if args.source_readiness:
-        if not args.region or not args.domain:
-            parser.error("--source-readiness requires --region and --domain")
-        print(json.dumps(source_readiness(region=args.region, domain=args.domain), indent=2, sort_keys=True))
-        return 0
-    if args.fixture is None:
-        parser.error("fixture is required unless --source-readiness is used")
     payload = json.loads(args.fixture.read_text(encoding="utf-8"))
     records = [
         ContextRecord(

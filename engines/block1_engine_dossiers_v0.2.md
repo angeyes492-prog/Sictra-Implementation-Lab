@@ -61,3 +61,4 @@ lineage; reintento usa nueva identidad o duplicate idempotente. El rollback del
 runtime de referencia consiste en retirar el commit/branch sin migración de
 datos; E06 actual es deliberadamente in-memory y no pretende persistencia de
 producción.
+

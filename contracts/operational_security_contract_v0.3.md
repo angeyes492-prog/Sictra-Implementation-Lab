@@ -68,3 +68,4 @@ ambiguos son rechazados.
 HMAC local no es PKI/KMS de producción. No se reclama verdad del contenido,
 exactly-once, HA, escalado distribuido, rotación de claves, revocación remota ni
 aceptación global.
+

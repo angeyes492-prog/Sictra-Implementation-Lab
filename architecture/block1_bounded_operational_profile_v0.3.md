@@ -89,3 +89,4 @@ entrega posterior al commit no degrada el journal durable a `FAILED`.
 6. fallo entre efecto y terminal revierte ambos y el retry produce un único efecto;
 7. CI externa pasa sobre el SHA exacto;
 8. cierre preserva no-claims y requiere decisión humana para merge.
+
