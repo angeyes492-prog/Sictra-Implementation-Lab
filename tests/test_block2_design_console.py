@@ -227,6 +227,18 @@ class DesignConsoleTests(unittest.TestCase):
         self.assertIn('href="/ops.css"', html)
         self.assertIn(".execution-tape li.reused", ops_css)
 
+    def test_federated_links_are_navigation_only_and_keep_block_boundaries(self):
+        root = Path(__file__).parents[1] / "src" / "sictra_block2_design" / "design_console"
+        html = (root / "index.html").read_text(encoding="utf-8")
+        css = (root / "app.css").read_text(encoding="utf-8")
+        self.assertIn('href="http://127.0.0.1:8765/"', html)
+        self.assertIn('href="http://127.0.0.1:8767/"', html)
+        self.assertEqual(2, html.count('target="_blank" rel="noopener"'))
+        self.assertNotIn("8765", (root / "app.js").read_text(encoding="utf-8"))
+        self.assertNotIn("8767", (root / "app.js").read_text(encoding="utf-8"))
+        self.assertIn(".suite-links", css)
+        self.assertIn("#edf8f5", css)
+
     def test_create_view_has_three_contract_sections_and_handoff_seal(self):
         root = Path(__file__).parents[1] / "src" / "sictra_block2_design" / "design_console"
         html = (root / "index.html").read_text(encoding="utf-8")

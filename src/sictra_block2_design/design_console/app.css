@@ -10,3 +10,11 @@ main{min-width:0;padding:0 30px 48px}.command-bar{min-height:94px;display:flex;a
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 @media(forced-colors:active){button,input,select,textarea,.design-element,.state-chip,.boundary,.handoff-seal{border:1px solid CanvasText}.active,.design-element.active{outline:3px solid Highlight;outline-offset:2px}.runtime i{forced-color-adjust:none}}
+
+/* SICTrA Operational presentation profile; domain and API semantics stay local. */
+.shell{grid-template-columns:272px minmax(0,1fr)}
+.product-rail{color:#17202a;background:#edf8f5;border-right:1px solid #dde7e4}
+.brand{border-bottom-color:#dde7e4}.brand-mark{color:#fff;border:0;border-radius:11px;background:#172557;font-family:Bahnschrift,"Segoe UI",sans-serif;font-style:normal}.brand small{color:#66727a}
+.product-rail nav button{color:#39454d}.product-rail nav small{color:#66727a}.product-rail nav button.active{color:#172557;background:#fff;box-shadow:0 5px 18px rgba(23,37,87,.08),inset 4px 0 #20b89a}
+.suite-links{display:grid;gap:7px;margin-top:auto;padding:17px 8px;border-top:1px solid #dde7e4}.suite-links span{color:#66727a;font:10px var(--utility);text-transform:uppercase;letter-spacing:.08em}.suite-links a{color:#172557;font-size:12px;font-weight:700;text-decoration:none}.suite-links a:hover{text-decoration:underline}.runtime{margin-top:0;border-top-color:#dde7e4}.runtime strong{color:#17202a}.runtime small{color:#66727a}
+@media(max-width:1120px){.suite-links{display:none}}
