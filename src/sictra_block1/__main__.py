@@ -9,13 +9,29 @@ from pathlib import Path
 
 from .context import ContextRecord, build_context_pack
 from .reassessment import reassess
+from .source_portfolio import DOMAINS, REGIONS, source_readiness as _portfolio_source_readiness
+
+
+def source_readiness(*, region: str, domain: str) -> dict[str, object]:
+    """Return a planning snapshot; never sources, bindings, or network data."""
+    return _portfolio_source_readiness(region=region, domain=domain)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("fixture", type=Path)
+    parser.add_argument("fixture", type=Path, nargs="?")
     parser.add_argument("--agent", default="Intelligence")
+    parser.add_argument("--source-readiness", action="store_true")
+    parser.add_argument("--region", choices=sorted(REGIONS - {"GLOBAL"}))
+    parser.add_argument("--domain", choices=sorted(DOMAINS))
     args = parser.parse_args()
+    if args.source_readiness:
+        if not args.region or not args.domain:
+            parser.error("--source-readiness requires --region and --domain")
+        print(json.dumps(source_readiness(region=args.region, domain=args.domain), indent=2, sort_keys=True))
+        return 0
+    if args.fixture is None:
+        parser.error("fixture is required unless --source-readiness is used")
     payload = json.loads(args.fixture.read_text(encoding="utf-8"))
     records = [
         ContextRecord(

@@ -25,7 +25,7 @@ def _claims(values: Iterable[str]) -> frozenset[str]:
     return normalized
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, init=False)
 class SourceApprovalRecord:
     source_id: str
     reviewer_id: str
@@ -33,9 +33,28 @@ class SourceApprovalRecord:
     terms_evidence_ref: str
     approved_hosts: tuple[str, ...]
     approved_claim_keys: frozenset[str]
-    max_content_bytes: int
     access_method: str
+    max_content_bytes: int
     decision: str
+
+    def __init__(
+        self, source_id: str, reviewer_id: str, reviewed_at: int,
+        terms_evidence_ref: str, approved_hosts: tuple[str, ...],
+        approved_claim_keys: frozenset[str], access_method: str,
+        max_content_bytes: int, decision: str, *,
+        allowed_hosts: tuple[str, ...] | None = None,
+        claim_keys: frozenset[str] | None = None,
+    ) -> None:
+        for name, value in (
+            ("source_id", source_id), ("reviewer_id", reviewer_id),
+            ("reviewed_at", reviewed_at), ("terms_evidence_ref", terms_evidence_ref),
+            ("approved_hosts", allowed_hosts if allowed_hosts is not None else approved_hosts),
+            ("approved_claim_keys", claim_keys if claim_keys is not None else approved_claim_keys),
+            ("access_method", access_method), ("max_content_bytes", max_content_bytes),
+            ("decision", decision),
+        ):
+            object.__setattr__(self, name, value)
+        self.__post_init__()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "source_id", _required_text("source_id", self.source_id))
@@ -83,3 +102,13 @@ class SourceApprovalRecord:
             "status": status,
             "candidate_status": candidate.status,
         }
+
+    @property
+    def allowed_hosts(self) -> tuple[str, ...]:
+        """Compatibility alias for the retained-source gateway contract."""
+        return self.approved_hosts
+
+    @property
+    def claim_keys(self) -> frozenset[str]:
+        """Compatibility alias for the retained-source gateway contract."""
+        return self.approved_claim_keys

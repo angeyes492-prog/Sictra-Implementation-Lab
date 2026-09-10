@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 from .common import ContractViolation
 
 
-REGIONS = frozenset(("AMERICAS", "EUROPE", "ASIA_PACIFIC", "OCEANIA"))
+REGIONS = frozenset(("GLOBAL", "AMERICAS", "EUROPE", "ASIA_PACIFIC", "OCEANIA"))
 DOMAINS = frozenset((
     "TRADE", "MARITIME", "AIR", "PORTS", "CUSTOMS", "INFRASTRUCTURE", "MACRO", "REGULATION",
 ))
@@ -29,7 +29,7 @@ def _https_reference(value: object) -> str:
     return value.strip()
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, init=False)
 class SourceCandidate:
     """Discovery metadata with no authorization effect whatsoever."""
 
@@ -47,6 +47,35 @@ class SourceCandidate:
     reference_url: str = "https://example.invalid/"
     source_class: str = "PUBLIC_INSTITUTIONAL"
     status: str = "PROPOSED"
+
+    def __init__(
+        self, source_id: str, publisher: str, hosts: tuple[str, ...] | None = None,
+        regions: frozenset[str] | None = None, domains: frozenset[str] | None = None,
+        cadence: str = "", source_role: str = "E2_CANDIDATE",
+        license_status: str = "UNREVIEWED", access_posture: str = "MANUAL_REVIEW_REQUIRED",
+        revision_policy: str = "UNKNOWN", research_state: str = "DISCOVERY_PENDING",
+        reference_url: str | None = None, source_class: str = "PUBLIC_INSTITUTIONAL",
+        status: str = "PROPOSED", *, candidate_hosts: tuple[str, ...] | None = None,
+    ) -> None:
+        if hosts is not None and candidate_hosts is not None and tuple(hosts) != tuple(candidate_hosts):
+            raise ContractViolation("candidate host aliases disagree")
+        selected_hosts = tuple(hosts if hosts is not None else candidate_hosts or ())
+        resolved_reference = reference_url or (f"https://{selected_hosts[0]}/" if selected_hosts else "")
+        for name, value in (
+            ("source_id", source_id), ("publisher", publisher), ("hosts", selected_hosts),
+            ("regions", frozenset(regions or ())), ("domains", frozenset(domains or ())),
+            ("cadence", cadence), ("source_role", source_role), ("license_status", license_status),
+            ("access_posture", access_posture), ("revision_policy", revision_policy),
+            ("research_state", research_state), ("reference_url", resolved_reference),
+            ("source_class", source_class), ("status", status),
+        ):
+            object.__setattr__(self, name, value)
+        self.__post_init__()
+
+    @property
+    def candidate_hosts(self) -> tuple[str, ...]:
+        """Compatibility alias for the approval/binding candidate contract."""
+        return self.hosts
 
     def __post_init__(self) -> None:
         if (

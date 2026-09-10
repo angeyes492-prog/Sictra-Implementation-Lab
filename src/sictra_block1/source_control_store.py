@@ -14,6 +14,7 @@ from typing import Any, Callable, Mapping
 
 from .common import ContractViolation
 from .evidence import EvidenceIssuer
+from .source_approval import SourceApprovalRecord as ReviewedSourceApprovalRecord
 from .source_gateway import (
     MAX_REGISTERED_SOURCES,
     SourceApprovalRecord,
@@ -56,7 +57,10 @@ def _registration_dict(value: SourceRegistration) -> dict[str, Any]:
     }
 
 
-def _approval_dict(value: SourceApprovalRecord) -> dict[str, Any]:
+CompatibleSourceApproval = SourceApprovalRecord | ReviewedSourceApprovalRecord
+
+
+def _approval_dict(value: CompatibleSourceApproval) -> dict[str, Any]:
     return {
         "source_id": value.source_id, "reviewer_id": value.reviewer_id,
         "reviewed_at": value.reviewed_at, "terms_evidence_ref": value.terms_evidence_ref,
@@ -93,7 +97,7 @@ def _approval(value: object) -> SourceApprovalRecord:
         raise SourceControlStoreViolation("stored source approval is invalid") from error
 
 
-def _matching_approval(registration: SourceRegistration, approval: SourceApprovalRecord) -> bool:
+def _matching_approval(registration: SourceRegistration, approval: CompatibleSourceApproval) -> bool:
     return (
         registration.status == "BOUND" and approval.decision == "APPROVED"
         and approval.source_id == registration.source_id
@@ -145,10 +149,13 @@ class SourceControlStore:
         return self._mac("source-control-record-v1:" + _encoded(material))
 
     def _validate_artifacts(
-        self, registration: SourceRegistration, approval: SourceApprovalRecord,
+        self, registration: SourceRegistration, approval: CompatibleSourceApproval,
         binding: Mapping[str, Any], *, now: int, require_current: bool,
     ) -> dict[str, Any]:
-        if not isinstance(registration, SourceRegistration) or not isinstance(approval, SourceApprovalRecord):
+        if (
+            not isinstance(registration, SourceRegistration)
+            or not isinstance(approval, (SourceApprovalRecord, ReviewedSourceApprovalRecord))
+        ):
             raise SourceControlStoreViolation("source control artifacts have invalid types")
         if not _matching_approval(registration, approval):
             raise SourceControlStoreViolation("approval does not match bound registration")
@@ -254,7 +261,7 @@ class SourceControlStore:
         }
 
     def persist(
-        self, registration: SourceRegistration, approval: SourceApprovalRecord,
+        self, registration: SourceRegistration, approval: CompatibleSourceApproval,
         binding: Mapping[str, Any],
     ) -> dict[str, Any]:
         now = self._clock()

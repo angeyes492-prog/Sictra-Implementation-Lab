@@ -13,6 +13,7 @@ from urllib.parse import urlsplit
 
 from .common import ContractViolation
 from .evidence import EvidenceIssuer
+from .source_approval import SourceApprovalRecord as ReviewedSourceApprovalRecord
 
 
 MAX_REGISTERED_SOURCES = 50
@@ -59,7 +60,7 @@ def _material(value: Mapping[str, Any]) -> bytes:
 def source_approval_fingerprint(approval: "SourceApprovalRecord") -> str:
     """Bind a source authorization to its exact normalized human review record."""
 
-    if not isinstance(approval, SourceApprovalRecord):
+    if not isinstance(approval, (SourceApprovalRecord, ReviewedSourceApprovalRecord)):
         raise ContractViolation("source approval fingerprint requires an approval record")
     material = {
         "source_id": approval.source_id,

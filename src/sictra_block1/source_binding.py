@@ -73,8 +73,18 @@ class SourceBindingIssuer:
             raise ContractViolation("binding issuer requires identity and 32-byte key")
         self.issuer, self._secret = issuer.strip(), bytes(secret)
 
-    def issue(self, *, approval: SourceApprovalRecord, candidate: SourceCandidate,
-              scope: str, now: int, ttl: int) -> SourceBindingAuthorization:
+    def issue(self, *legacy_args: object, approval: SourceApprovalRecord | None = None,
+              candidate: SourceCandidate | None = None, scope: str | None = None,
+              now: int, ttl: int) -> SourceBindingAuthorization | dict[str, Any]:
+        if legacy_args:
+            if len(legacy_args) != 2 or approval is not None or candidate is not None or scope is not None:
+                raise ContractViolation("legacy binding issue requires registration and approval")
+            from .source_gateway import SourceBindingIssuer as RetainedSourceBindingIssuer
+            return RetainedSourceBindingIssuer(self.issuer, self._secret).issue(
+                legacy_args[0], legacy_args[1], now=now, ttl=ttl,
+            )
+        if approval is None or candidate is None or scope is None:
+            raise ContractViolation("binding issue requires approval, candidate, and scope")
         if not isinstance(now, int) or isinstance(now, bool) or now < 0 or not isinstance(ttl, int) or isinstance(ttl, bool) or ttl < 1:
             raise ContractViolation("binding issue requires non-negative now and positive ttl")
         readiness = approval.readiness_for(candidate, now=now)
