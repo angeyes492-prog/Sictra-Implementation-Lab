@@ -22,6 +22,8 @@ escenarios y sus límites operacionales.
 | `GET` | `/api/workspace` | Snapshot defensivo del catálogo. |
 | `GET` | `/api/investigations/{id}` | Expediente conocido o `404`. |
 | `GET` | `/api/comparisons/{id}?left=A&right=B` | Comparación compatible o error explícito. |
+| `GET` | `/api/dossiers` | Estado explícito y resúmenes de dossiers verificados. |
+| `GET` | `/api/dossiers/{id}` | Dossier recomputado y candidato editorial bloqueado. |
 | `POST` | `/api/scenarios/{scenario}` | Resultado del fixture existente; payload prohibido. |
 
 No se admiten otras rutas, métodos, archivos, IDs o parámetros implícitos.
@@ -68,3 +70,8 @@ inmutables; v0.1 no promete persistencia de interacción.
 - No autenticación, multiusuario, publicación, CRM o acciones comerciales.
 - No verdad de fuentes, forecast, score universal o recomendación autónoma.
 - No gate GREEN, producción, Bloques 2–4 ni aceptación global.
+
+La extensión de dossiers se rige además por
+`block1_dossier_workspace_reader_contract_v0.1.md`. No cambia la clase de los
+fixtures existentes; un dossier durable declara su propia clase y nunca se
+mezcla silenciosamente con el catálogo sintético.

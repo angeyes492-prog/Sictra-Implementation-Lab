@@ -15,6 +15,70 @@ Prioritize work in this order:
 
 Every material work cycle must produce a **closure delta**: an implemented capability, executable test, validated contract, resolved contradiction, verified integration, regression vector, repaired failure, reduced uncertainty, promoted gate, or durable architecture artifact. A status update alone is not progress.
 
+## Block 1 completion protocol — persistent execution rule
+
+This project has spent substantial time in construction. Optimize for
+**verifiable Block 1 completion**, not activity, cosmetic documentation,
+repeated status summaries, or speculative expansion. The owner authorizes
+autonomous technical progress within this repository: inspect, implement, test,
+refactor safely, commit, push and obtain CI without repeated intermediate
+approval. Do not ask the owner to say “continue”.
+
+The authorized internal target is `LABORATORY_INTERNAL_SUPERVISED`, not
+production. Deferred review never permits fabricated review, weakened
+controls, silent gate promotion, external publication, network acquisition or
+third-party contact.
+
+### Mandatory completion sequence
+
+Keep a single ordered backlog in the closure ledger. At each cycle, attack the
+highest-risk unfinished item; do not reopen a completed item without new
+contradictory evidence.
+
+1. Retain/recover an approved source path with provenance, exact
+   approval/binding lineage, expiry, hash and controlled selection.
+2. Complete watchlist comparison; distinguish no change, detected change,
+   insufficient evidence and review-required. A delta is not an insight.
+3. Persist an intelligence dossier separating facts, evidence,
+   interpretations, hypotheses, uncertainty, contradictions, limitations,
+   affected scope, executive questions and next-data needs.
+4. Prove E01–E08 accepts only current attested evidence and that stale,
+   altered, contradictory, incomplete or out-of-scope evidence cannot create
+   a runtime effect.
+5. Connect traceable dossiers to editorial shortlist, human selection or
+   abstention; never publish, send, sell or hand off unrestricted content.
+6. Expose evidence state, limits, uncertainty, watchlists, dossiers and
+   editorial candidates in the laboratory interface without production claims.
+7. Test reproducible local operation: controlled input, recovery, backup
+   boundary and non-technical operator guidance.
+8. Produce a technical closure manifest after adversarial preflight, full
+   regression and CI over the exact final SHA.
+
+### Non-negotiable execution controls
+
+- Before modification, read applicable rules, contract, architecture, tests,
+  closure ledger, direct dependencies and current SHA/CI.
+- Every implementation increment needs a positive test and an appropriate
+  rejection, adversarial, recovery, replay, stale or tamper test.
+- Run focused tests during change and full regression before material commit.
+  A commit becomes closure evidence only after CI succeeds on that exact SHA.
+- Record unresolved blockers with state, evidence, owner, next action and
+  promotion boundary. Prefer `UNKNOWN`, `YELLOW`, `RED` and `INSUFFICIENT
+  EVIDENCE` to unsupported green claims.
+- Updates must state only: concrete change, test/result, SHA/CI, remaining
+  limit and next technical blocker.
+- Exhaust diagnosis, repair and safe alternatives before calling routine work
+  a blocker. Request owner input only for a missing business choice,
+  credential, approved source or external authority.
+
+### Closure boundary
+
+Never claim Block 1 `COMPLETE`, `GREEN`, production-ready, independently
+reviewed or globally operational until all eight items have evidence at the
+required boundary. The highest default completion claim is
+`LABORATORY_INTERNAL_SUPERVISED`; the owner's approval validates intended scope
+and internal testing, not independent validation.
+
 ## Authority and epistemics
 
 Apply this hierarchy when sources disagree:

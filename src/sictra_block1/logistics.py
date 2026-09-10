@@ -313,10 +313,41 @@ for _fixture in _INVESTIGATIONS:
     validate_investigation(_fixture)
 
 
-def workspace_catalog() -> dict[str, Any]:
-    """Return a defensive JSON-ready workspace snapshot."""
+def _operator_draft(value: Mapping[str, Any]) -> dict[str, Any]:
+    """Accept only the evidence-free operator draft shape from local intake."""
 
-    investigations = deepcopy(_INVESTIGATIONS)
+    required = {
+        "investigation_id", "record_type", "created_at", "title", "question",
+        "question_id", "status", "certainty", "confidence", "scope", "topic_keys",
+        "signal", "limitations", "sources", "claims", "strategies", "watchlist",
+        "operator_declaration",
+    }
+    if not isinstance(value, Mapping) or set(value) != required:
+        raise LogisticsContractViolation("operator draft fields do not match contract")
+    if (
+        value["record_type"] != "OPERATOR_RESEARCH_DRAFT"
+        or value["status"] != "DRAFT"
+        or value["certainty"] != "INSUFFICIENT EVIDENCE"
+        or value["confidence"] != "E"
+        or value["sources"]
+        or value["claims"]
+        or value["strategies"]
+    ):
+        raise LogisticsContractViolation("operator draft must remain evidence-free")
+    validate_investigation(value)
+    return deepcopy(value)
+
+
+def workspace_catalog(*, operator_drafts: tuple[Mapping[str, Any], ...] = ()) -> dict[str, Any]:
+    """Return a defensive snapshot, including validated local operator drafts."""
+
+    drafts = [_operator_draft(value) for value in operator_drafts]
+    identities = {item["investigation_id"] for item in _INVESTIGATIONS}
+    if any(item["investigation_id"] in identities for item in drafts) or len(
+        {item["investigation_id"] for item in drafts}
+    ) != len(drafts):
+        raise LogisticsContractViolation("operator draft identity collides with workspace")
+    investigations = list(deepcopy(_INVESTIGATIONS)) + drafts
     for investigation in investigations:
         investigation["evidence_summary"] = {
             "sources": len(investigation["sources"]),
@@ -327,20 +358,25 @@ def workspace_catalog() -> dict[str, Any]:
     return {
         "scope": WORKSPACE_SCOPE,
         "fixture_class": FIXTURE_CLASS,
+        "data_classes": [FIXTURE_CLASS] + (
+            ["OPERATOR_DECLARED_NO_EVIDENCE"] if drafts else []
+        ),
         "identity": {"product": "Telecare OS", "block": "01", "name": "Intelligence"},
         "non_claims": [
             "No consulta internet ni fuentes externas.",
-            "No contiene perfiles de empresas ni datos personales reales.",
+            "No incluye perfiles reales precargados; los borradores locales son declaración de operador, no evidencia.",
             "No promueve el gate global ni demuestra producción.",
         ],
         "investigations": investigations,
     }
 
 
-def get_investigation(investigation_id: str) -> dict[str, Any] | None:
+def get_investigation(
+    investigation_id: str, *, operator_drafts: tuple[Mapping[str, Any], ...] = (),
+) -> dict[str, Any] | None:
     if not isinstance(investigation_id, str):
         return None
-    catalog = workspace_catalog()
+    catalog = workspace_catalog(operator_drafts=operator_drafts)
     return next(
         (item for item in catalog["investigations"] if item["investigation_id"] == investigation_id),
         None,
@@ -348,9 +384,10 @@ def get_investigation(investigation_id: str) -> dict[str, Any] | None:
 
 
 def compare_investigation_strategies(
-    investigation_id: str, left_id: str, right_id: str
+    investigation_id: str, left_id: str, right_id: str,
+    *, operator_drafts: tuple[Mapping[str, Any], ...] = (),
 ) -> dict[str, Any]:
-    investigation = get_investigation(investigation_id)
+    investigation = get_investigation(investigation_id, operator_drafts=operator_drafts)
     if investigation is None:
         raise LogisticsContractViolation("unknown investigation")
     strategies = {item["strategy_id"]: item for item in investigation["strategies"]}
