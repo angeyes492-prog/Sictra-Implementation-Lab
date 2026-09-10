@@ -138,3 +138,4 @@ Do not promote when evidence is insufficient, stale, circular, contradictory, un
 ## Layer rules
 
 This file governs every subtree. Read the local `AGENTS.md` in `architecture/`, `engines/`, `contracts/`, `tests/`, or `closure/` before working there. Local rules add constraints; they never override this file.
+
