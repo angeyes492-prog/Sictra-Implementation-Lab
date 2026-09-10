@@ -11,6 +11,7 @@ from .account_knowledge import (
     WebsiteFetchResponse,
 )
 from .account_memory import AccountKnowledgeStore
+from .account_context import AccountContextAdmission, AccountContextAdmissionPolicy, AccountContextIngress
 from .account_research import (
     AccountResearchCoordinator,
     AccountResearchPolicy,
@@ -27,6 +28,7 @@ from .excel_account_import import (
     ImportedAccountSeed,
 )
 from .adaptive import AdaptiveFrontierController
+from .decision_catalog import DecisionSignalCatalogPolicy, DecisionSignalRule, GovernedDecisionSignalCatalog
 from .adaptive_pipeline import PrecisionAdaptivePipeline
 from .behavioral import BehavioralIntelligenceEngine
 from .context import ContextIntelligenceEngine
@@ -42,6 +44,9 @@ __all__ = [
     "AccountKnowledgeDossier",
     "AccountKnowledgeEngine",
     "AccountKnowledgeStore",
+    "AccountContextAdmission",
+    "AccountContextAdmissionPolicy",
+    "AccountContextIngress",
     "AccountResearchCoordinator",
     "AccountResearchPolicy",
     "AccountResearchReceipt",
@@ -66,6 +71,9 @@ __all__ = [
     "ContextIntelligenceEngine",
     "RelevanceGate",
     "AdaptiveFrontierController",
+    "DecisionSignalCatalogPolicy",
+    "DecisionSignalRule",
+    "GovernedDecisionSignalCatalog",
     "MessageIntelligenceEngine",
     "TimingChannelIntelligenceEngine",
     "LearningEngine",

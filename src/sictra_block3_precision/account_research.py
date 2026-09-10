@@ -299,6 +299,30 @@ class ResearchReceiptLedger:
             ).fetchall()
             return tuple(json.loads(row["record_json"]) for row in rows)
 
+    def assert_current(self, receipt: AccountResearchReceipt, *, now: int) -> None:
+        """Verify that this exact receipt is durable, untampered and unexpired.
+
+        A caller-controlled receipt object is never sufficient evidence of a
+        completed shadow run.  The exact serialized receipt must still exist in
+        the tenant/account chain after that chain has been verified.
+        """
+        if not isinstance(receipt, AccountResearchReceipt):
+            raise PrecisionContractViolation("receipt assertion requires an AccountResearchReceipt")
+        if not isinstance(now, int) or isinstance(now, bool) or now < 0:
+            raise PrecisionContractViolation("receipt assertion requires non-negative logical time")
+        if receipt.persisted_at > now or receipt.expires_at < now:
+            raise PrecisionContractViolation("research receipt is not current")
+        with self._lock:
+            self._assert_schema()
+            self._assert_metadata()
+            self._verify(receipt.tenant_id, receipt.account_id)
+            row = self._db.execute(
+                "SELECT record_json FROM research_receipts WHERE tenant_id=? AND account_id=? AND receipt_id=?",
+                (receipt.tenant_id, receipt.account_id, receipt.receipt_id),
+            ).fetchone()
+            if row is None or row["record_json"] != _encoded(receipt):
+                raise PrecisionContractViolation("research receipt is absent or differs from durable record")
+
 
 class AccountResearchCoordinator:
     """Executes one explicitly approved, read-only research request and records it."""

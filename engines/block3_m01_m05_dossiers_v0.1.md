@@ -19,7 +19,7 @@
 | M02 | YES | LOCAL | YES | YES | LOCAL / 6 vectores directos + pipeline | FOUNDATION ONLY | NO |
 | M03 | YES | LOCAL | YES | YES | LOCAL / 5 vectores | FOUNDATION ONLY | NO |
 | M04 | YES | LOCAL | YES | YES | LOCAL / 8 vectores | FOUNDATION ONLY | NO |
-| M05 | YES | LOCAL | YES | YES | LOCAL / 6 vectores | FOUNDATION ONLY | NO |
+| M05 | YES | LOCAL | YES | YES | LOCAL / 6 vectores + ingress | `ACCOUNT KNOWLEDGE LOCAL`; foundation otherwise | NO |
 
 ## Dependencias y autoridad
 
@@ -60,10 +60,12 @@ restricciones y fingerprints de inputs materiales.
 
 ## Gaps antes de promoción
 
-1. Contrato autorizado de Account Intelligence.
+1. Contrato autorizado de Account Intelligence y binding con fuentes reales de
+   Bloque 1. El ingress local v0.1 sólo admite dossier/recibo shadow durable.
 2. Binding interbloques a outputs reales de Bloque 1 y assets de Bloque 2.
 3. Adapter de eventos CRM/email con identidad, consentimiento y retención.
-4. Catálogo gobernado de reglas que produzca `DecisionSignal`.
+4. Catálogo de reglas revisado y aprobado por dominio. El catálogo local v0.1
+   produce `DecisionSignal` sólo desde reglas explícitas, sin promoción.
 5. Relevance Gate y oráculo independiente.
 6. Storage, replay durable, concurrency, SLOs y observabilidad de producción.
 7. CI externa en SHA exacto y revisión independiente posterior a la última

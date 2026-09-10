@@ -346,6 +346,24 @@ class AccountKnowledgeStore:
             ).fetchone()
             return None if row is None else json.loads(row["record_json"])
 
+    def snapshot(self, *, tenant_id: str, account_id: str, dossier_id: str, now: int) -> dict[str, Any] | None:
+        """Return one current, integrity-verified dossier snapshot by identity."""
+        for value in (tenant_id, account_id, dossier_id):
+            require_text("memory identity", value)
+        if not isinstance(now, int) or isinstance(now, bool) or now < 0:
+            raise PrecisionContractViolation("snapshot query requires non-negative logical time")
+        with self._lock:
+            self._assert_allowed_schema_objects()
+            self._assert_metadata()
+            self._verify_account(tenant_id, account_id)
+            self._assert_active(tenant_id, account_id, now)
+            row = self._db.execute(
+                """SELECT record_json FROM account_snapshots
+                   WHERE tenant_id=? AND account_id=? AND dossier_id=? AND expires_at>=?""",
+                (tenant_id, account_id, dossier_id, now),
+            ).fetchone()
+            return None if row is None else json.loads(row["record_json"])
+
     def search(self, *, tenant_id: str, account_id: str, query: str, now: int, limit: int = 8) -> tuple[dict[str, Any], ...]:
         """Deterministic discovery aid. Returned entries remain source evidence, not facts."""
         tokens = set(token.casefold() for token in _QUERY_TOKEN.findall(query))

@@ -1,0 +1,34 @@
+{
+  "artifact": "block3_account_context_ingress_and_decision_catalog_hardening_v0.1",
+  "executed_at": "2026-09-09",
+  "environment": "local bounded SUT; Python 3.12; PYTHONPATH bound to workspace src",
+  "commands": [
+    "python -m unittest discover -s tests -p test_block3_account_context_ingress.py -v",
+    "python -m unittest discover -s tests -q",
+    "python -m compileall -q src tests"
+  ],
+  "results": {
+    "focused": "9/9 PASS",
+    "full_regression": "486/486 PASS",
+    "compile": "PASS"
+  },
+  "closure_delta": [
+    "M05 ingress seals the exact AccountContextAdmission material with a configured local HMAC issuer.",
+    "M02 accepts only a current admission whose issuer, declared admission policy and HMAC match its configured trust boundary.",
+    "Forged attestation, unknown issuer and substituted policy reject before DecisionSignal creation."
+  ],
+  "adversarial_vectors": [
+    "caller-forged admission attestation",
+    "unknown admission issuer",
+    "substituted admission policy",
+    "expired, cross-account, missing-durable and quarantined account lineage"
+  ],
+  "certainty": "VERIFIED",
+  "confidence": "B",
+  "limitations": [
+    "The HMAC issuer is local test configuration, not production KMS or reviewer identity.",
+    "Synthetic local fixtures only; no Block 1/2 normative binding, CRM, consent enforcement, delivery or authorized real shadow run.",
+    "Local execution is not hosted CI, independent review, common-architecture integration or gate acceptance."
+  ],
+  "promotion_boundary": "LOCAL ATTESTED INTEGRATION ONLY"
+}
