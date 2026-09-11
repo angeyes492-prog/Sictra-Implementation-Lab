@@ -1,0 +1,43 @@
+{
+  "artifact": "Block 1 Source Portfolio v0.1 local validation",
+  "executed_on": "2026-08-29",
+  "environment": {
+    "python": "3.12.10",
+    "workspace_git_identity": "NO_COMMIT_ON_MASTER"
+  },
+  "commands": [
+    {
+      "command": "python -m compileall -q src",
+      "result": "PASS"
+    },
+    {
+      "command": "python -m unittest tests.test_block1_source_portfolio -v",
+      "result": "PASS",
+      "tests_run": 5,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "command": "python -m unittest discover -s tests -q",
+      "result": "PASS",
+      "tests_run": 253,
+      "failures": 0,
+      "errors": 0
+    }
+  ],
+  "artifacts_sha256": {
+    "architecture/block1_source_portfolio_v0.1.md": "fd271ba1431cfa5b4d60c9f1ec9b337568e2b2b8029261a9223ffe66a9cc466e",
+    "contracts/block1_source_portfolio_contract_v0.1.md": "b628821d57b309396a1a7b06d6b6e18497b3fb2a0e7ce23a2d6b4e08ab26a32d",
+    "src/sictra_block1/source_portfolio.py": "133951e252a111baad5f8adcf160fd6d895eabcabfdd593a52862944c341b368",
+    "src/sictra_block1/__init__.py": "cbe588d4e45995741835ed6a9d7abaacbd9a25411583793c11fc766d7107ac6a",
+    "tests/test_block1_source_portfolio.py": "6ea3a21dc9df5842c7f5bbcaaee208c34d53e4d0238c340c172c89fc8a6a5d3c"
+  },
+  "scope": "proposed source candidates only; no binding, ingestion, or network acquisition",
+  "certainty": "VERIFIED",
+  "confidence": "B",
+  "limitations": [
+    "Local test evidence only; no immutable Git SHA or external CI is associated with this worktree.",
+    "The catalog does not verify identity, availability, license, terms, data quality, or editorial independence.",
+    "The adversarial review was performed by the constructor and is not an independent human or agent review."
+  ]
+}

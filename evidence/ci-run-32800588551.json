@@ -1,0 +1,29 @@
+{
+  "artifact_type": "external_ci_evidence",
+  "scope": "BLOCK1_REFERENCE_RUNTIME",
+  "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+  "branch": "feat/block1-context-reassessment",
+  "commit_sha": "649c58f7f8d763620e1d3b83fd16cc926a791100",
+  "workflow_run_id": 32800588551,
+  "job_id": 97660481280,
+  "workflow_conclusion": "success",
+  "test_observation": "Ran 93 tests in 0.024s; OK",
+  "steps": {
+    "tests": "success",
+    "context_manifest": "success",
+    "eight_engine_manifest": "success"
+  },
+  "reference_execution_fingerprint": "54116aa569180cf790aa9c69a2237e00310e625f5daaf273d6cf0bb07589bd48",
+  "evidence_class": "EXTERNAL_CI_OBSERVED",
+  "claims_supported": [
+    "the exact commit executed successfully in GitHub Actions",
+    "the repository test suite passed in that run",
+    "the deterministic eight-engine reference manifest executed"
+  ],
+  "claims_not_supported": [
+    "production runtime behavior",
+    "external side-effect enforcement",
+    "independent architectural acceptance",
+    "global Telecare OS closure"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "artifact_type": "external_ci_evidence",
+  "scope": "BLOCK1_EUROSTAT_MARITIME_PROPOSED_SOURCE_REGRESSION",
+  "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+  "branch": "codex/block1-source-governance",
+  "commit_sha": "844f16c15ed855e150ae7de0a6ec58ba63a8d881",
+  "workflow_run_id": 33943023301,
+  "workflow_run_number": 298,
+  "workflow_name": "Block 1 bounded-slice validation",
+  "workflow_status": "completed",
+  "workflow_conclusion": "success",
+  "observed_at": "2026-09-04",
+  "evidence_class": "EXTERNAL_CI_OBSERVED",
+  "claims_supported": [
+    "the exact commit executed successfully in GitHub Actions",
+    "the proposed Eurostat maritime registration remains blocked from source attestation until it is bound"
+  ],
+  "claims_not_supported": [
+    "Eurostat content was ingested or independently validated",
+    "a real-source license exception was approved",
+    "independent human review",
+    "global Telecare OS closure or production readiness"
+  ]
+}

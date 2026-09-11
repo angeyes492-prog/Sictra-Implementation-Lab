@@ -1,0 +1,44 @@
+{
+  "artifact": "Block 1 Source Governance v0.2 local validation",
+  "executed_on": "2026-08-29",
+  "environment": {
+    "python": "3.12.10",
+    "workspace_git_identity": "NO_COMMIT_ON_MASTER"
+  },
+  "commands": [
+    {"command": "python -m compileall -q src", "result": "PASS"},
+    {
+      "command": "python -m unittest tests.test_block1_source_binding tests.test_block1_source_gateway tests.test_block1_source_approval -v",
+      "result": "PASS", "tests_run": 15, "failures": 0, "errors": 0
+    },
+    {
+      "command": "python -m unittest discover -s tests -q",
+      "result": "PASS", "tests_run": 272, "failures": 0, "errors": 0
+    }
+  ],
+  "artifacts_sha256": {
+    "architecture/block1_source_approval_v0.1.md": "5fa019950f0f884bd450376e0105e9515af3fa4e51144e6294af308177298477",
+    "architecture/block1_source_binding_v0.1.md": "33aa4bd16c5f8f673a182f07a634f0277ea676dd9c79634d1ebcd81c8e66510c",
+    "architecture/block1_source_gateway_v0.1.md": "338c7c3f85458b8003523f45c6da9cbd598b6e078000ce411b36feaf2ee43a6b",
+    "contracts/block1_source_approval_contract_v0.1.md": "cb32f1404e1feee609f94bbf79abc5e575b448b5fec41bfb4e658dff02326721",
+    "contracts/block1_source_binding_contract_v0.1.md": "d44b6df5cd8542cdf742dcf2a0fdbe493d1611cf48b7fc8f4f0c46974f9596cd",
+    "contracts/block1_source_gateway_contract_v0.1.md": "d00b503f4da6b6d6328f4f91d244b18bce4e47ca239edab63d9a1a7e8599ae44",
+    "src/sictra_block1/source_primitives.py": "9010f85a5bdb14bcb99f9f7ad4ead74facbee0fefb942229231ae89067147df0",
+    "src/sictra_block1/source_approval.py": "212b1dfcf77778d0ff6f21e430790fd4371cffc7316b2dff4dae98de31a61528",
+    "src/sictra_block1/source_binding.py": "a6f41da142c3f1c492b9b8ae3b263d142772836d4d6445b576eb4600c8569da6",
+    "src/sictra_block1/source_gateway.py": "dd3ba560d2119c3f5f39ced9aaec3d87c5c0be0950afdf4896a5dc1f8d0a1225",
+    "src/sictra_block1/source_portfolio.py": "8028e67dcf733dca332358956345fa7b8518d4dda54c5ff23988964e06242168",
+    "src/sictra_block1/__init__.py": "6b01fa8ae8eb152d43bf64db67e977da7aa539434822ce3340f1a95713d3f8fa",
+    "tests/test_block1_source_approval.py": "97d91bf16683cef8f0c136ba5493cf5e74293354224f655b2ba44d1819213b69",
+    "tests/test_block1_source_binding.py": "b0eb2e26801afb77b66060774c737863b3c4ff8e9060e87de950db77b1e8629d",
+    "tests/test_block1_source_gateway.py": "c37ac711215012fe17f1a6a01f0fe2c4d87713e53d8ef1a639c2e73a55e6e6c1"
+  },
+  "scope": "manual source bundles only; no network acquisition, credentials, or source activation",
+  "certainty": "VERIFIED",
+  "confidence": "B",
+  "limitations": [
+    "Local test evidence only; no immutable Git SHA or external CI is associated with this worktree.",
+    "HMAC represents a bounded local configuration authority, not verified human identity, production KMS, or corporate roles.",
+    "No source identity, license, terms, availability, data quality, or real content was verified."
+  ]
+}

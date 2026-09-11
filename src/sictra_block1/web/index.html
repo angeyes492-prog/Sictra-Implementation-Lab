@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>SICTrA Intelligence · Telecare OS</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Saltar al contenido</a>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Navegación principal">
+      <div class="identity">
+        <div class="brand-plate"><img src="/brand-mark.png" alt="SICTrA"></div>
+        <div class="identity-copy"><strong>Intelligence</strong><span>Bloque 1 · Operational</span></div>
+      </div>
+      <nav class="rail-nav">
+        <p class="nav-group">Inicio</p>
+        <button class="nav-item active" data-view="overview" data-view-label="Panorama" data-view-copy="Orientación y estado general del laboratorio."><span>⌁</span><b>Panorama</b><small>Orientación</small></button>
+        <p class="nav-group">Investigación</p>
+        <button class="nav-item" data-view="investigations" data-view-label="Investigaciones" data-view-copy="Aquí se formulan y guardan preguntas locales como borradores."><span>◎</span><b>Investigaciones</b><small>Crear preguntas</small></button>
+        <button class="nav-item" data-view="sources" data-view-label="Fuentes" data-view-copy="Aquí se evalúan candidatos; no se importan ni se convierten en evidencia."><span>⌘</span><b>Fuentes</b><small>Evaluar candidatos</small></button>
+        <button class="nav-item" data-view="strategy" data-view-label="Strategy Lab" data-view-copy="Aquí se comparan métodos de investigación sin modificar evidencia."><span>⇄</span><b>Strategy Lab</b><small>Comparar métodos</small></button>
+        <p class="nav-group">Inteligencia</p>
+        <button class="nav-item" data-view="evidence" data-view-label="Evidencia" data-view-copy="Aquí se consulta la cadena retenida y el estado de cada fuente."><span>⌇</span><b>Evidencia</b><small>Ver cadena retenida</small></button>
+        <button class="nav-item" data-view="dossiers" data-view-label="Dossiers" data-view-copy="Aquí se almacenan y leen cambios verificables que requieren interpretación."><span>▤</span><b>Dossiers</b><small>Cambios verificados</small></button>
+        <button class="nav-item" data-view="watchlists" data-view-label="Watchlists" data-view-copy="Aquí se consulta cuándo comparar una fuente con su próxima versión."><span>◌</span><b>Watchlists</b><small>Esperar y comparar</small></button>
+        <button class="nav-item" data-view="editorial" data-view-label="Mesa editorial" data-view-copy="Aquí se revisan candidatos y se permite abstenerse; no se publica contenido."><span>◇</span><b>Mesa editorial</b><small>Revisar, no publicar</small></button>
+        <p class="nav-group">Control</p>
+        <button class="nav-item" data-view="validation" data-view-label="Validación" data-view-copy="Aquí se prueban los límites técnicos del laboratorio."><span>✓</span><b>Validación</b><small>Probar límites</small></button>
+      </nav>
+      <div class="suite-links" aria-label="Interfaces locales SICTrA">
+        <span>Suite local</span>
+        <a href="http://127.0.0.1:8766/" target="_blank" rel="noopener">Abrir Bloque 2 ↗</a>
+        <a href="http://127.0.0.1:8767/" target="_blank" rel="noopener">Abrir Bloque 3 ↗</a>
+      </div>
+      <div class="rail-foot">
+        <span class="local-dot"></span>
+        <div><strong>Runtime local</strong><span id="runtime-status">Comprobando…</span></div>
+      </div>
+    </aside>
+
+    <main id="workspace" class="workspace" tabindex="-1">
+      <header class="command-bar">
+        <div><span class="crumb">SICTrA Intelligence / <strong id="view-name">Panorama</strong></span><h1>Centro de inteligencia logística</h1><p id="view-guide" class="view-guide">Orientación y estado general del laboratorio.</p></div>
+        <div class="command-actions"><div class="system-chip"><span class="local-dot online"></span><div><small>Entorno</small><strong>Supervisado</strong></div></div><span class="fixture-badge">Campo sintético</span><button id="refresh" class="refresh-button" type="button" aria-label="Actualizar workspace"><span>↻</span> Actualizar</button></div>
+      </header>
+      <section class="boundary-strip" aria-label="Límite del entorno"><strong>Entorno de pruebas trazable</strong><span>No consulta internet; un borrador local no es evidencia ni cambia gates.</span></section>
+      <section class="work-route" aria-label="Ruta de trabajo de Intelligence">
+        <div class="route-intro"><span class="section-kicker">Ruta de operación</span><h2>De pregunta a expediente, sin atajos</h2><p>Usa esta secuencia para saber dónde actuar y qué queda guardado en el laboratorio.</p></div>
+        <ol class="route-steps">
+          <li data-route-for="investigations"><button type="button" data-jump="investigations"><span>01</span><strong>Plantea una investigación</strong><small>Se guarda como borrador local, sin evidencia.</small></button></li>
+          <li data-route-for="evidence"><button type="button" data-jump="evidence"><span>02</span><strong>Verifica una fuente</strong><small>El archivo se importa con el comando local; aquí ves su cadena.</small></button></li>
+          <li data-route-for="dossiers"><button type="button" data-jump="dossiers"><span>03</span><strong>Retén el cambio</strong><small>Solo un delta verificable crea un dossier de hechos.</small></button></li>
+          <li data-route-for="editorial"><button type="button" data-jump="editorial"><span>04</span><strong>Revisa o abstente</strong><small>Nada se publica desde esta herramienta.</small></button></li>
+        </ol>
+      </section>
+      <div id="loading" class="loading-state"><span></span>Cargando el tejido de inteligencia…</div>
+      <div id="error" class="error-state" role="alert" hidden></div>
+
+      <section class="view active" data-view-panel="overview">
+        <div class="scope-lens">
+          <div class="lens-copy"><span class="section-kicker">Scope lens</span><h2>Una pregunta. Tres escalas. Evidencia que conserva sus límites.</h2><p>Explora cómo cambia una investigación logística entre el plano global, regional y local sin mezclar observaciones incompatibles.</p><div id="scope-controls" class="segmented" aria-label="Filtrar por escala"></div></div>
+          <div class="scope-orbit" aria-hidden="true"><span class="orbit orbit-global">Global</span><span class="orbit orbit-regional">Regional</span><span class="orbit orbit-local">Local</span><i class="orbit-core">I</i></div>
+        </div>
+        <div class="metrics-row" id="metrics-row"></div>
+        <div class="overview-grid">
+          <section class="panel signal-board"><div class="panel-head"><div><span class="section-kicker">Radar activo</span><h2>Investigaciones</h2></div><button class="text-button" data-jump="investigations">Ver todas →</button></div><div id="investigation-list" class="investigation-list"></div></section>
+          <section class="panel pulse-panel"><div class="panel-head"><div><span class="section-kicker">Pulso epistémico</span><h2>Estado del conocimiento</h2></div></div><div id="epistemic-pulse"></div></section>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="investigations">
+        <div class="view-intro"><div><span class="section-kicker">Paso 01 · Research desk</span><h2>Aquí empiezan las investigaciones</h2><p>Formula y guarda una pregunta local. Queda como borrador; no consulta la referencia ni crea evidencia.</p></div><select id="investigation-select" aria-label="Seleccionar investigación"></select></div>
+        <section class="panel intake-panel">
+          <div class="panel-head"><div><span class="section-kicker">Entrada local</span><h2>Formular investigación</h2></div><span class="fixture-badge">Siempre DRAFT</span></div>
+          <p>Guarda una pregunta y su alcance en esta computadora. Una referencia declarada no se consulta ni se convierte en evidencia; no ingreses secretos ni datos personales.</p>
+          <form id="research-intake-form" class="intake-form">
+            <label>Título<input name="title" required minlength="3" maxlength="160" placeholder="Ej.: Riesgo de reposición electrónica"></label>
+            <label>Pregunta<textarea name="question" required minlength="12" maxlength="600" placeholder="¿Qué debe investigarse y por qué?" rows="3"></textarea></label>
+            <label>Escala<select name="level"><option>GLOBAL</option><option>REGIONAL</option><option>LOCAL</option></select></label>
+            <label>Geografía<input name="geography" required minlength="2" maxlength="120" placeholder="China → México"></label>
+            <label>Industria<select name="industry"><option value="electronics">Electrónica</option><option value="automotive">Automotriz</option><option value="manufacturing">Manufactura</option><option value="retail">Retail</option><option value="food">Alimentos</option><option value="pharmaceuticals">Farmacéutica</option><option value="chemicals">Química</option></select></label>
+            <label>Actor<input name="actor" required minlength="2" maxlength="100" placeholder="Importadores"></label>
+            <label>Modalidad<input name="mode" required minlength="2" maxlength="100" placeholder="Marítimo + terrestre"></label>
+            <label>Período<input name="period" required minlength="2" maxlength="60" placeholder="30 días"></label>
+            <label>Tema principal<select name="topic_key"><option value="supply_chain_resilience">Resiliencia de cadena</option><option value="ocean_freight_rates">Flete marítimo</option><option value="port_congestion">Congestión portuaria</option><option value="tariff_change">Cambio arancelario</option><option value="customs_audits">Aduanas</option><option value="geopolitical_risk">Riesgo geopolítico</option><option value="electronics">Industria electrónica</option></select></label>
+            <label class="intake-wide">Referencia opcional, aún no verificada<input name="source_reference" maxlength="500" placeholder="URL, título de informe o nota para investigar"></label>
+            <button class="primary-button" type="submit">Guardar borrador local</button>
+          </form>
+          <div id="research-intake-result" aria-live="polite"></div>
+        </section>
+        <div id="investigation-detail"></div>
+      </section>
+
+      <section class="view" data-view-panel="strategy">
+        <div class="view-intro"><div><span class="section-kicker">E03 · Experimentación</span><h2>Strategy Lab</h2><p>Compara métodos observados sin convertir métricas heterogéneas en un puntaje artificial.</p></div></div>
+        <div class="strategy-controls panel"><label>Investigación<select id="strategy-investigation"></select></label><label>Estrategia izquierda<select id="strategy-left"></select></label><label>Estrategia derecha<select id="strategy-right"></select></label><button id="compare" class="primary-button" type="button">Comparar estrategias</button></div>
+        <div id="strategy-result" aria-live="polite"></div>
+      </section>
+
+      <section class="view" data-view-panel="evidence">
+        <div class="view-intro"><div><span class="section-kicker">Paso 02 · E02 + E04 + E05</span><h2>Aquí se consulta la evidencia retenida</h2><p>Para importar un XLSX aprobado usa <code>import_eurostat_workbook.cmd</code>. Esta pestaña muestra la cadena, no descarga ni modifica fuentes.</p></div><select id="evidence-select" aria-label="Seleccionar investigación para evidencia"></select></div>
+        <div id="evidence-spine"></div>
+      </section>
+
+      <section class="view" data-view-panel="dossiers">
+        <div class="view-intro"><div><span class="section-kicker">Paso 03 · Cadena firmada</span><h2>Aquí se almacenan los cambios verificables</h2><p>Un dossier aparece únicamente tras un delta válido. Conserva hechos y límites; interpretación y publicación siguen bloqueadas.</p></div><span id="dossier-reader-state" class="fixture-badge">Comprobando…</span></div>
+        <section class="dossier-reader-grid">
+          <aside class="panel"><div class="panel-head"><div><span class="section-kicker">Registro durable</span><h2>Expedientes disponibles</h2></div><span id="dossier-count" class="method-code">0</span></div><div id="durable-dossier-list" class="durable-dossier-list"></div></aside>
+          <div id="durable-dossier-detail" class="durable-dossier-detail" aria-live="polite"><section class="panel empty-dossier"><span class="section-kicker">Sin selección</span><h2>Selecciona un expediente verificado</h2><p>Si el lector aún no está configurado, la herramienta explicará el límite sin sustituirlo con contenido sintético.</p></section></div>
+        </section>
+      </section>
+
+      <section class="view" data-view-panel="sources">
+        <div class="view-intro"><div><span class="section-kicker">E02 · Source Gateway</span><h2>Candidatos de fuente</h2><p>Aquí se evalúan candidatos. No se guardan como evidencia, no se descargan y no cambian la cadena aprobada.</p></div></div>
+        <div class="strategy-controls panel"><label>Región<select id="source-region"><option>AMERICAS</option><option>EUROPE</option><option>ASIA_PACIFIC</option><option>OCEANIA</option></select></label><label>Dominio<select id="source-domain"><option>TRADE</option><option>MARITIME</option><option>AIR</option><option>PORTS</option><option>CUSTOMS</option><option>INFRASTRUCTURE</option><option>MACRO</option><option>REGULATION</option></select></label><button id="source-refresh" class="primary-button" type="button">Consultar candidatos</button></div>
+        <div id="source-readiness-result" aria-live="polite"></div>
+      </section>
+
+      <section class="view" data-view-panel="editorial">
+        <div class="view-intro"><div><span class="section-kicker">Paso 04 · E01–E08</span><h2>Mesa editorial</h2><p>Revisa candidatos o registra abstención. Los dossiers firmados permanecen en su pestaña y este laboratorio no publica contenido.</p></div><span class="fixture-badge">Ciclo semanal sintético</span></div>
+        <div id="editorial-summary" class="editorial-summary"></div>
+        <div class="editorial-layout">
+          <section class="panel"><div class="panel-head"><div><span class="section-kicker">Frontera Pareto</span><h2>Lista corta</h2></div><span id="editorial-method" class="method-code"></span></div><div id="editorial-shortlist" class="editorial-shortlist"></div></section>
+          <aside id="editorial-blocked" class="panel editorial-blocked"></aside>
+        </div>
+        <div id="editorial-detail" class="editorial-detail"></div>
+        <div id="editorial-handoff" class="editorial-handoff" aria-live="polite"></div>
+      </section>
+
+      <section class="view" data-view-panel="watchlists">
+        <div class="view-intro"><div><span class="section-kicker">7 / 30 / 90</span><h2>Watchlists de revalidación</h2><p>Observables futuros, no predicciones automáticas.</p></div></div>
+        <div id="watchlist-grid" class="watchlist-grid"></div>
+      </section>
+
+      <section class="view" data-view-panel="validation">
+        <div class="view-intro"><div><span class="section-kicker">Pruebas del runtime</span><h2>Validation Deck</h2><p>Ejecuta los límites adversariales del Bloque 1 sin salir de la herramienta.</p></div></div>
+        <div class="validation-layout">
+          <div class="scenario-grid"><button data-scenario="valid"><strong>Flujo válido</strong><span>Debe registrar un único efecto controlado.</span></button><button data-scenario="stale-evidence"><strong>Evidencia vencida</strong><span>Debe bloquearse sin escribir.</span></button><button data-scenario="missing-authority"><strong>Autoridad ausente</strong><span>Debe bloquearse sin escribir.</span></button><button data-scenario="wrong-scope"><strong>Alcance incorrecto</strong><span>Debe bloquearse sin escribir.</span></button></div>
+          <div id="validation-result" class="panel validation-result" aria-live="polite"><span class="section-kicker">Resultado</span><h3>Sin ejecución reciente</h3><p>Selecciona un vector para comprobar el límite correspondiente.</p></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "artifact": "block3-account-knowledge-fabric-hosted-ci",
+  "timestamp_utc": "2026-08-29T02:55:56Z",
+  "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+  "pull_request": 9,
+  "head_sha": "c3a1c6dd7ec527afcab6e7b3d338e547079adecb",
+  "workflow": {
+    "name": "SICTrA CI",
+    "run_id": 33230134010,
+    "job_id": 99041382994,
+    "job_name": "test",
+    "command": "python -m unittest discover -s tests -v",
+    "tests_passed": 172,
+    "failures": 0,
+    "errors": 0,
+    "conclusion": "success"
+  },
+  "local_comparison": {
+    "tests_passed": 229,
+    "difference": 57,
+    "interpretation": "The workspace contains 57 regression vectors not represented by this hosted SHA. The local and hosted scopes are retained separately."
+  },
+  "certainty": "VERIFIED",
+  "confidence": "A",
+  "scope": "hosted CI for the exact implementation SHA",
+  "promotion_boundary": "not real-site authorization, independent review, production encryption, CRM integration, delivery or global gate acceptance"
+}

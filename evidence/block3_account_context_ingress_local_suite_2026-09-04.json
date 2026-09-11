@@ -1,0 +1,33 @@
+{
+  "artifact": "block3_account_context_ingress_and_decision_catalog_v0.1",
+  "executed_at": "2026-09-04",
+  "environment": "local bounded SUT; bundled Python 3 runtime",
+  "commands": [
+    "PYTHONPATH=src python -m unittest discover -s tests -p test_block3_account_context_ingress.py -v",
+    "PYTHONPATH=src python -m unittest discover -s tests -q"
+  ],
+  "results": {
+    "focused": "8/8 PASS",
+    "full_regression": "485/485 PASS"
+  },
+  "covered_claims": [
+    "A durable exact receipt and a durable exact dossier are required before M05 account context admission.",
+    "Substitution, expiry, missing durable state and quarantined observations do not enter M05.",
+    "An explicit tag rule can reach M02 only as a hypothesis; no-match returns upstream.",
+    "The integrated fixture preserves ACCOUNT hypothesis status and no delivery authority."
+  ],
+  "formal_check": {
+    "status": "INSUFFICIENT EVIDENCE",
+    "attempt": "Wolfram context query",
+    "result": "MCP SSE probe returned 404 from wolfram.com",
+    "boundary": "No formal result is claimed."
+  },
+  "limitations": [
+    "Synthetic local fixtures only.",
+    "No authenticated reviewer, production key management, CRM, consent enforcement, delivery, or real authorized shadow run.",
+    "Local regression is not hosted CI, independent review, global integration, or gate acceptance."
+  ],
+  "certainty": "VERIFIED",
+  "confidence": "B",
+  "promotion_boundary": "LOCAL EXECUTED / LOCAL INTEGRATION ONLY"
+}

@@ -1,0 +1,20 @@
+{
+  "artifact_type": "external_ci_evidence",
+  "scope": "BLOCK1_SOURCE_GOVERNANCE_BOOLEAN_TIMESTAMP_REGRESSION",
+  "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+  "branch": "codex/block1-source-governance",
+  "commit_sha": "a35c372668b53308e1d5a3a7b0b0e42eec2748bc",
+  "workflow_run_id": 33325180999,
+  "workflow_name": "Block 1 bounded-slice validation",
+  "workflow_conclusion": "success",
+  "evidence_class": "EXTERNAL_CI_OBSERVED",
+  "claims_supported": [
+    "the exact commit executed successfully in GitHub Actions",
+    "the boolean timestamp rejection regression was present in the executed repository state"
+  ],
+  "claims_not_supported": [
+    "real-source truth, licensing, or terms compliance",
+    "independent human review",
+    "global Telecare OS closure or production readiness"
+  ]
+}

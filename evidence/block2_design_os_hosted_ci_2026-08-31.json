@@ -1,0 +1,26 @@
+{
+  "evidence_type": "HOSTED_CI_EXECUTION",
+  "repository": "angeyes492-prog/Sictra-Implementation-Lab",
+  "pull_request": 11,
+  "branch": "codex/block2-design-green",
+  "commit_sha": "6c3adb15484af34e654b650f8b1b2a71010af79e",
+  "workflow": "SICTrA bounded runtime validation",
+  "workflow_run_id": 33464431457,
+  "workflow_run_number": 218,
+  "job_id": 99721231056,
+  "status": "completed",
+  "conclusion": "success",
+  "verified_steps": [
+    "Install SICTrA packages",
+    "Run bounded context-to-reassessment tests",
+    "Compile Python sources",
+    "Validate Design Console JavaScript",
+    "Produce local-scope execution manifest",
+    "Execute eight-engine reference runtime",
+    "Execute Block 2 E01-E08 reference runtime"
+  ],
+  "certainty": "VERIFIED",
+  "confidence": "A",
+  "scope": "Exact hosted execution for the reconciled code SHA; no architectural acceptance or provider/assistive-technology claim.",
+  "promotion_boundary": "HOSTED_CI_PASS != MASTER_ARCHITECTURE_REVIEW != GLOBAL_ACCEPTANCE"
+}
