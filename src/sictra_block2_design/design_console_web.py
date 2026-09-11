@@ -68,6 +68,20 @@ class DesignConsoleHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
+    def _discard_bounded_request_body(self, max_bytes: int) -> None:
+        """Drain a small local request before an early rejection.
+
+        Windows may reset a connection when the server closes it with unread
+        request bytes, hiding the intended HTTP rejection from the client.
+        Only the already-declared, endpoint-bounded body is consumed.
+        """
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            return
+        if 0 < length <= max_bytes:
+            self.rfile.read(length)
+
     def _guard_local_request(self) -> bool:
         port = self.server.server_port
         allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
@@ -142,6 +156,7 @@ class DesignConsoleHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "Ruta no disponible."})
             return
         if self.headers.get("X-SICTrA-Edit-Token") != self.server.edit_token:
+            self._discard_bounded_request_body(16_384)
             self._send_json(HTTPStatus.FORBIDDEN, {"error": "Token de edición ausente o inválido."})
             return
         if self.headers.get_content_type() != "application/json":
@@ -208,6 +223,7 @@ class DesignConsoleHandler(BaseHTTPRequestHandler):
 
     def _handle_create(self) -> None:
         if self.headers.get("X-SICTrA-Edit-Token") != self.server.edit_token:
+            self._discard_bounded_request_body(32_768)
             self._send_json(HTTPStatus.FORBIDDEN, {"error": "Token de Create ausente o inválido."})
             return
         if self.headers.get_content_type() != "application/json":

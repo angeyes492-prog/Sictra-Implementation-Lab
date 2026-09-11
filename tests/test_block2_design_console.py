@@ -154,11 +154,13 @@ class DesignConsoleTests(unittest.TestCase):
         self.assertTrue({"OBJECT_ID_MISSING", "FACTS_MISSING", "EVIDENCE_MISSING", "AUDIENCE_MISSING"}.issubset(result["reasons"]))
 
     def test_create_rejects_missing_token_and_non_allowlisted_schema(self):
-        status, _, _ = self.request(
-            "POST", "/api/create", headers={"Content-Type": "application/json"},
-            body=self.create_payload(),
-        )
-        self.assertEqual(403, status)
+        for attempt in range(3):
+            with self.subTest(unauthorized_attempt=attempt):
+                status, _, _ = self.request(
+                    "POST", "/api/create", headers={"Content-Type": "application/json"},
+                    body=self.create_payload(create_id=f"UNAUTHORIZED-{attempt}"),
+                )
+                self.assertEqual(403, status)
         _, _, session_body = self.request("GET", "/api/session")
         token = json.loads(session_body)["edit_token"]
         payload = json.loads(self.create_payload())
