@@ -81,6 +81,10 @@ class DesignConsoleTests(unittest.TestCase):
         self.assertEqual(200, status)
         self.assertIn("default-src 'self'", headers["Content-Security-Policy"])
         self.assertIn("frame-ancestors 'none'", headers["Content-Security-Policy"])
+        status, headers, body = self.request("GET", "/favicon.svg")
+        self.assertEqual(200, status)
+        self.assertEqual("image/svg+xml", headers["Content-Type"])
+        self.assertIn(b"SICTrA Design", body)
 
     def test_host_origin_and_mutation_methods_fail_closed(self):
         status, _, _ = self.request("GET", "/health", headers={"Host": "attacker.invalid"})
@@ -264,6 +268,29 @@ class DesignConsoleTests(unittest.TestCase):
         self.assertIn('id="visual-diff"', html)
         self.assertIn('aria-live="polite"', html)
         self.assertIn(".diff-entry", history_css)
+
+    def test_polish_exposes_evidence_route_guidance_and_refresh_recovery(self):
+        root = Path(__file__).parents[1] / "src" / "sictra_block2_design" / "design_console"
+        html = (root / "index.html").read_text(encoding="utf-8")
+        polish_css = (root / "polish.css").read_text(encoding="utf-8")
+        app_js = (root / "app.js").read_text(encoding="utf-8")
+        parser = _StructureParser()
+        parser.feed(html)
+
+        self.assertIn('href="/polish.css"', html)
+        self.assertIn('id="evidence-route"', html)
+        self.assertEqual(5, html.count('data-route="'))
+        self.assertIn('id="mode-guidance"', html)
+        self.assertIn('id="mode-next-step"', html)
+        self.assertIn('id="refresh-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"', html)
+        self.assertIn('id="retry"', html)
+        self.assertIn('aria-busy="false"', html)
+        self.assertIn("Evidencia actualizada; la aceptación no cambió.", app_js)
+        self.assertIn("No se publicó, aceptó ni promovió ningún artefacto.", app_js)
+        self.assertIn("RETURN_UPSTREAM", app_js)
+        self.assertIn("[data-evidence-state=\"stale\"]", polish_css)
+        self.assertIn(".route-step.current", polish_css)
+        self.assertIn("@media(max-width:760px)", polish_css)
 
 
 if __name__ == "__main__":

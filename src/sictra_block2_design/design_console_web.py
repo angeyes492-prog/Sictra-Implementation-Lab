@@ -36,6 +36,8 @@ _STATIC_FILES = {
     "/ops.css": ("ops.css", "text/css; charset=utf-8"),
     "/create.css": ("create.css", "text/css; charset=utf-8"),
     "/history.css": ("history.css", "text/css; charset=utf-8"),
+    "/polish.css": ("polish.css", "text/css; charset=utf-8"),
+    "/favicon.svg": ("favicon.svg", "image/svg+xml"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
 }
 

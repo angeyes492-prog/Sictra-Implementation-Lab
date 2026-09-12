@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SICTrA Precision">
+  <rect width="64" height="64" rx="16" fill="#172557"/>
+  <circle cx="32" cy="32" r="17" fill="none" stroke="#fff" stroke-width="5"/>
+  <path d="M32 9v11m0 24v11M9 32h11m24 0h11" stroke="#20b89a" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="5" fill="#f2a65a"/>
+</svg>

@@ -1,0 +1,203 @@
+/* Balanced operational polish. Domain colors and authority remain in app.css. */
+.command-bar {
+  border-bottom: 1px solid var(--line);
+}
+
+.command-meta {
+  flex-wrap: wrap;
+}
+
+.mode-guidance {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(220px, .8fr);
+  gap: 18px;
+  margin: 18px 0 12px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(120deg, #fff 0%, var(--quiet) 100%);
+}
+
+.mode-guidance h2 {
+  margin: 4px 0 6px;
+  color: var(--navy);
+  font: 650 23px/1.15 var(--display);
+}
+
+.mode-guidance p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+}
+
+.mode-guidance aside {
+  align-self: stretch;
+  padding: 15px 16px;
+  border-left: 4px solid var(--teal);
+  border-radius: 10px;
+  background: var(--mint);
+}
+
+.mode-guidance aside span,
+.mode-guidance aside strong {
+  display: block;
+}
+
+.mode-guidance aside span {
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.evidence-route {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(115px, 1fr));
+  gap: 2px;
+  margin: 0 0 24px;
+  padding: 6px;
+  overflow-x: auto;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--quiet);
+}
+
+.route-step {
+  position: relative;
+  min-width: 115px;
+  padding: 10px 12px 10px 18px;
+  border-radius: 9px;
+  color: var(--muted);
+}
+
+.route-step::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.route-step span,
+.route-step small {
+  display: block;
+}
+
+.route-step span {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.route-step.current {
+  color: var(--teal);
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(23, 37, 87, .08);
+}
+
+.route-step.current span {
+  color: var(--navy);
+}
+
+.recovery {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  padding: 18px 20px;
+  border: 1px solid #efcaca;
+  border-left: 5px solid var(--red);
+  border-radius: 12px;
+  background: #fff7f7;
+}
+
+.recovery p {
+  margin: 2px 0 8px;
+  color: var(--muted);
+}
+
+.recovery button {
+  min-height: 44px;
+  padding: 0 15px;
+  border: 1px solid var(--navy);
+  border-radius: 9px;
+  color: var(--navy);
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#refresh:disabled,
+.recovery button:disabled {
+  cursor: wait;
+  opacity: .62;
+}
+
+[data-evidence-state="stale"] .mode-guidance,
+[data-evidence-state="stale"] .evidence-route {
+  opacity: .7;
+}
+
+[data-evidence-state="stale"] .mode-guidance::after {
+  content: "Lectura anterior descartada";
+  align-self: center;
+  color: var(--red);
+  font: 700 12px var(--mono);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.stage-list button:hover,
+.design-element:hover,
+.version-list button:hover {
+  border-color: var(--teal);
+}
+
+@media(max-width:1000px) {
+  .mode-guidance {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media(max-width:760px) {
+  .mode-guidance {
+    margin-top: 12px;
+    padding: 16px;
+  }
+
+  .evidence-route {
+    grid-template-columns: repeat(5, 128px);
+    scroll-snap-type: x proximity;
+  }
+
+  .route-step {
+    scroll-snap-align: start;
+  }
+
+  .command-meta {
+    align-items: stretch;
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .mode-guidance,
+  .route-step {
+    transition-duration: .01ms !important;
+  }
+}
+
+@media(forced-colors:active) {
+  .mode-guidance,
+  .evidence-route,
+  .route-step.current,
+  .recovery {
+    border: 1px solid CanvasText;
+  }
+
+  .route-step.current {
+    outline: 3px solid Highlight;
+  }
+}
