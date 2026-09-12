@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>Design Console · SICTrA</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/ops.css">
   <link rel="stylesheet" href="/create.css">
   <link rel="stylesheet" href="/history.css">
+  <link rel="stylesheet" href="/polish.css">
 </head>
 <body>
   <a class="skip-link" href="#studio">Saltar al contenido</a>
@@ -16,9 +18,9 @@
     <aside class="product-rail" aria-label="Modos del Design Intelligence OS">
       <div class="brand"><span class="brand-mark" aria-hidden="true">S</span><div><strong>SICTrA</strong><small>Design / 02</small></div></div>
       <nav aria-label="Navegación principal">
-        <button type="button" data-view="create"><span aria-hidden="true">＋</span> Create<small>Brief verificable</small></button>
-        <button type="button" class="active" aria-current="page" data-view="studio"><span aria-hidden="true">⌗</span> Studio<small>Documento trazable</small></button>
-        <button type="button" data-view="ops"><span aria-hidden="true">◫</span> Ops<small>Ejecución auditable</small></button>
+        <button type="button" data-view="create"><span aria-hidden="true">＋</span> Preparar<small>Create · brief verificable</small></button>
+        <button type="button" class="active" aria-current="page" data-view="studio"><span aria-hidden="true">⌗</span> Taller<small>Studio · documento trazable</small></button>
+        <button type="button" data-view="ops"><span aria-hidden="true">◫</span> Operación<small>Ops · ejecución auditable</small></button>
       </nav>
       <div class="suite-links" aria-label="Interfaces locales SICTrA">
         <span>Suite local</span>
@@ -28,17 +30,28 @@
       <div class="runtime"><i id="runtime-dot" aria-hidden="true"></i><div><strong>Runtime local</strong><small id="runtime-status">Comprobando…</small></div></div>
     </aside>
 
-    <main id="studio" tabindex="-1">
+    <main id="studio" tabindex="-1" aria-busy="false" data-evidence-state="current">
       <header class="command-bar">
-        <div><span class="eyebrow">Design intelligence / Studio</span><h1>Evidence-first canvas</h1></div>
-        <div class="command-meta"><span id="project-badge">Proyecto local</span><button id="refresh" type="button">Actualizar evidencia</button></div>
+        <div><span class="eyebrow">Design intelligence / Studio</span><h1>Taller de evidencia visual</h1></div>
+        <div class="command-meta"><span id="project-badge">Proyecto local</span><button id="refresh" type="button">Actualizar evidencia</button><span id="refresh-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span></div>
       </header>
       <section class="boundary" aria-label="Límite de autoridad">
         <strong>Candidato local, no publicado</strong>
         <span>La consola explica el run; no acepta calidad, derechos ni gates.</span>
       </section>
-      <div id="loading" class="loading" role="status">Abriendo el grafo de diseño…</div>
-      <div id="error" class="error" role="alert" hidden></div>
+      <section id="mode-guidance" class="mode-guidance" aria-labelledby="mode-guidance-title">
+        <div><span class="eyebrow">Ruta de evidencia</span><h2 id="mode-guidance-title">Inspecciona el documento vigente</h2><p id="mode-guidance-copy">Compara contenido, procedencia y límites sin convertir el candidato en un artefacto aceptado.</p></div>
+        <aside><span>Siguiente paso válido</span><strong id="mode-next-step">Selecciona un elemento y revisa sus referencias.</strong></aside>
+      </section>
+      <ol id="evidence-route" class="evidence-route" aria-label="Ruta del candidato de diseño">
+        <li class="route-step" data-route="brief"><span>Brief</span><small>intención</small></li>
+        <li class="route-step" data-route="system"><span>Sistema</span><small>dirección</small></li>
+        <li class="route-step current" data-route="document" aria-current="step"><span>CDD</span><small>versión</small></li>
+        <li class="route-step" data-route="review"><span>Revisión</span><small>recibo</small></li>
+        <li class="route-step" data-route="candidate"><span>Candidato</span><small>no aceptado</small></li>
+      </ol>
+      <div id="loading" class="loading" role="status" aria-live="polite" aria-atomic="true">Abriendo el grafo de diseño…</div>
+      <section id="error" class="error recovery" role="alert" hidden><strong>No se pudo abrir la evidencia local.</strong><span id="error-message"></span><p>No se publicó, aceptó ni promovió ningún artefacto.</p><button id="retry" type="button">Reintentar lectura local</button></section>
 
       <section id="workspace" class="workspace" hidden aria-label="Design Studio">
         <aside class="project-panel" aria-labelledby="project-heading">
@@ -47,7 +60,7 @@
         </aside>
 
         <section class="canvas-panel" aria-labelledby="canvas-heading">
-          <div class="canvas-head"><div><span>Canonical Design Document</span><h2 id="canvas-heading">Lienzo semántico</h2></div><span id="document-state" class="state-chip"></span></div>
+          <div class="canvas-head"><div><span>Canonical Design Document</span><h2 id="canvas-heading" tabindex="-1">Lienzo semántico</h2></div><span id="document-state" class="state-chip"></span></div>
           <div id="canvas" class="canvas" aria-live="polite"></div>
         </section>
 
@@ -69,7 +82,7 @@
 
       <section id="ops-view" class="ops-view" hidden aria-labelledby="ops-heading">
         <header class="ops-head">
-          <div><span class="eyebrow">Orchestrator / observación</span><h2 id="ops-heading">Execution tape</h2></div>
+          <div><span class="eyebrow">Orchestrator / observación</span><h2 id="ops-heading" tabindex="-1">Cinta de ejecución</h2></div>
           <p>Separa trabajo ejecutado de estado reutilizado. No concede aceptación.</p>
         </header>
         <div id="ops-summary" class="ops-summary"></div>
@@ -87,7 +100,7 @@
 
       <section id="create-view" class="create-view" hidden aria-labelledby="create-heading">
         <header class="create-head">
-          <div><span class="eyebrow">Create / handoff compiler</span><h2 id="create-heading">Construir un brief verificable</h2></div>
+          <div><span class="eyebrow">Create / handoff compiler</span><h2 id="create-heading" tabindex="-1">Construir un brief verificable</h2></div>
           <p>Describe la intención y enlaza evidencia existente. Create no completa hechos ni derechos ausentes.</p>
         </header>
         <form id="create-form" class="create-form">

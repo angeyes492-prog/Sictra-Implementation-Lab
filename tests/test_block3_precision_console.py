@@ -32,6 +32,8 @@ class PrecisionConsoleTests(unittest.TestCase):
     def test_static_security_and_loopback_binding(self):
         status,headers,_=self.request("GET","/"); self.assertEqual(200,status)
         self.assertIn("frame-ancestors 'none'",headers["Content-Security-Policy"])
+        status,headers,body=self.request("GET","/favicon.svg"); self.assertEqual(200,status)
+        self.assertEqual("image/svg+xml",headers["Content-Type"]); self.assertIn(b"SICTrA Precision",body)
         with self.assertRaisesRegex(ValueError,"127.0.0.1"): create_server(host="0.0.0.0",port=0)
 
     def test_host_origin_cross_site_and_mutations_fail_closed(self):
@@ -62,6 +64,41 @@ class PrecisionConsoleTests(unittest.TestCase):
         for unsafe_interpolation in ("${a.account_id}", "${s.value}", "${v}"):
             self.assertNotIn(unsafe_interpolation, js)
         self.assertEqual("BLOCK3_LOCAL_PRECISION_CONSOLE_READ_MODEL",synthetic_workspace()["scope"])
+
+    def test_polish_exposes_account_context_guidance_and_refresh_recovery(self):
+        root=Path(__file__).parents[1]/"src"/"sictra_block3_precision"/"precision_console"
+        html=(root/"index.html").read_text(encoding="utf-8")
+        css=(root/"app.css").read_text(encoding="utf-8")
+        js=(root/"app.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="account-context"',html)
+        for element_id in ("context-tenant","context-account","context-evidence","context-disposition"):
+            self.assertIn(f'id="{element_id}"',html)
+        self.assertIn('id="view-guidance"',html)
+        self.assertIn('id="view-next-step"',html)
+        self.assertIn('id="refresh-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"',html)
+        self.assertIn('id="retry"',html)
+        self.assertIn('aria-busy="false"',html)
+        self.assertIn("Evidencia actualizada; ninguna señal fue aceptada.",js)
+        self.assertIn("No se realizó contacto, delivery ni escritura en CRM.",js)
+        self.assertIn("Sin señales gobernadas",js)
+        self.assertIn("Sin controles declarados",js)
+        self.assertIn("clearWorkspace",js)
+        self.assertIn('[data-evidence-state="stale"]',css)
+        self.assertIn(".route-step.current",css)
+
+    def test_empty_collections_remain_explicit_non_authority(self):
+        payload=synthetic_workspace(); payload["signals"]=[]; payload["controls"]=[]
+        other=create_server(port=0,workspace_loader=lambda: payload)
+        thread=threading.Thread(target=other.serve_forever,daemon=True); thread.start()
+        try:
+            c=http.client.HTTPConnection("127.0.0.1",other.server_port,timeout=2)
+            c.request("GET","/api/workspace"); r=c.getresponse(); body=json.loads(r.read()); c.close()
+            self.assertEqual(200,r.status)
+            self.assertEqual([],body["signals"])
+            self.assertEqual([],body["controls"])
+            self.assertEqual("NOT_ACCEPTED",body["authority"]["acceptance"])
+        finally: other.shutdown(); other.server_close(); thread.join(timeout=2)
 
 
 if __name__ == "__main__": unittest.main()

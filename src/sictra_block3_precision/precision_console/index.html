@@ -1,7 +1,76 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>SICTrA Precision · Bloque 3</title><link rel="stylesheet" href="/app.css"></head><body>
-<a class="skip" href="#workspace">Saltar al contenido</a><div class="shell"><aside class="rail"><div class="brand"><b>S</b><div><strong>SICTrA</strong><small>Precision / 03</small></div></div><nav aria-label="Navegación de precisión"><button class="active" data-view="accounts" type="button">Cuentas<small>Dossier oficial</small></button><button data-view="admission" type="button">Admisión<small>Contexto atestado</small></button><button data-view="signals" type="button">Señales<small>Decisión gobernada</small></button><button data-view="control" type="button">Control<small>Límites activos</small></button></nav><div class="suite"><span>Suite local</span><a href="http://127.0.0.1:8765/" target="_blank" rel="noopener">Abrir Bloque 1 ↗</a><a href="http://127.0.0.1:8766/" target="_blank" rel="noopener">Abrir Bloque 2 ↗</a></div><div class="runtime"><i></i><div><strong>Runtime local</strong><small id="runtime">Comprobando…</small></div></div></aside>
-<main id="workspace" tabindex="-1"><header><div><span class="eyebrow">SICTrA Precision / <b id="view-name">Cuentas</b></span><h1>Contexto comercial, sin atajos</h1></div><button id="refresh" type="button">Actualizar evidencia</button></header><section class="boundary"><strong>Shadow supervisado</strong><span>Sin CRM write, contacto, delivery ni aceptación automática.</span></section><section class="route" aria-label="Ruta de precisión"><span>Cuenta aprobada</span><i>→</i><span>Dossier oficial</span><i>→</i><span>Contexto atestado</span><i>→</i><span>Señal gobernada</span><i>→</i><strong>Revisión humana</strong></section><div id="loading" role="status">Verificando la cadena local…</div><div id="error" role="alert" hidden></div>
-<section class="view active" data-panel="accounts"><div class="intro"><span class="eyebrow">Account knowledge fabric</span><h2>Cuenta y evidencia atribuible</h2><p>Una declaración del sitio oficial no equivale a un hecho verificado independientemente.</p></div><div id="account-grid" class="grid"></div></section>
-<section class="view" data-panel="admission"><div class="intro"><span class="eyebrow">M02 / frontera de ingreso</span><h2>Admisión de contexto</h2><p>La política, el issuer, la vigencia y la atestación deben coincidir antes de producir efectos.</p></div><div id="admission-card"></div></section>
-<section class="view" data-panel="signals"><div class="intro"><span class="eyebrow">Catálogo gobernado</span><h2>Señales separadas de hipótesis</h2><p>No existe un score universal y ninguna señal es una decisión aceptada.</p></div><div id="signals-list" class="cards"></div></section>
-<section class="view" data-panel="control"><div class="intro"><span class="eyebrow">Fronteras activas</span><h2>Control y abstención</h2><p>Los bloqueos esperados son comportamiento correcto, no ausencia de capacidad.</p></div><div id="controls-list" class="cards"></div></section></main></div><script src="/app.js" defer></script></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>SICTrA Precision · Bloque 3</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <a class="skip" href="#workspace">Saltar al contenido</a>
+  <div class="shell">
+    <aside class="rail">
+      <div class="brand"><b aria-hidden="true">S</b><div><strong>SICTrA</strong><small>Precision / 03</small></div></div>
+      <nav aria-label="Navegación de precisión">
+        <button class="active" data-view="accounts" type="button">Cuentas<small>Dossier oficial</small></button>
+        <button data-view="admission" type="button">Admisión<small>Contexto atestado</small></button>
+        <button data-view="signals" type="button">Señales<small>Decisión gobernada</small></button>
+        <button data-view="control" type="button">Control<small>Límites activos</small></button>
+      </nav>
+      <div class="suite" aria-label="Interfaces locales SICTrA">
+        <span>Suite local</span>
+        <a href="http://127.0.0.1:8765/" target="_blank" rel="noopener">Abrir Bloque 1 ↗</a>
+        <a href="http://127.0.0.1:8766/" target="_blank" rel="noopener">Abrir Bloque 2 ↗</a>
+      </div>
+      <div class="runtime"><i id="runtime-dot" aria-hidden="true"></i><div><strong>Runtime local</strong><small id="runtime">Comprobando…</small></div></div>
+    </aside>
+
+    <main id="workspace" tabindex="-1" aria-busy="false" data-evidence-state="current">
+      <header class="command-bar">
+        <div><span class="eyebrow">SICTrA Precision / <b id="view-name">Cuentas</b></span><h1>Mesa de precisión comercial</h1></div>
+        <div class="command-actions"><button id="refresh" type="button">Actualizar evidencia</button><span id="refresh-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span></div>
+      </header>
+      <section class="boundary" aria-label="Límite de autoridad"><strong>Shadow supervisado</strong><span>Sin CRM write, contacto, delivery ni aceptación automática.</span></section>
+      <section id="account-context" class="account-context" aria-label="Contexto de la cuenta seleccionada">
+        <div><span>Tenant</span><strong id="context-tenant">Sin cargar</strong></div>
+        <div><span>Cuenta</span><strong id="context-account">Sin cargar</strong></div>
+        <div><span>Clase de evidencia</span><strong id="context-evidence">Sin cargar</strong></div>
+        <div><span>Disposición</span><strong id="context-disposition">Sin cargar</strong></div>
+      </section>
+      <section id="view-guidance" class="view-guidance" aria-labelledby="view-guidance-title">
+        <div><span class="eyebrow">Orientación de revisión</span><h2 id="view-guidance-title">Ubica la cuenta y su evidencia</h2><p id="view-guidance-copy">La identidad aprobada delimita la revisión; no demuestra por sí sola una oportunidad comercial.</p></div>
+        <aside><span>Siguiente paso humano</span><strong id="view-next-step">Comprueba el host oficial y las limitaciones del dossier.</strong></aside>
+      </section>
+      <ol class="route" aria-label="Ruta de precisión">
+        <li class="route-step current" data-route="accounts" aria-current="step"><span>Cuenta</span><small>aprobada</small></li>
+        <li class="route-step" data-route="dossier"><span>Dossier</span><small>oficial</small></li>
+        <li class="route-step" data-route="admission"><span>Contexto</span><small>atestado</small></li>
+        <li class="route-step" data-route="signals"><span>Señal</span><small>gobernada</small></li>
+        <li class="route-step" data-route="control"><span>Revisión</span><small>humana</small></li>
+      </ol>
+      <div id="loading" role="status" aria-live="polite" aria-atomic="true">Verificando la cadena local…</div>
+      <section id="error" class="recovery" role="alert" hidden><strong>No se pudo verificar la evidencia local.</strong><span id="error-message"></span><p>No se realizó contacto, delivery ni escritura en CRM.</p><button id="retry" type="button">Reintentar lectura local</button></section>
+
+      <section class="view active" data-panel="accounts" aria-labelledby="accounts-heading">
+        <div class="intro"><span class="eyebrow">Account knowledge fabric</span><h2 id="accounts-heading" tabindex="-1">Cuenta y evidencia atribuible</h2><p>Una declaración del sitio oficial no equivale a un hecho verificado independientemente.</p></div>
+        <div id="account-grid" class="grid" aria-live="polite"></div>
+      </section>
+      <section class="view" data-panel="admission" aria-labelledby="admission-heading" hidden>
+        <div class="intro"><span class="eyebrow">M02 / frontera de ingreso</span><h2 id="admission-heading" tabindex="-1">Admisión de contexto</h2><p>Política, issuer, vigencia y atestación deben coincidir antes de producir efectos.</p></div>
+        <div id="admission-card" aria-live="polite"></div>
+      </section>
+      <section class="view" data-panel="signals" aria-labelledby="signals-heading" hidden>
+        <div class="intro"><span class="eyebrow">Catálogo gobernado</span><h2 id="signals-heading" tabindex="-1">Señales separadas de hipótesis</h2><p>No existe un score universal y ninguna señal es una decisión aceptada.</p></div>
+        <div id="signals-list" class="signal-groups" aria-live="polite"></div>
+      </section>
+      <section class="view" data-panel="control" aria-labelledby="control-heading" hidden>
+        <div class="intro"><span class="eyebrow">Fronteras activas</span><h2 id="control-heading" tabindex="-1">Control y abstención</h2><p>Los bloqueos esperados son comportamiento correcto, no ausencia de capacidad.</p></div>
+        <div id="controls-list" class="control-groups" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

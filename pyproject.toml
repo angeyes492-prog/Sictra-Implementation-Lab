@@ -15,7 +15,7 @@ package-dir = {"" = "src"}
 start-directory = "tests"
 
 [tool.setuptools.package-data]
-sictra_block1 = ["web/*.html", "web/*.css", "web/*.js"]
-sictra_block2_design = ["design_console/*.html", "design_console/*.css", "design_console/*.js"]
-sictra_block3_precision = ["precision_console/*.html", "precision_console/*.css", "precision_console/*.js"]
+sictra_block1 = ["web/*.html", "web/*.css", "web/*.js", "web/*.png"]
+sictra_block2_design = ["design_console/*.html", "design_console/*.css", "design_console/*.js", "design_console/*.svg"]
+sictra_block3_precision = ["precision_console/*.html", "precision_console/*.css", "precision_console/*.js", "precision_console/*.svg"]
 
