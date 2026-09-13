@@ -51,7 +51,7 @@ class PrecisionConsoleTests(unittest.TestCase):
     def test_markup_exposes_four_views_suite_links_and_accessibility(self):
         root=Path(__file__).parents[1]/"src"/"sictra_block3_precision"/"precision_console"; html=(root/"index.html").read_text(encoding="utf-8"); parser=_Parser(); parser.feed(html)
         self.assertIn("main",parser.tags); self.assertIn("nav",parser.tags); self.assertEqual(4,html.count('data-view="'))
-        self.assertIn("http://127.0.0.1:8765/",html); self.assertIn("http://127.0.0.1:8766/",html)
+        self.assertIn("http://127.0.0.1:8765/",html); self.assertIn("http://127.0.0.1:8766/",html); self.assertIn("http://127.0.0.1:8768/",html)
         self.assertTrue(any(a.get("role")=="alert" for _,a in parser.attrs)); self.assertFalse(any(t=="style" for t in parser.tags))
         self.assertTrue(all(a.get("type") in {"button","submit"} for t,a in parser.attrs if t=="button"))
 

@@ -233,9 +233,11 @@ class DesignConsoleTests(unittest.TestCase):
         css = (root / "app.css").read_text(encoding="utf-8")
         self.assertIn('href="http://127.0.0.1:8765/"', html)
         self.assertIn('href="http://127.0.0.1:8767/"', html)
-        self.assertEqual(2, html.count('target="_blank" rel="noopener"'))
+        self.assertIn('href="http://127.0.0.1:8768/"', html)
+        self.assertEqual(3, html.count('target="_blank" rel="noopener"'))
         self.assertNotIn("8765", (root / "app.js").read_text(encoding="utf-8"))
         self.assertNotIn("8767", (root / "app.js").read_text(encoding="utf-8"))
+        self.assertNotIn("8768", (root / "app.js").read_text(encoding="utf-8"))
         self.assertIn(".suite-links", css)
         self.assertIn("#edf8f5", css)
 
