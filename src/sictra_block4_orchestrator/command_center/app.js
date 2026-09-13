@@ -68,6 +68,7 @@ if (typeof document !== "undefined") {
     detail(cases.find(item => item.case_id === selected));
   }
   async function load() {
+    loadWorker();
     clearAudit(); cases = []; selected = null;
     $("#main").setAttribute("aria-busy","true");
     for (const id of ["#refresh","#retry","#search","#state-filter"]) $(id).disabled = true;
@@ -101,5 +102,28 @@ if (typeof document !== "undefined") {
   });
   for(const id of ["#search","#state-filter"]) $(id).addEventListener("input",()=>{const previous=selected;render();if(previous!==selected)audit(selected);});
   $("#refresh").addEventListener("click",load); $("#retry").addEventListener("click",load);
+  let workerRequest = 0;
+  async function loadWorker() {
+    const request = ++workerRequest;
+    $("#worker-jobs").replaceChildren();
+    $("#worker-status").textContent = "Verificando cola…";
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(),10000);
+    try {
+      const response = await fetch("/api/worker",{credentials:"same-origin",signal:controller.signal});
+      if (!response.ok) throw new Error("WORKER_UNAVAILABLE");
+      const data = await response.json();
+      const labels = {NOT_CONFIGURED:"Ejecutor no configurado. No hay procesamiento automático activo.",
+        PAUSED:"Cola pausada.",AVAILABLE:"Cola disponible. Consulta la sesión del ejecutor; esta lectura no demuestra que esté activo.",
+        RECOVERY_REQUIRED:"Trabajo en ejecución o pendiente de recuperación. No se repetirá automáticamente.",
+        REVIEW_REQUIRED:"Cola detenida: requiere revisión de evidencia o recuperación."};
+      if(!Object.hasOwn(labels,data.status)||!Array.isArray(data.jobs))throw new Error("WORKER_SCHEMA_INVALID");
+      if(request!==workerRequest)return;
+      $("#worker-status").textContent=labels[data.status];
+      $("#worker-jobs").innerHTML=data.jobs.map(job=>'<li><code>'+escapeHTML(job.job_id)+'</code> · '+escapeHTML(job.state)+'</li>').join("");
+    } catch (_) {
+      if(request===workerRequest){$("#worker-status").textContent="No se pudo verificar la cola. No se conservan resultados anteriores.";$("#worker-jobs").replaceChildren();}
+    } finally {clearTimeout(timer);}
+  }
   load();
 }

@@ -13,7 +13,10 @@ from typing import Any, Callable
 
 UI_SCOPE = "BLOCK3_LOCAL_PRECISION_CONSOLE_READ_MODEL"
 _WEB_ROOT = Path(__file__).with_name("precision_console")
+from sictra.console_assets import CONSOLE_ASSETS
+
 _STATIC = {
+    **CONSOLE_ASSETS,
     "/": ("index.html", "text/html; charset=utf-8"),
     "/app.css": ("app.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),

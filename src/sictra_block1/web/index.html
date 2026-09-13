@@ -6,33 +6,34 @@
   <meta name="color-scheme" content="light">
   <title>SICTrA Intelligence · Telecare OS</title>
   <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/suite.css">
 </head>
-<body class="overview-mode">
+<body class="overview-mode" data-telecare-block="1">
   <a class="skip-link" href="#workspace">Saltar al contenido</a>
   <div class="app-shell">
-    <aside class="rail" aria-label="Navegación principal">
+    <aside class="rail telecare-rail" aria-label="Navegación principal">
       <div class="identity telecare-identity">
         <div class="telecare-wordmark"><strong>Telecare</strong><span>OS</span></div>
         <div class="identity-copy"><strong>Editorial Command Center</strong><span>Bloque 1 · Intelligence</span></div>
       </div>
       <nav class="rail-nav">
         <p class="nav-group">Operación</p>
-        <button class="nav-item active" data-view="overview" data-view-label="Vista general" data-view-copy="Prioridades, evidencia y trazabilidad del laboratorio."><span>01</span><b>Vista general</b><small>Control editorial</small></button>
-        <button class="nav-item" data-view="editorial" data-view-label="Revisión humana" data-view-copy="Revisa candidatos o registra abstención; nunca publica."><span>02</span><b>Revisión humana</b><small>Seleccionar o abstenerse</small></button>
-        <button class="nav-item" data-view="investigations" data-view-label="Inteligencia" data-view-copy="Formula preguntas locales y consulta sus límites."><span>03</span><b>Inteligencia</b><small>Investigaciones</small></button>
-        <button class="nav-item" data-view="evidence" data-view-label="Evidencia" data-view-copy="Consulta la cadena retenida y el estado de cada fuente."><span>04</span><b>Evidencia</b><small>Cadena verificable</small></button>
-        <button class="nav-item" data-view="dossiers" data-view-label="Dossiers" data-view-copy="Lee cambios verificables e interpretación pendiente."><span>05</span><b>Dossiers</b><small>Expedientes</small></button>
-        <button class="nav-item" data-view="watchlists" data-view-label="Watchlists" data-view-copy="Compara fuentes en horizontes controlados."><span>06</span><b>Watchlists</b><small>7 / 30 / 90 días</small></button>
+        <button class="nav-item active" data-view="overview" data-view-label="Vista general" data-view-copy="Prioridades, evidencia y trazabilidad del laboratorio."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#home"></use></svg><b>Vista general</b><small>Control editorial</small></button>
+        <button class="nav-item" data-view="editorial" data-view-label="Revisión humana" data-view-copy="Revisa candidatos o registra abstención; nunca publica."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#review"></use></svg><b>Revisión humana</b><small>Seleccionar o abstenerse</small></button>
+        <button class="nav-item" data-view="investigations" data-view-label="Inteligencia" data-view-copy="Formula preguntas locales y consulta sus límites."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#intelligence"></use></svg><b>Inteligencia</b><small>Investigaciones</small></button>
+        <button class="nav-item" data-view="evidence" data-view-label="Evidencia" data-view-copy="Consulta la cadena retenida y el estado de cada fuente."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#review"></use></svg><b>Evidencia</b><small>Cadena verificable</small></button>
+        <button class="nav-item" data-view="dossiers" data-view-label="Dossiers" data-view-copy="Lee cambios verificables e interpretación pendiente."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#document"></use></svg><b>Dossiers</b><small>Expedientes</small></button>
+        <button class="nav-item" data-view="watchlists" data-view-label="Watchlists" data-view-copy="Compara fuentes en horizontes controlados."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#watch"></use></svg><b>Watchlists</b><small>7 / 30 / 90 días</small></button>
         <p class="nav-group">Herramientas</p>
-        <button class="nav-item" data-view="sources" data-view-label="Fuentes" data-view-copy="Evalúa candidatos sin importarlos como evidencia."><span>07</span><b>Fuentes</b><small>Evaluar candidatos</small></button>
-        <button class="nav-item" data-view="strategy" data-view-label="Strategy Lab" data-view-copy="Compara métodos sin modificar evidencia."><span>08</span><b>Strategy Lab</b><small>Comparar métodos</small></button>
-        <button class="nav-item" data-view="validation" data-view-label="Validación" data-view-copy="Prueba límites técnicos del laboratorio."><span>09</span><b>Validación</b><small>Vectores adversariales</small></button>
+        <button class="nav-item" data-view="sources" data-view-label="Fuentes" data-view-copy="Evalúa candidatos sin importarlos como evidencia."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#source"></use></svg><b>Fuentes</b><small>Evaluar candidatos</small></button>
+        <button class="nav-item" data-view="strategy" data-view-label="Strategy Lab" data-view-copy="Compara métodos sin modificar evidencia."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#design"></use></svg><b>Strategy Lab</b><small>Comparar métodos</small></button>
+        <button class="nav-item" data-view="validation" data-view-label="Validación" data-view-copy="Prueba límites técnicos del laboratorio."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#check"></use></svg><b>Validación</b><small>Vectores adversariales</small></button>
       </nav>
       <div class="suite-links" aria-label="Interfaces locales SICTrA">
         <span>Suite local</span>
-        <a href="http://127.0.0.1:8766/" target="_blank" rel="noopener">Abrir Bloque 2 ↗</a>
-        <a href="http://127.0.0.1:8767/" target="_blank" rel="noopener">Abrir Bloque 3 ↗</a>
-        <a href="http://127.0.0.1:8768/" target="_blank" rel="noopener">Abrir Bloque 4 ↗</a>
+        <a href="http://127.0.0.1:8766/"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#design"></use></svg>Diseño</a>
+        <a href="http://127.0.0.1:8767/"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#precision"></use></svg>Precisión</a>
+        <a href="http://127.0.0.1:8768/"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#orchestrator"></use></svg>Orquestador</a>
       </div>
       <div class="rail-foot">
         <img class="legacy-brand-mark" src="/brand-mark.png" alt="SICTrA">

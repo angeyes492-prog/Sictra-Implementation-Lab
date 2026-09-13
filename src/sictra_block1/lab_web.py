@@ -42,7 +42,10 @@ from .operator_pipeline import OperatorPipelineViolation, load_operator_pipeline
 
 UI_SCOPE = "BLOCK1_LOCAL_INTELLIGENCE_PRODUCT_UI"
 _WEB_ROOT = Path(__file__).with_name("web")
+from sictra.console_assets import CONSOLE_ASSETS
+
 _STATIC_FILES = {
+    **CONSOLE_ASSETS,
     "/": ("index.html", "text/html; charset=utf-8"),
     "/app.css": ("app.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),

@@ -7,23 +7,24 @@
   <title>SICTrA Precision · Bloque 3</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/suite.css">
 </head>
-<body>
+<body data-telecare-block="3">
   <a class="skip" href="#workspace">Saltar al contenido</a>
   <div class="shell">
-    <aside class="rail">
-      <div class="brand"><b aria-hidden="true">S</b><div><strong>SICTrA</strong><small>Precision / 03</small></div></div>
+    <aside class="rail telecare-rail">
+      <div class="brand suite-brand"><div><strong>Telecare <em>OS</em></strong><small>Precisión · Command Center</small></div></div>
       <nav aria-label="Navegación de precisión">
-        <button class="active" data-view="accounts" type="button">Cuentas<small>Dossier oficial</small></button>
-        <button data-view="admission" type="button">Admisión<small>Contexto atestado</small></button>
-        <button data-view="signals" type="button">Señales<small>Decisión gobernada</small></button>
-        <button data-view="control" type="button">Control<small>Límites activos</small></button>
+        <button class="active" data-view="accounts" type="button"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#people"></use></svg>Cuentas<small>Dossier oficial</small></button>
+        <button data-view="admission" type="button"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#check"></use></svg>Admisión<small>Contexto atestado</small></button>
+        <button data-view="signals" type="button"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#precision"></use></svg>Señales<small>Decisión gobernada</small></button>
+        <button data-view="control" type="button"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#check"></use></svg>Control<small>Límites activos</small></button>
       </nav>
       <div class="suite" aria-label="Interfaces locales SICTrA">
         <span>Suite local</span>
-        <a href="http://127.0.0.1:8765/" target="_blank" rel="noopener">Abrir Bloque 1 ↗</a>
-        <a href="http://127.0.0.1:8766/" target="_blank" rel="noopener">Abrir Bloque 2 ↗</a>
-        <a href="http://127.0.0.1:8768/" target="_blank" rel="noopener">Abrir Bloque 4 ↗</a>
+        <a href="http://127.0.0.1:8765/"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#intelligence"></use></svg>Inteligencia</a>
+        <a href="http://127.0.0.1:8766/"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#design"></use></svg>Diseño</a>
+        <a href="http://127.0.0.1:8768/"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#orchestrator"></use></svg>Orquestador</a>
       </div>
       <div class="runtime"><i id="runtime-dot" aria-hidden="true"></i><div><strong>Runtime local</strong><small id="runtime">Comprobando…</small></div></div>
     </aside>

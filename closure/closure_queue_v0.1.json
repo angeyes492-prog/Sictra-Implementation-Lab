@@ -59,7 +59,7 @@
     "state": "READY_FOR_TECHNICAL_WORK",
     "risk": 5, "dependency_impact": 4, "evidence_gap": 5, "irreversibility": 3,
     "next_action": "Build backup/restore exercises, configured identities, resource limits, stop/resume controls and deployment checks before the final review.",
-    "evidence": "Local journal recovery exists. Disaster recovery, deployment identity and production secret management are not established.",
+    "evidence": "Candidate local_worker now runs explicit hash-bound files through the real Block 1 pipeline with signed queue state, bounded polling, pause and crash/review stops; eight focused tests pass. Full job recovery, deployment identity, rollback anchors and production secret management remain unfinished.",
     "dependencies": []
   },
   {

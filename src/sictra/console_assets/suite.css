@@ -1,0 +1,67 @@
+/* Telecare editorial shell. Shared identity; producer state colors stay semantic. */
+:root{--suite-navy:#10254b;--suite-blue:#0754d4;--suite-teal:#00b6ab;--suite-ink:#112455;--suite-paper:#f7f9fc;--suite-line:#d6dce6;--suite-display:Bahnschrift,"Segoe UI",sans-serif;--suite-body:"Segoe UI",Aptos,sans-serif}
+body[data-telecare-block]{--cobalt:var(--suite-blue);--navy:var(--suite-ink);--display:var(--suite-display);--paper:var(--suite-paper);font-family:var(--suite-body)}
+.telecare-rail{background:var(--suite-navy);color:#fff;border-right:0}
+.telecare-rail .brand,.telecare-rail .brand strong{color:white}
+.suite-brand strong{font:600 24px var(--suite-display);letter-spacing:-.7px}
+.suite-brand em{color:var(--suite-teal);font-style:normal}
+.telecare-rail .brand small,.telecare-rail .runtime small,.telecare-rail .runtime strong{color:#cfdaef}
+.telecare-rail .suite-links,.telecare-rail .suite{display:grid;gap:5px;border-top:1px solid #50617f;padding:16px 0}
+.telecare-rail .suite-links>span,.telecare-rail .suite>span{color:#b5c4df}
+.telecare-rail :is(.suite-links,.suite) a{display:flex;align-items:center;gap:13px;color:#fff;text-decoration:none;min-height:44px;padding:8px 10px;border-radius:5px;font-size:13px}
+.telecare-rail :is(.suite-links,.suite) a:hover{background:#203d6c}
+.telecare-rail nav button{color:#e4ebf8;background:transparent;border-color:transparent;border-radius:5px;min-height:48px}
+.telecare-rail nav button:hover{color:#fff;background:#203d6c}
+.telecare-rail nav :is(button.active,a.active){background:var(--suite-blue);color:#fff;border-color:transparent;box-shadow:none}
+.telecare-rail nav button small,.telecare-rail nav a small{color:#bbcbea}
+.telecare-rail nav .active small{color:#e2edff}
+.suite-icon{width:23px;height:23px;flex:0 0 23px;display:inline-block;vertical-align:middle;color:inherit}
+.worker-panel{margin-bottom:24px;border-left:3px solid var(--suite-blue)}
+.worker-panel li{overflow-wrap:anywhere;font-size:12px}
+.telecare-rail .nav-item{grid-template-columns:27px minmax(0,1fr);gap:2px 10px;text-align:left}
+.telecare-rail .nav-item .suite-icon{grid-column:1;grid-row:1 / span 2}
+.telecare-rail .nav-item b,.telecare-rail .nav-item small{grid-column:2}
+.telecare-rail nav button:not(.nav-item){display:grid;grid-template-columns:27px minmax(0,1fr);gap:3px 10px;align-items:center;text-align:left}
+.telecare-rail nav button:not(.nav-item) .suite-icon{grid-column:1;grid-row:1 / span 2}
+.telecare-rail nav button:not(.nav-item) small{grid-column:2;margin-left:0}
+.telecare-rail :focus-visible{outline:3px solid #50e7db;outline-offset:3px}
+body[data-telecare-block="2"] .command-bar,body[data-telecare-block="3"] .command-bar{
+ min-height:205px;padding:28px 30px;background:linear-gradient(90deg,rgba(5,20,44,.96),rgba(5,20,44,.72)),url("/suite-hero.png") center 52%/cover;color:white;border:0;gap:24px
+}
+body[data-telecare-block="2"] .command-bar h1,body[data-telecare-block="3"] .command-bar h1{color:white;font:600 clamp(25px,2.7vw,40px)/1.15 var(--suite-display);max-width:640px}
+body[data-telecare-block="2"] .command-bar .eyebrow,body[data-telecare-block="3"] .command-bar .eyebrow{color:#c8daef}
+body[data-telecare-block="2"] .command-meta>span{color:#e5edfa}
+body[data-telecare-block="2"] #project-badge{background:#18375e;color:#fff;border-color:#7693b8}
+body[data-telecare-block="2"] .command-bar button,body[data-telecare-block="3"] .command-bar button{color:white;background:var(--suite-blue);border-color:#72a4f4}
+body[data-telecare-block="4"] .mission{background:linear-gradient(90deg,rgba(5,20,44,.97),rgba(5,20,44,.72)),url("/suite-hero.png") center/cover;margin:0 0 24px;padding:32px;color:#fff}
+body[data-telecare-block="4"] .mission h2,body[data-telecare-block="4"] .mission>div>p{color:#fff}
+body[data-telecare-block="4"] .mission h2 em{color:#39dbce}
+body[data-telecare-block="4"] .mission-note{background:rgba(9,26,54,.8);border-left-color:var(--suite-teal);color:white}
+body[data-telecare-block="4"] .mission-note span,body[data-telecare-block="4"] .mission-note p{color:#d4e1f4}
+body[data-telecare-block="4"] .rail nav .active .suite-icon{color:#fff}
+body[data-telecare-block] main :is(h2,h3){font-family:var(--suite-display)}
+body[data-telecare-block="2"] .panel,body[data-telecare-block="3"] .card,body[data-telecare-block="4"] .panel{border-radius:5px}
+@media(min-width:761px) and (max-width:1180px){
+ body[data-telecare-block="1"] .app-shell{grid-template-columns:210px minmax(0,1fr)}
+ body[data-telecare-block="1"] .telecare-rail .nav-item b,body[data-telecare-block="1"] .telecare-rail .nav-item small{display:block}
+ body[data-telecare-block="1"] .telecare-rail .nav-item{place-items:initial}
+ body[data-telecare-block="1"] .telecare-rail .suite-links{display:grid}
+}
+@media(max-width:760px){
+ body[data-telecare-block="1"] .app-shell{display:block}
+ body[data-telecare-block] .telecare-rail{position:relative;width:100%;height:auto;max-height:none;overflow:visible;padding:16px;display:block}
+ .telecare-rail nav,.telecare-rail .rail-nav{display:flex;overflow-x:auto;gap:6px;margin:12px 0;max-width:100%;padding:3px}
+ .telecare-rail nav :is(button,a){flex:0 0 auto;min-width:120px}
+ .telecare-rail .nav-item b{display:block;font-size:12px}
+ .telecare-rail .nav-item small,.telecare-rail nav button small,.telecare-rail nav a small,.telecare-rail .nav-group{display:none}
+ .telecare-rail .nav-item{display:flex;align-items:center;gap:9px}
+ .telecare-rail .suite-links,.telecare-rail .suite{display:flex;flex-wrap:wrap;gap:4px;padding:10px 0 0;margin:0}
+ .telecare-rail .suite-links>span,.telecare-rail .suite>span{width:100%;font-size:10px}
+ .telecare-rail :is(.suite-links,.suite) a{font-size:12px;gap:7px;min-height:44px;padding:6px 9px}
+ .telecare-rail :is(.runtime,.rail-foot){display:none}
+ body[data-telecare-block="2"] .command-bar,body[data-telecare-block="3"] .command-bar{padding:24px 18px;flex-wrap:wrap;min-height:210px}
+ body[data-telecare-block="4"] .mission{padding:24px 18px}
+ .suite-brand{display:block}
+}
+@media(forced-colors:active){.suite-icon{forced-color-adjust:auto}.telecare-rail nav .active{outline:2px solid Highlight}}
+@media(prefers-reduced-motion:reduce){.telecare-rail *{transition:none;animation:none}}

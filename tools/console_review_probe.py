@@ -10,6 +10,7 @@ import tempfile
 import threading
 
 from sictra_block2_design.design_console_web import bootstrap_demo, create_server as design
+from sictra_block1.lab_web import create_server as intelligence
 from sictra_block3_precision.precision_console_web import create_server as precision
 from sictra_block4_orchestrator.web import create_server as orchestrator
 from sictra_block4_orchestrator.runtime import FederatedOrchestratorStore, build_controlled_block1_package
@@ -25,12 +26,17 @@ def main():
         store.ingest(build_controlled_block1_package(integrity_key=key))
         store.process_pending()
         store.ingest(build_controlled_block1_package(integrity_key=key, case_id='CASE-RETURN', certainty='CONTRADICTED'))
-        servers = [design(db, 'PROJECT-DEMO', port=0), precision(port=0), orchestrator(store, port=0)]
+        servers = [design(db, 'PROJECT-DEMO', port=0), precision(port=0), orchestrator(store, port=0),
+                   intelligence(port=0, intake_store_path=Path(directory) / 'intake.json')]
         threads = [threading.Thread(target=server.serve_forever, daemon=True) for server in servers]
         for thread in threads:
             thread.start()
         try:
-            return subprocess.run(['node', str(root / 'tools/console_review_probe.cjs'), *[f'http://127.0.0.1:{server.server_port}' for server in servers]], cwd=root, check=False).returncode
+            urls = [f'http://127.0.0.1:{server.server_port}' for server in servers]
+            result = subprocess.run(['node', str(root / 'tools/console_review_probe.cjs'), *urls[:3]], cwd=root, check=False)
+            if result.returncode:
+                return result.returncode
+            return subprocess.run(['node', str(root / 'tools/suite_navigation_probe.cjs'), urls[3], *urls[:3]], cwd=root, check=False).returncode
         finally:
             for server in servers:
                 server.shutdown()

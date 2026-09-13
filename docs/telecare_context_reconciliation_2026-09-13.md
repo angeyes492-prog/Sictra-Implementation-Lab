@@ -66,6 +66,20 @@ This document explains its intent rather than introducing a second backlog.
    interfaces. Unavailable upstream data must show unavailable, not invented
    operational metrics or generalized customer conclusions.
 
+Formal dependency challenge on 2026-09-13 used Wolfram Language over the
+declared closure graph. The graph is acyclic; the technical final SHA is four
+edges from the consolidated increment, while production promotion is six edges
+away and becomes unreachable if human architecture review is removed. This is
+formal analysis of the declared graph, not evidence that any implementation or
+gate passed. It confirms that signed adapters and recovery may proceed in
+parallel conceptually, but both dominate end-to-end validation.
+
+The Notion task “Construir flujo end-to-end y recuperación” (edited 2026-08-25,
+unverified) defines the expected evidence as exact commit, executed tests, CI,
+limitations, contradictions and next gate. No newer Block 4 result was found in
+the bounded Slack or Atlassian searches. Absence from those searches does not
+prove no document exists.
+
 ## Evidence at this checkpoint
 
 - VERIFIED / A: hosted CI run 34744453655 completed successfully for

@@ -30,7 +30,10 @@ from .design_context import (
 
 UI_SCOPE = "BLOCK2_LOCAL_DESIGN_CONSOLE_READ_MODEL"
 _WEB_ROOT = Path(__file__).with_name("design_console")
+from sictra.console_assets import CONSOLE_ASSETS
+
 _STATIC_FILES = {
+    **CONSOLE_ASSETS,
     "/": ("index.html", "text/html; charset=utf-8"),
     "/app.css": ("app.css", "text/css; charset=utf-8"),
     "/ops.css": ("ops.css", "text/css; charset=utf-8"),

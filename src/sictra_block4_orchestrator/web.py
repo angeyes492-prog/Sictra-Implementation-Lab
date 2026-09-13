@@ -12,11 +12,15 @@ from typing import Any
 from urllib.parse import unquote, urlsplit
 
 from .runtime import FederatedContractError, FederatedOrchestratorStore, build_controlled_block1_package
+from .local_worker import LocalIntakeWorker
 
 
 UI_SCOPE = "BLOCK4_LOCAL_FEDERATED_ORCHESTRATOR"
 WEB_ROOT = Path(__file__).with_name("command_center")
+from sictra.console_assets import CONSOLE_ASSETS
+
 STATIC = {
+    **CONSOLE_ASSETS,
     "/": ("index.html", "text/html; charset=utf-8"),
     "/app.css": ("app.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
@@ -84,6 +88,16 @@ class CommandCenterHandler(BaseHTTPRequestHandler):
             if path == "/api/cases":
                 cases = [_case_payload(item) for item in self.server.store.list_cases()]
                 self._json(HTTPStatus.OK, {"scope": UI_SCOPE, "fixture": "CONTROLLED_LOCAL_PACKAGES_ONLY", "cases": cases, "authority": {"publication": "PROHIBITED", "delivery": "PROHIBITED", "acceptance": "NOT_ACCEPTED"}}); return
+            if path == "/api/worker":
+                if self.server.worker is None:
+                    self._json(HTTPStatus.OK, {"status": "NOT_CONFIGURED", "jobs": [], "publication": "PROHIBITED"}); return
+                snapshot = self.server.worker.snapshot()
+                jobs = [{"job_id": job["job_id"], "state": job["state"],
+                         "source_hash": job["sha256"]} for job in snapshot["jobs"]]
+                status = "PAUSED" if snapshot["paused"] else (
+                    "RECOVERY_REQUIRED" if any(job["state"] == "RUNNING" for job in jobs) else
+                    "REVIEW_REQUIRED" if any(job["state"] == "REVIEW_REQUIRED" for job in jobs) else "AVAILABLE")
+                self._json(HTTPStatus.OK, {"status": status, "jobs": jobs, "publication": "PROHIBITED"}); return
             if path.startswith("/api/cases/") and path.endswith("/events"):
                 case_id = unquote(path.removeprefix("/api/cases/").removesuffix("/events"))
                 self.server.store.get_case(case_id)
@@ -101,9 +115,12 @@ class CommandCenterHandler(BaseHTTPRequestHandler):
     do_POST = do_PUT = do_PATCH = do_DELETE = do_OPTIONS = _reject_mutation
 
 
-def create_server(store: FederatedOrchestratorStore, *, host: str = "127.0.0.1", port: int = 8768) -> CommandCenterServer:
+def create_server(store: FederatedOrchestratorStore, *, host: str = "127.0.0.1", port: int = 8768, worker: LocalIntakeWorker | None = None) -> CommandCenterServer:
     if host != "127.0.0.1": raise ValueError("the Command Center may only bind to 127.0.0.1")
-    server = CommandCenterServer((host, port), CommandCenterHandler); server.store = store; return server
+    server = CommandCenterServer((host, port), CommandCenterHandler)
+    server.store = store
+    server.worker = worker
+    return server
 
 
 def _read_key(path: Path, *, bootstrap_demo: bool) -> bytes:
@@ -116,11 +133,22 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--store", required=True); parser.add_argument("--integrity-key-file", required=True)
     parser.add_argument("--port", type=int, default=8768); parser.add_argument("--bootstrap-demo", action="store_true")
+    for field in ("queue", "inbox", "pipeline", "key-file"):
+        parser.add_argument("--worker-" + field, type=Path)
     args = parser.parse_args(); key = _read_key(Path(args.integrity_key_file), bootstrap_demo=args.bootstrap_demo)
+    worker_args = (args.worker_queue, args.worker_inbox, args.worker_pipeline, args.worker_key_file)
+    if any(worker_args) and not all(worker_args):
+        parser.error("All four --worker-* paths are required together.")
+    worker = None
+    if all(worker_args):
+        if args.worker_key_file.is_symlink() or args.worker_key_file.resolve().is_relative_to(args.worker_inbox.resolve()):
+            parser.error("Worker key must be outside the inbox.")
+        worker = LocalIntakeWorker(args.worker_queue, inbox=args.worker_inbox,
+            pipeline=args.worker_pipeline, key=args.worker_key_file.read_bytes())
     store = FederatedOrchestratorStore(args.store, integrity_key=key)
     if args.bootstrap_demo and not store.list_cases():
         item = store.ingest(build_controlled_block1_package(integrity_key=key)); store.process_to_human_gate(item.case_id)
-    server = create_server(store, port=args.port); print(f"Command Center disponible en http://127.0.0.1:{server.server_port}/")
+    server = create_server(store, port=args.port, worker=worker); print(f"Command Center disponible en http://127.0.0.1:{server.server_port}/")
     try: server.serve_forever()
     except KeyboardInterrupt: return 0
     finally: server.server_close()
