@@ -208,16 +208,18 @@ class FederatedOrchestratorStore:
         return FederatedCase(row["case_id"], row["run_id"], row["state"], row["retry_count"], row["fingerprint"], package["source_hash"], package["provenance_root"], package["certainty"], package["disposition"], package["expires_at"], tuple(route), tuple(package["payload"]["limitations"]), package["evidence_id"], package["dossier_id"], tuple(package["uncertainty"]))
 
     def get_case(self, case_id: str) -> FederatedCase:
-        self._verify_chain()
         with closing(self._connect()) as db:
+            db.execute("BEGIN")
+            self._verify_chain(db)
             row = db.execute("SELECT * FROM cases WHERE case_id=?", (case_id,)).fetchone()
         if row is None:
             raise FederatedContractError("CASE_NOT_FOUND")
         return self._snapshot_row(row)
 
     def list_cases(self) -> tuple[FederatedCase, ...]:
-        self._verify_chain()
         with closing(self._connect()) as db:
+            db.execute("BEGIN")
+            self._verify_chain(db)
             rows = db.execute("SELECT * FROM cases ORDER BY updated_at DESC, case_id").fetchall()
         return tuple(self._snapshot_row(row) for row in rows)
 
@@ -306,7 +308,8 @@ class FederatedOrchestratorStore:
         return self.process_to_human_gate(case_id, now=current)
 
     def audit_events(self, case_id: str) -> tuple[dict[str, Any], ...]:
-        self._verify_chain()
         with closing(self._connect()) as db:
+            db.execute("BEGIN")
+            self._verify_chain(db)
             rows = db.execute("SELECT event_type,state,created_at,payload_json FROM events WHERE case_id=? ORDER BY sequence", (case_id,)).fetchall()
         return tuple({"event_type": row["event_type"], "state": row["state"], "created_at": row["created_at"], "payload": json.loads(row["payload_json"])} for row in rows)

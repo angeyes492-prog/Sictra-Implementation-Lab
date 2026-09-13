@@ -8,6 +8,7 @@ import tempfile
 import threading
 import unittest
 import http.client
+from unittest.mock import patch
 
 from sictra_block4_orchestrator.runtime import (
     FederatedContractError, FederatedOrchestratorStore, build_controlled_block1_package,
@@ -126,6 +127,49 @@ class FederatedOrchestratorTests(unittest.TestCase):
             db.close()
         with self.assertRaisesRegex(FederatedContractError, "CHECKPOINT_INTEGRITY_ERROR"):
             self.store.list_cases()
+
+    def test_case_reads_use_the_same_snapshot_as_integrity_verification(self):
+        for mode in ("get", "list"):
+            with self.subTest(mode=mode):
+                store = FederatedOrchestratorStore(Path(self.temp.name) / (mode + ".sqlite"), integrity_key=KEY)
+                item = store.ingest(self.package(), now=NOW)
+                writer = sqlite3.connect(store.path)
+                try:
+                    writer.execute("PRAGMA journal_mode=WAL")
+                    verify = store._verify_chain
+
+                    def change_after_verification(db=None):
+                        verify(db)
+                        writer.execute("UPDATE cases SET state='HUMAN_REVIEW_REQUIRED'")
+                        writer.commit()
+
+                    with patch.object(store, "_verify_chain", side_effect=change_after_verification):
+                        observed = store.get_case(item.case_id) if mode == "get" else store.list_cases()[0]
+                    self.assertEqual("BLOCK1_ATTESTED", observed.state)
+                    with self.assertRaisesRegex(FederatedContractError, "CHECKPOINT_INTEGRITY_ERROR"):
+                        store.get_case(item.case_id)
+                finally:
+                    writer.close()
+
+    def test_audit_read_cannot_observe_an_unverified_concurrent_event_edit(self):
+        item = self.store.ingest(self.package(), now=NOW)
+        writer = sqlite3.connect(self.path)
+        try:
+            writer.execute("PRAGMA journal_mode=WAL")
+            verify = self.store._verify_chain
+
+            def change_after_verification(db=None):
+                verify(db)
+                writer.execute("UPDATE events SET event_type='FORGED_APPROVAL'")
+                writer.commit()
+
+            with patch.object(self.store, "_verify_chain", side_effect=change_after_verification):
+                events = self.store.audit_events(item.case_id)
+            self.assertEqual(["INGESTED"], [event["event_type"] for event in events])
+            with self.assertRaisesRegex(FederatedContractError, "JOURNAL_INTEGRITY_ERROR"):
+                self.store.audit_events(item.case_id)
+        finally:
+            writer.close()
 
 
 class FederatedCommandCenterTests(unittest.TestCase):

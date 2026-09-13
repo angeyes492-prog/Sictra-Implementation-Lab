@@ -38,10 +38,10 @@
   {
     "identifier": "SUITE-UI-INTEGRITY",
     "title": "Detailed consoles, evidence-state integrity and unified interface integration",
-    "state": "IN_PROGRESS",
+    "state": "DONE",
     "risk": 5, "dependency_impact": 5, "evidence_gap": 3, "irreversibility": 3,
-    "next_action": "Obtain CI for final SHA and prepare reviewable draft PR. Final human review is deferred.",
-    "evidence": "Merged regression passed 707 tests in 45.076 seconds. Four JS tests and browser checks pass for Blocks 2-4 at 1440, 1024 and 390 pixels; checkpoint and retry repairs verified.",
+    "next_action": "Retain draft PR #15 for final review; validate later changes on their own SHA. DONE denotes this technical increment, not system acceptance.",
+    "evidence": "fb98759cf49dad45c04b6fa3095f7fa5c4004275: hosted CI 34744453655 success. Local 707 Python tests, four JS tests and browser checks for Blocks 2-4 at 1440, 1024 and 390 pixels passed.",
     "dependencies": []
   },
   {
