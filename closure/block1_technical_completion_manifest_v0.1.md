@@ -89,3 +89,7 @@ its API, share a store/key or infer its availability as evidence. Focused web
 tests and the 282-test Block 1 regression passed before this documentation
 delta. The common orchestration contract remains a candidate pending Master
 Architecture Review and human gate coverage for the final SHA.
+
+Hosted CI run `34732696001` passed on exact federation-navigation SHA
+`6ef50afe9c20f182e7d4ac3114620a1aa67e7b31`. This verifies the bounded UI
+increment only; it does not accept the cross-block contract or human gate.
