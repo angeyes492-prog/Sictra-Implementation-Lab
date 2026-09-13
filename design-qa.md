@@ -40,6 +40,8 @@ instead of copying the mock rows.
 - JavaScript syntax: `node --check`, passed.
 - Focused laboratory-web suite: 17 tests, passed.
 - Full local regression: 282 tests, passed.
+- GitHub Actions bounded runtime validation #395: passed on exact UI SHA
+  `7afb6552f5a29a63d3439a39e5e1f05146377992`.
 - Rejection coverage: traversal and unapproved asset paths return `404`;
   static serving remains an explicit allowlist.
 

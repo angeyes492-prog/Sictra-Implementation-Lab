@@ -17,7 +17,7 @@ acceptance.
 | 5. Editorial bridge | Verified dossier composes only as `RESEARCH_NEEDED` / `BLOCKED`, no handoff. | `VERIFIED / B` | Complete; independent root and human interpretation are later human/source inputs, not bypassable code tasks. |
 | 6. Laboratory UI | The Telecare OS editorial command center exposes evidence, uncertainty, scope filters, priority review, dossiers and Block 1–4 lineage from synthetic workspace data. Its persistent inspector preserves source/disposition context, and the navigation keeps Block 2 and Block 3 at separate local addresses. | `VERIFIED / B` | No open local implementation blocker; this remains a supervised laboratory interface, not a publication surface. |
 | 7. Local operation | Windows launch/import/backup/restore commands initialize keys outside OneDrive/Git and recover all pipeline ledgers only under original keys. | `VERIFIED / B` | Not a cross-device key recovery or production backup. |
-| 8. Closure | 282 local tests passed; compile, JavaScript syntax and E01-E08 demo passed. GitHub Actions runs `34303522368` and `34303518680` passed on exact implementation SHA `e73cc427f7dd55983916cbe5b06cc59624fe45da`. | `VERIFIED / A` for that prior implementation SHA; `VERIFIED / B` locally for the new UI increment | The new UI commit must pass CI on its exact SHA; afterward only independent review and final owner approval remain. |
+| 8. Closure | 282 local tests passed; compile, JavaScript syntax and E01-E08 demo passed. GitHub Actions run #395 passed on exact UI SHA `7afb6552f5a29a63d3439a39e5e1f05146377992`; prior implementation runs `34303522368` and `34303518680` passed on SHA `e73cc427f7dd55983916cbe5b06cc59624fe45da`. | `VERIFIED / A` for the implementation SHAs | The commit containing this final evidence ledger must pass the same workflow; afterward only independent review and final owner approval remain. |
 
 ## Completed technical chain
 
@@ -76,5 +76,7 @@ and explicit Block 1–4 lineage. Asset serving is fail-closed: only five approv
 PNG paths are available, while traversal and unknown asset requests return
 `404`. Visual QA passed at 1536 × 1092 with no browser console warnings or
 errors; JavaScript syntax, 17 focused web tests and the full 282-test regression
-all passed locally. This delta remains `LABORATORY_INTERNAL_SUPERVISED`; exact-SHA
-CI and the human gate are still required.
+all passed locally. GitHub Actions bounded runtime validation #395 passed on the
+exact UI SHA `7afb6552f5a29a63d3439a39e5e1f05146377992`. This delta remains
+`LABORATORY_INTERNAL_SUPERVISED`; the final ledger SHA and the human gate are
+still required.
