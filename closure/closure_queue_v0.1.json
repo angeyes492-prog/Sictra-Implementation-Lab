@@ -1,0 +1,50 @@
+[
+  {
+    "identifier": "B1-PR6-INDEPENDENT-REVIEW",
+    "title": "Independent review of the updated Block 1 integration head",
+    "state": "HUMAN_REVIEW_REQUIRED",
+    "risk": 5,
+    "dependency_impact": 5,
+    "evidence_gap": 4,
+    "irreversibility": 4,
+    "next_action": "A non-author reviews PR #6 at SHA 3b693d2 and records Approve.",
+    "evidence": "PR #6 checks are green; no approval is recorded for its current head.",
+    "dependencies": []
+  },
+  {
+    "identifier": "B1-PR5-INDEPENDENT-REVIEW",
+    "title": "Independent review of the parent Block 1 laboratory PR",
+    "state": "BLOCKED_BY_DEPENDENCY",
+    "risk": 5,
+    "dependency_impact": 5,
+    "evidence_gap": 4,
+    "irreversibility": 4,
+    "next_action": "Request review only after PR #6 merges into its base.",
+    "evidence": "PR #5 checks are green; the required child integration remains open.",
+    "dependencies": ["B1-PR6-INDEPENDENT-REVIEW"]
+  },
+  {
+    "identifier": "B4-INTEGRATION-REBASE",
+    "title": "Rebase and regression-test the federated Orchestrator against the current integration base",
+    "state": "READY_FOR_TECHNICAL_WORK",
+    "risk": 5,
+    "dependency_impact": 5,
+    "evidence_gap": 3,
+    "irreversibility": 3,
+    "next_action": "Reconcile current main, run full regression, then prepare a focused Block 4 PR.",
+    "evidence": "Local and hosted CI passed on 607ce56, but no integration PR exists for that SHA.",
+    "dependencies": []
+  },
+  {
+    "identifier": "B4-MAR-DECISIONS",
+    "title": "Master Architecture Review for cross-block production decisions",
+    "state": "ARCHITECTURE_DECISION_REQUIRED",
+    "risk": 5,
+    "dependency_impact": 5,
+    "evidence_gap": 5,
+    "irreversibility": 5,
+    "next_action": "Architecture authority decides contract ownership, adapters, identity, retention, kill-switch and human receipt rules.",
+    "evidence": "MAR request v0.1 is open; laboratory evidence cannot answer these governance decisions.",
+    "dependencies": ["B4-INTEGRATION-REBASE"]
+  }
+]
