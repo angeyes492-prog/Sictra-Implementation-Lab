@@ -26,7 +26,7 @@ instead of copying the mock rows.
 
 | Region | Result | Notes |
 | --- | --- | --- |
-| Navigation | Pass | Ordered workspaces, active state and separate Block 2/3 exits remain visible. |
+| Navigation | Pass | Ordered workspaces, active state and separate Block 2/3/4 exits remain visible. |
 | Hero | Pass | Human-review count dominates; laboratory, synthetic-data and no-publication boundaries are explicit. |
 | Evidence mosaic | Pass | Four real raster assets, consistent crops and supporting captions. |
 | Review queue | Pass | Scope filters and review actions operate on the rendered workspace catalog. |

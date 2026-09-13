@@ -80,3 +80,12 @@ all passed locally. GitHub Actions bounded runtime validation #395 passed on the
 exact UI SHA `7afb6552f5a29a63d3439a39e5e1f05146377992`. This delta remains
 `LABORATORY_INTERNAL_SUPERVISED`; the final ledger SHA and the human gate are
 still required.
+
+## Federation navigation delta — 2026-09-12
+
+The local suite rail now exposes the separate loopback Block 4 Command Center
+at `127.0.0.1:8768`. It remains a navigation-only link: Block 1 does not fetch
+its API, share a store/key or infer its availability as evidence. Focused web
+tests and the 282-test Block 1 regression passed before this documentation
+delta. The common orchestration contract remains a candidate pending Master
+Architecture Review and human gate coverage for the final SHA.
