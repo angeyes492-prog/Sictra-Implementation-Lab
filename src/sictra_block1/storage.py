@@ -79,9 +79,15 @@ class OperationalStore:
         self._integrity_key = bytes(integrity_key)
         self.failure_injector: Callable[[str], None] | None = None
         self._lock = RLock()
-        self._db = sqlite3.connect(self.path, check_same_thread=False, isolation_level=None)
+        # A cold-start peer may be atomically creating the schema.  Use the
+        # same bounded wait for connection and PRAGMA locks rather than making
+        # concurrent openers fail spuriously after successful initialization.
+        self._db = sqlite3.connect(
+            self.path, check_same_thread=False, isolation_level=None, timeout=30.0,
+        )
         self._db.row_factory = sqlite3.Row
         try:
+            self._db.execute("PRAGMA busy_timeout = 30000")
             self._db.execute("PRAGMA foreign_keys = ON")
             self._initialize_or_verify()
             if self.path != ":memory:":
