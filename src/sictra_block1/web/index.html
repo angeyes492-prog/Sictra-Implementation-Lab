@@ -7,35 +7,35 @@
   <title>SICTrA Intelligence · Telecare OS</title>
   <link rel="stylesheet" href="/app.css">
 </head>
-<body>
+<body class="overview-mode">
   <a class="skip-link" href="#workspace">Saltar al contenido</a>
   <div class="app-shell">
     <aside class="rail" aria-label="Navegación principal">
-      <div class="identity">
-        <div class="brand-plate"><img src="/brand-mark.png" alt="SICTrA"></div>
-        <div class="identity-copy"><strong>Intelligence</strong><span>Bloque 1 · Operational</span></div>
+      <div class="identity telecare-identity">
+        <div class="telecare-wordmark"><strong>Telecare</strong><span>OS</span></div>
+        <div class="identity-copy"><strong>Editorial Command Center</strong><span>Bloque 1 · Intelligence</span></div>
       </div>
       <nav class="rail-nav">
-        <p class="nav-group">Inicio</p>
-        <button class="nav-item active" data-view="overview" data-view-label="Panorama" data-view-copy="Orientación y estado general del laboratorio."><span>⌁</span><b>Panorama</b><small>Orientación</small></button>
-        <p class="nav-group">Investigación</p>
-        <button class="nav-item" data-view="investigations" data-view-label="Investigaciones" data-view-copy="Aquí se formulan y guardan preguntas locales como borradores."><span>◎</span><b>Investigaciones</b><small>Crear preguntas</small></button>
-        <button class="nav-item" data-view="sources" data-view-label="Fuentes" data-view-copy="Aquí se evalúan candidatos; no se importan ni se convierten en evidencia."><span>⌘</span><b>Fuentes</b><small>Evaluar candidatos</small></button>
-        <button class="nav-item" data-view="strategy" data-view-label="Strategy Lab" data-view-copy="Aquí se comparan métodos de investigación sin modificar evidencia."><span>⇄</span><b>Strategy Lab</b><small>Comparar métodos</small></button>
-        <p class="nav-group">Inteligencia</p>
-        <button class="nav-item" data-view="evidence" data-view-label="Evidencia" data-view-copy="Aquí se consulta la cadena retenida y el estado de cada fuente."><span>⌇</span><b>Evidencia</b><small>Ver cadena retenida</small></button>
-        <button class="nav-item" data-view="dossiers" data-view-label="Dossiers" data-view-copy="Aquí se almacenan y leen cambios verificables que requieren interpretación."><span>▤</span><b>Dossiers</b><small>Cambios verificados</small></button>
-        <button class="nav-item" data-view="watchlists" data-view-label="Watchlists" data-view-copy="Aquí se consulta cuándo comparar una fuente con su próxima versión."><span>◌</span><b>Watchlists</b><small>Esperar y comparar</small></button>
-        <button class="nav-item" data-view="editorial" data-view-label="Mesa editorial" data-view-copy="Aquí se revisan candidatos y se permite abstenerse; no se publica contenido."><span>◇</span><b>Mesa editorial</b><small>Revisar, no publicar</small></button>
-        <p class="nav-group">Control</p>
-        <button class="nav-item" data-view="validation" data-view-label="Validación" data-view-copy="Aquí se prueban los límites técnicos del laboratorio."><span>✓</span><b>Validación</b><small>Probar límites</small></button>
+        <p class="nav-group">Operación</p>
+        <button class="nav-item active" data-view="overview" data-view-label="Vista general" data-view-copy="Prioridades, evidencia y trazabilidad del laboratorio."><span>01</span><b>Vista general</b><small>Control editorial</small></button>
+        <button class="nav-item" data-view="editorial" data-view-label="Revisión humana" data-view-copy="Revisa candidatos o registra abstención; nunca publica."><span>02</span><b>Revisión humana</b><small>Seleccionar o abstenerse</small></button>
+        <button class="nav-item" data-view="investigations" data-view-label="Inteligencia" data-view-copy="Formula preguntas locales y consulta sus límites."><span>03</span><b>Inteligencia</b><small>Investigaciones</small></button>
+        <button class="nav-item" data-view="evidence" data-view-label="Evidencia" data-view-copy="Consulta la cadena retenida y el estado de cada fuente."><span>04</span><b>Evidencia</b><small>Cadena verificable</small></button>
+        <button class="nav-item" data-view="dossiers" data-view-label="Dossiers" data-view-copy="Lee cambios verificables e interpretación pendiente."><span>05</span><b>Dossiers</b><small>Expedientes</small></button>
+        <button class="nav-item" data-view="watchlists" data-view-label="Watchlists" data-view-copy="Compara fuentes en horizontes controlados."><span>06</span><b>Watchlists</b><small>7 / 30 / 90 días</small></button>
+        <p class="nav-group">Herramientas</p>
+        <button class="nav-item" data-view="sources" data-view-label="Fuentes" data-view-copy="Evalúa candidatos sin importarlos como evidencia."><span>07</span><b>Fuentes</b><small>Evaluar candidatos</small></button>
+        <button class="nav-item" data-view="strategy" data-view-label="Strategy Lab" data-view-copy="Compara métodos sin modificar evidencia."><span>08</span><b>Strategy Lab</b><small>Comparar métodos</small></button>
+        <button class="nav-item" data-view="validation" data-view-label="Validación" data-view-copy="Prueba límites técnicos del laboratorio."><span>09</span><b>Validación</b><small>Vectores adversariales</small></button>
       </nav>
       <div class="suite-links" aria-label="Interfaces locales SICTrA">
         <span>Suite local</span>
         <a href="http://127.0.0.1:8766/" target="_blank" rel="noopener">Abrir Bloque 2 ↗</a>
         <a href="http://127.0.0.1:8767/" target="_blank" rel="noopener">Abrir Bloque 3 ↗</a>
+        <a href="http://127.0.0.1:8768/" target="_blank" rel="noopener">Abrir Bloque 4 ↗</a>
       </div>
       <div class="rail-foot">
+        <img class="legacy-brand-mark" src="/brand-mark.png" alt="SICTrA">
         <span class="local-dot"></span>
         <div><strong>Runtime local</strong><span id="runtime-status">Comprobando…</span></div>
       </div>
@@ -44,7 +44,7 @@
     <main id="workspace" class="workspace" tabindex="-1">
       <header class="command-bar">
         <div><span class="crumb">SICTrA Intelligence / <strong id="view-name">Panorama</strong></span><h1>Centro de inteligencia logística</h1><p id="view-guide" class="view-guide">Orientación y estado general del laboratorio.</p></div>
-        <div class="command-actions"><div class="system-chip"><span class="local-dot online"></span><div><small>Entorno</small><strong>Supervisado</strong></div></div><span class="fixture-badge">Campo sintético</span><button id="refresh" class="refresh-button" type="button" aria-label="Actualizar workspace"><span>↻</span> Actualizar</button></div>
+        <div class="command-actions"><div class="system-chip"><span class="local-dot online"></span><div><small>Entorno</small><strong>Supervisado</strong></div></div><span class="fixture-badge">Campo sintético</span><button id="refresh" class="refresh-button" type="button">Actualizar datos</button></div>
       </header>
       <section class="boundary-strip" aria-label="Límite del entorno"><strong>Entorno de pruebas trazable</strong><span>No consulta internet; un borrador local no es evidencia ni cambia gates.</span></section>
       <section class="work-route" aria-label="Ruta de trabajo de Intelligence">
@@ -59,15 +59,57 @@
       <div id="loading" class="loading-state"><span></span>Cargando el tejido de inteligencia…</div>
       <div id="error" class="error-state" role="alert" hidden></div>
 
-      <section class="view active" data-view-panel="overview">
-        <div class="scope-lens">
-          <div class="lens-copy"><span class="section-kicker">Scope lens</span><h2>Una pregunta. Tres escalas. Evidencia que conserva sus límites.</h2><p>Explora cómo cambia una investigación logística entre el plano global, regional y local sin mezclar observaciones incompatibles.</p><div id="scope-controls" class="segmented" aria-label="Filtrar por escala"></div></div>
-          <div class="scope-orbit" aria-hidden="true"><span class="orbit orbit-global">Global</span><span class="orbit orbit-regional">Regional</span><span class="orbit orbit-local">Local</span><i class="orbit-core">I</i></div>
-        </div>
-        <div class="metrics-row" id="metrics-row"></div>
-        <div class="overview-grid">
-          <section class="panel signal-board"><div class="panel-head"><div><span class="section-kicker">Radar activo</span><h2>Investigaciones</h2></div><button class="text-button" data-jump="investigations">Ver todas →</button></div><div id="investigation-list" class="investigation-list"></div></section>
-          <section class="panel pulse-panel"><div class="panel-head"><div><span class="section-kicker">Pulso epistémico</span><h2>Estado del conocimiento</h2></div></div><div id="epistemic-pulse"></div></section>
+      <section class="view active command-center" data-view-panel="overview">
+        <section class="command-hero" aria-labelledby="hero-title">
+          <img src="/assets/telecare-hero-port.png" alt="Terminal logística observada desde un centro de operaciones">
+          <div class="hero-shade"></div>
+          <div class="hero-content">
+            <div class="hero-brand">Telecare <span>OS</span></div>
+            <h2 id="hero-title"><strong id="priority-count">3</strong> <span id="priority-label">asuntos requieren</span><br>revisión humana</h2>
+            <p>Centro de inteligencia logística para decisiones más confiables.</p>
+            <div class="hero-boundary"><b>LABORATORY_INTERNAL_SUPERVISED</b><span>Datos sintéticos</span><span>Sin publicación</span></div>
+          </div>
+          <div class="hero-manifesto"><span>INTELIGENCIA</span><span>DISEÑO</span><span>PRECISIÓN</span><span>ORQUESTACIÓN</span><b>DECISIONES<br>CON CONTEXTO</b></div>
+        </section>
+
+        <div class="command-grid">
+          <div class="command-main">
+            <section class="evidence-context" aria-labelledby="evidence-context-title">
+              <div class="section-heading"><div><span class="heading-rule"></span><h2 id="evidence-context-title">Evidencia en contexto</h2><p>Señales recientes que requieren atención</p></div><button class="text-button" type="button" data-jump="evidence">Ver todas las evidencias</button></div>
+              <div class="evidence-mosaic">
+                <button class="evidence-tile" type="button" data-evidence-tile="0"><img src="/assets/telecare-hero-port.png" alt="Terminal portuaria y embarque internacional"><span><strong>Embarque internacional</strong><small>Documentación y manifiestos</small></span></button>
+                <button class="evidence-tile" type="button" data-evidence-tile="1"><img src="/assets/evidence-documents.png" alt="Documentos comerciales bajo revisión"><span><strong>Documentos comerciales</strong><small>BL, facturas, certificados</small></span></button>
+                <button class="evidence-tile" type="button" data-evidence-tile="2"><img src="/assets/evidence-inspection.png" alt="Inspección logística en origen"><span><strong>Inspección en origen</strong><small>Fotos y reportes de campo</small></span></button>
+                <button class="evidence-tile" type="button" data-evidence-tile="3"><img src="/assets/evidence-traceability.png" alt="Mapa regional de trazabilidad logística"><span><strong>Trazabilidad logística</strong><small>Eventos y geolocalización</small></span></button>
+              </div>
+            </section>
+
+            <section class="priority-queue" aria-labelledby="queue-title">
+              <div class="section-heading"><div><span class="heading-rule"></span><h2 id="queue-title">Cola de revisión prioritaria</h2><p>Asuntos que requieren evaluación humana</p></div><div id="scope-controls" class="segmented compact" aria-label="Filtrar por escala"></div></div>
+              <div class="queue-scroll"><table class="priority-table"><thead><tr><th>#</th><th>Descripción</th><th>Estado</th><th>Incertidumbre</th><th>Antigüedad</th><th>Disposición</th><th>Acciones</th></tr></thead><tbody id="priority-table-body"></tbody></table></div>
+              <div id="metrics-row" class="metrics-row command-metrics"></div>
+              <div id="investigation-list" hidden></div><div id="epistemic-pulse" hidden></div>
+            </section>
+
+            <section class="lineage" aria-labelledby="lineage-title">
+              <div class="section-heading"><div><span class="heading-rule"></span><h2 id="lineage-title">Trazabilidad en la cadena de análisis</h2><p>La evidencia conserva su identidad entre bloques</p></div></div>
+              <ol class="lineage-track">
+                <li class="complete"><span>01</span><div><b>Bloque 1 · Intelligence</b><small>Ingesta y normalización</small></div></li>
+                <li class="complete"><span>02</span><div><b>Bloque 2 · Design</b><small>Enriquecimiento y contexto</small></div></li>
+                <li class="complete"><span>03</span><div><b>Bloque 3 · Precision</b><small>Validación y scoring</small></div></li>
+                <li><span>04</span><div><b>Bloque 4 · Orchestrator</b><small>Coordinación local supervisada</small></div></li>
+              </ol>
+            </section>
+
+            <section class="human-close">
+              <img src="/assets/human-review.png" alt="Equipo humano revisando evidencia logística">
+              <div><span class="section-kicker">Supervisión obligatoria</span><h2>Las personas cierran el ciclo</h2><p>Tecnología, contexto y criterio humano para decisiones más confiables. Este laboratorio permite seleccionar o abstenerse; nunca publica.</p><button class="secondary-button" type="button" data-jump="editorial">Ir a revisión humana</button></div>
+            </section>
+          </div>
+
+          <aside id="priority-inspector" class="priority-inspector" aria-live="polite">
+            <div class="inspector-empty"><span class="section-kicker">Inspector de evidencia</span><h2>Preparando contexto…</h2><p>La selección conservará procedencia, límites y disposición.</p></div>
+          </aside>
         </div>
       </section>
 
