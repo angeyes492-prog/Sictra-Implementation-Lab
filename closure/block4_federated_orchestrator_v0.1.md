@@ -20,3 +20,7 @@ call neighbouring APIs, share their stores or keys, acquire network data,
 publish, deliver, write CRM data or replace human approval. The Master
 Architecture Review is open because the common contract changes cross-block
 semantics.
+
+Hosted CI run `34732725511` passed on the exact implementation SHA
+`4c76a4106f77e401b1b22f1719c93badfe255f4a`. The documentation SHA and all
+human/MAR gates remain separate from this bounded result.
