@@ -41,25 +41,25 @@
     "state": "DONE",
     "risk": 5, "dependency_impact": 5, "evidence_gap": 3, "irreversibility": 3,
     "next_action": "Retain draft PR #15 for final review; validate later changes on their own SHA. DONE denotes this technical increment, not system acceptance.",
-    "evidence": "fb98759cf49dad45c04b6fa3095f7fa5c4004275: hosted CI 34744453655 success. Local 707 Python tests, four JS tests and browser checks for Blocks 2-4 at 1440, 1024 and 390 pixels passed.",
+    "evidence": "b8cfb0cb4b585571e63070c5926f0baf3f5e9c23: hosted CI 34780784612 success. Local 719 Python tests, four JS tests, browser checks for Blocks 1-4 and a same-tab 4→1→2→3→4 navigation probe passed.",
     "dependencies": []
   },
   {
     "identifier": "B4-SIGNED-ADAPTERS",
     "title": "Real producer adapters with separate evidence and execution receipts",
-    "state": "IMPLEMENTED_LOCAL_AWAITING_CI",
+    "state": "DONE",
     "risk": 5, "dependency_impact": 5, "evidence_gap": 5, "irreversibility": 3,
-    "next_action": "Obtain hosted CI on the exact commit, then retain activation, dossier-to-precision semantics, M06-M08 and shared contract acceptance for final MAR.",
-    "evidence": "The isolated candidate invokes real Block 2 E01-E08 and Block 3 M01-M05 runtimes, persists producer-specific signed receipts and resumes from a verified checkpoint. Seven focused integration/adversarial tests and the full 726-test local regression passed on 2026-09-13. Coordination-only paths remain explicitly distinct.",
+    "next_action": "Retain activation, dossier-to-precision semantics, M06-M08 and shared contract acceptance for final MAR. DONE denotes this bounded technical increment only.",
+    "evidence": "c2168204af913915a8937a1b6864a5e4d2a8662c: hosted CI 34781446702 success. The isolated candidate invokes real Block 2 E01-E08 and Block 3 M01-M05 runtimes, persists producer-specific signed receipts and resumes from a verified checkpoint. Seven focused integration/adversarial tests and the full 726-test local regression passed on 2026-09-13. Coordination-only paths remain explicitly distinct.",
     "dependencies": []
   },
   {
     "identifier": "OPS-RECOVERY-IDENTITY",
     "title": "Recovery, identity, secrets and bounded scheduling for sustained operation",
-    "state": "READY_FOR_TECHNICAL_WORK",
+    "state": "IMPLEMENTED_LOCAL_AWAITING_CI",
     "risk": 5, "dependency_impact": 4, "evidence_gap": 5, "irreversibility": 3,
-    "next_action": "Build backup/restore exercises, configured identities, resource limits, stop/resume controls and deployment checks before the final review.",
-    "evidence": "Candidate local_worker now runs explicit hash-bound files through the real Block 1 pipeline with signed queue state, bounded polling, pause and crash/review stops; eight focused tests pass. Full job recovery, deployment identity, rollback anchors and production secret management remain unfinished.",
+    "next_action": "Obtain hosted CI on the exact commit. Retain external monotonic rollback anchoring, organizational deployment identity and production secret custody for the final architecture decision.",
+    "evidence": "The candidate worker runs explicit hash-bound files through the real Block 1 pipeline with signed queue state, bounded polling and pause/review/crash stops. It now supports separate-key, short-lived, snapshot-bound recovery receipts plus signed backup verification and non-overwriting restore. Twelve focused tests cover positive and rejection paths; the full local regression passed 730 tests on 2026-09-13.",
     "dependencies": []
   },
   {

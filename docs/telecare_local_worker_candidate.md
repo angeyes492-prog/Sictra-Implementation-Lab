@@ -30,6 +30,12 @@ Replace the final `status` with:
   processing of registered jobs, including jobs explicitly enqueued meanwhile.
 - `pause` / `resume`: persist the dispatch control. Pause prevents the next
   claim; it does not interrupt an already executing pipeline.
+- `backup <new-directory>`: create a producer-key-signed SQLite backup manifest
+  after verifying the live queue and current pipeline snapshot.
+- `verify-backup <directory>`: recheck the manifest, bytes, embedded queue HMAC
+  and current pipeline boundary.
+- `restore-backup <directory> <new-queue-path>`: restore only to a new path;
+  the command never overwrites the live queue.
 
 At most 128 unique jobs and 2048 audit events fit in this candidate queue.
 Single dispatch is enforced through a committed RUNNING claim. Another worker
@@ -49,14 +55,28 @@ crash leaves RUNNING; the next worker reports RECOVERY_REQUIRED instead of
 replaying it. Both conditions stop later dispatch. Resume clears only pause,
 not a failed job or a review requirement.
 
-Recovery is deliberately manual in this slice: inspect the upstream attested
-ledgers and the queue against the input hash. Do not edit the SQLite row, delete
-the queue, or mark a job completed to clear the stop. An authenticated recovery
-receipt/migration interface remains unfinished. The HMAC detects content
-tampering, wrong keys and changed inbox/pipeline identity; it does not detect
-replacement of the entire database by an older correctly signed backup.
-External rollback anchors, complete job/database recovery and durable reviewer
-identity remain required before sustained production operation.
+Recovery is explicit and authenticated: inspect the upstream attested ledgers
+and input hash, then invoke `recover` with a separate recovery key, an actor ID,
+a reason and one of `ABSTAIN`, `CONFIRM_COMPLETED` or `REQUEUE_EXACT_INPUT`.
+The generated receipt is valid for 15 minutes and binds the job, source hash and
+current verified pipeline snapshot. Pipeline drift, receipt tamper, a wrong key,
+shared queue/recovery keys or an altered input stops recovery. The signed receipt
+and actor identity remain in the queue audit state; no decision creates
+publication authority.
+
+Do not edit the SQLite row or delete the queue to clear a stop. The HMAC detects
+content tampering, wrong keys and changed inbox/pipeline identity, but it does not
+detect replacement of the entire database by an older correctly signed backup.
+The signed backup/restore exercise rejects changed bytes and pipeline drift and
+restores only to a new queue path. An external monotonic rollback anchor and
+durable organizational identity remain required before sustained production
+operation.
+
+Example after the required upstream inspection:
+
+```powershell
+python -m sictra_block4_orchestrator.local_worker --queue C:/Telecare/state/jobs.sqlite --inbox C:/Telecare/inbox --pipeline C:/Telecare/pipeline --key-file C:/Telecare/secrets/worker.key recover <job-id> --decision ABSTAIN --actor-id operator:owner --reason "Outcome cannot be proven after interruption" --recovery-key-file C:/Telecare/secrets/recovery.key
+```
 
 ## Command Center
 
@@ -70,13 +90,16 @@ console explicitly preserves that uncertainty.
 
 ## Validation and remaining integration
 
-Eight focused tests execute real pipeline fixtures and cover baseline/delta,
+Twelve focused tests execute real pipeline fixtures and cover baseline/delta,
 review stopping, pause/restart, duplicate identity, hash tamper, queue tamper,
 missing signed state, interrupted execution, polling limits, HTTP sanitization
-and denied HTTP mutation. Test workbooks are synthetic and are not claimed as
-approved real-world source evidence.
+and denied HTTP mutation, authenticated abstention, explicit exact-input replay,
+separate recovery keys, short-lived receipts, pipeline-snapshot drift, signed
+backup verification, tampered backup rejection and non-overwriting restore. Test
+workbooks are synthetic and are not claimed as approved real-world source evidence.
 
-Still missing: real dossier export/producer execution adapters, end-to-end
-B2/B3 execution from admissible real inputs, authenticated recovery decisions,
-rollback anchors, durable deployment and final acceptance. These remain in the
-single closure ledger. No shared contract or gate is promoted by this candidate.
+Still missing: real dossier export, a governed dossier-to-precision mapping,
+M06-M08 integration, an external rollback anchor, durable deployment identity
+and final acceptance.
+These remain in the single closure ledger. No shared contract or gate is promoted
+by this candidate.

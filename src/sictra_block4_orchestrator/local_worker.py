@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import closing
+from dataclasses import asdict, dataclass, replace
 from hashlib import sha256
 import hmac
 import json
@@ -16,7 +17,7 @@ import tempfile
 import time
 from typing import Callable
 
-from sictra_block1.operator_pipeline import ingest_eurostat_workbook, load_operator_pipeline
+from sictra_block1.operator_pipeline import ingest_eurostat_workbook, load_operator_pipeline, pipeline_snapshot
 
 
 class WorkerViolation(ValueError):
@@ -25,6 +26,48 @@ class WorkerViolation(ValueError):
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+
+
+@dataclass(frozen=True, slots=True)
+class RecoveryReceipt:
+    job_id: str
+    source_sha256: str
+    pipeline_fingerprint: str
+    decision: str
+    actor_id: str
+    reason: str
+    issued_at: int
+    signature: str = ""
+
+
+def sign_recovery_receipt(receipt: RecoveryReceipt, key: bytes) -> RecoveryReceipt:
+    if not isinstance(key, bytes) or len(key) < 32:
+        raise WorkerViolation("RECOVERY_KEY_INVALID")
+    if receipt.signature:
+        raise WorkerViolation("RECOVERY_RECEIPT_ALREADY_SIGNED")
+    material = {name: value for name, value in asdict(receipt).items() if name != "signature"}
+    return replace(receipt, signature=hmac.new(key, canonical(material), "sha256").hexdigest())
+
+
+def verify_recovery_receipt(receipt: RecoveryReceipt, key: bytes, *, now: int) -> None:
+    if not isinstance(receipt, RecoveryReceipt):
+        raise WorkerViolation("RECOVERY_RECEIPT_TYPE_INVALID")
+    if receipt.decision not in {"ABSTAIN", "CONFIRM_COMPLETED", "REQUEUE_EXACT_INPUT"}:
+        raise WorkerViolation("RECOVERY_DECISION_INVALID")
+    if (any(not isinstance(value, str) or not value.strip() for value in
+            (receipt.job_id, receipt.actor_id, receipt.reason, receipt.signature))
+            or len(receipt.actor_id) > 128 or len(receipt.reason) > 1000
+            or any(len(value) != 64 or any(character not in "0123456789abcdef" for character in value)
+                   for value in (receipt.source_sha256, receipt.pipeline_fingerprint))):
+        raise WorkerViolation("RECOVERY_RECEIPT_CONTENT_INVALID")
+    if type(receipt.issued_at) is not int or receipt.issued_at > now or receipt.issued_at < now - 900:
+        raise WorkerViolation("RECOVERY_RECEIPT_TIME_INVALID")
+    if not isinstance(key, bytes) or len(key) < 32:
+        raise WorkerViolation("RECOVERY_KEY_INVALID")
+    material = {name: value for name, value in asdict(receipt).items() if name != "signature"}
+    expected = hmac.new(key, canonical(material), "sha256").hexdigest()
+    if not hmac.compare_digest(expected, receipt.signature):
+        raise WorkerViolation("RECOVERY_RECEIPT_SIGNATURE_INVALID")
 
 
 class LocalIntakeWorker:
@@ -79,10 +122,10 @@ class LocalIntakeWorker:
         with closing(self._connect()) as db:
             return self._read(db)
 
-    def _event(self, state, event, job_id=None):
+    def _event(self, state, event, job_id=None, **details):
         if len(state["events"]) >= 2048:
             raise WorkerViolation("EVENT_BUDGET_EXHAUSTED")
-        state["events"].append({"event": event, "job_id": job_id, "at": self.clock()})
+        state["events"].append({"event": event, "job_id": job_id, "at": self.clock(), **details})
 
     def set_paused(self, paused: bool):
         if type(paused) is not bool:
@@ -210,6 +253,136 @@ class LocalIntakeWorker:
                 sleep(interval_seconds)
         return results
 
+    def recovery_receipt(self, job_id: str, *, decision: str, actor_id: str,
+                         reason: str, recovery_key: bytes) -> RecoveryReceipt:
+        """Create a short-lived receipt bound to the current upstream snapshot."""
+        if recovery_key == self.key:
+            raise WorkerViolation("RECOVERY_KEY_MUST_BE_SEPARATE")
+        state = self.snapshot()
+        job = next((item for item in state["jobs"] if item["job_id"] == job_id), None)
+        if job is None:
+            raise WorkerViolation("RECOVERY_JOB_NOT_FOUND")
+        if job["state"] not in {"RUNNING", "REVIEW_REQUIRED"}:
+            raise WorkerViolation("RECOVERY_JOB_STATE_INVALID")
+        pipeline_fingerprint = sha256(canonical(pipeline_snapshot(self.pipeline, clock=self.clock))).hexdigest()
+        return sign_recovery_receipt(RecoveryReceipt(job_id, job["sha256"], pipeline_fingerprint,
+            decision, actor_id, reason, self.clock()), recovery_key)
+
+    def recover(self, receipt: RecoveryReceipt, *, recovery_key: bytes):
+        """Apply an authenticated, snapshot-bound decision; never infer success."""
+        if recovery_key == self.key:
+            raise WorkerViolation("RECOVERY_KEY_MUST_BE_SEPARATE")
+        now = self.clock()
+        verify_recovery_receipt(receipt, recovery_key, now=now)
+        current_pipeline = sha256(canonical(pipeline_snapshot(self.pipeline, clock=self.clock))).hexdigest()
+        if current_pipeline != receipt.pipeline_fingerprint:
+            raise WorkerViolation("RECOVERY_PIPELINE_CHANGED")
+        with closing(self._connect()) as db:
+            db.execute("BEGIN IMMEDIATE")
+            state = self._read(db)
+            job = next((item for item in state["jobs"] if item["job_id"] == receipt.job_id), None)
+            if job is None:
+                raise WorkerViolation("RECOVERY_JOB_NOT_FOUND")
+            if job["state"] not in {"RUNNING", "REVIEW_REQUIRED"}:
+                raise WorkerViolation("RECOVERY_JOB_STATE_INVALID")
+            if job["sha256"] != receipt.source_sha256:
+                raise WorkerViolation("RECOVERY_SOURCE_IDENTITY_MISMATCH")
+            if receipt.decision == "REQUEUE_EXACT_INPUT":
+                content = self._source(job["filename"])
+                if sha256(content).hexdigest() != job["sha256"]:
+                    raise WorkerViolation("INPUT_HASH_MISMATCH")
+                next_state = "QUEUED"
+            elif receipt.decision == "CONFIRM_COMPLETED":
+                next_state = "COMPLETED"
+            else:
+                next_state = "ABSTAINED"
+            receipt_material = asdict(receipt)
+            job["state"] = next_state
+            job["result"] = {"recovery_receipt": receipt_material, "publication_authority": "NONE"}
+            self._event(state, "RECOVERED_" + receipt.decision, job["job_id"],
+                        actor_id=receipt.actor_id,
+                        receipt_fingerprint=sha256(canonical(receipt_material)).hexdigest())
+            self._save(db, state)
+            db.commit()
+        return {"state": next_state, "job_id": receipt.job_id}
+
+    def create_backup(self, destination: Path):
+        """Create a verified, signed queue backup without copying either key."""
+        target = Path(destination)
+        if target.exists() or target.is_symlink() or not target.name:
+            raise WorkerViolation("BACKUP_DESTINATION_INVALID")
+        resolved = target.resolve()
+        if (resolved.is_relative_to(self.inbox) or resolved.is_relative_to(self.pipeline)
+                or resolved == self.path.resolve()):
+            raise WorkerViolation("BACKUP_DESTINATION_INVALID")
+        self.snapshot()
+        target.mkdir(parents=True)
+        backup_db = target / "queue.sqlite"
+        with closing(self._connect()) as source, closing(sqlite3.connect(backup_db)) as backup:
+            source.backup(backup)
+        queue_sha256 = sha256(backup_db.read_bytes()).hexdigest()
+        manifest = {"version": 1, "scope": "TELECARE_LOCAL_WORKER_QUEUE_BACKUP",
+                    "created_at": self.clock(), "queue_sha256": queue_sha256,
+                    "pipeline_fingerprint": sha256(canonical(
+                        pipeline_snapshot(self.pipeline, clock=self.clock))).hexdigest()}
+        manifest["signature"] = hmac.new(self.key, canonical(manifest), "sha256").hexdigest()
+        (target / "manifest.json").write_text(json.dumps(manifest, sort_keys=True, indent=2), encoding="utf-8")
+        self.verify_backup(target)
+        return {"destination": str(resolved), "queue_sha256": queue_sha256,
+                "pipeline_fingerprint": manifest["pipeline_fingerprint"]}
+
+    def verify_backup(self, source: Path):
+        """Verify manifest, queue state and current pipeline recovery boundary."""
+        root = Path(source)
+        if root.is_symlink() or not root.is_dir():
+            raise WorkerViolation("BACKUP_SOURCE_INVALID")
+        try:
+            manifest_path, queue_path = root / "manifest.json", root / "queue.sqlite"
+            if (manifest_path.is_symlink() or queue_path.is_symlink()
+                    or not manifest_path.is_file() or not queue_path.is_file()
+                    or manifest_path.stat().st_size > 65_536 or queue_path.stat().st_size > 16_777_216):
+                raise WorkerViolation("BACKUP_SOURCE_INVALID")
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            queue_bytes = queue_path.read_bytes()
+        except (OSError, json.JSONDecodeError) as error:
+            raise WorkerViolation("BACKUP_SOURCE_INVALID") from error
+        if set(manifest) != {"version", "scope", "created_at", "queue_sha256",
+                            "pipeline_fingerprint", "signature"}:
+            raise WorkerViolation("BACKUP_MANIFEST_INVALID")
+        material = {key: value for key, value in manifest.items() if key != "signature"}
+        if (not isinstance(manifest["signature"], str)
+                or type(manifest["created_at"]) is not int
+                or any(not isinstance(manifest[name], str) for name in
+                       ("scope", "queue_sha256", "pipeline_fingerprint"))):
+            raise WorkerViolation("BACKUP_MANIFEST_INVALID")
+        expected = hmac.new(self.key, canonical(material), "sha256").hexdigest()
+        if not hmac.compare_digest(expected, manifest["signature"]):
+            raise WorkerViolation("BACKUP_SIGNATURE_INVALID")
+        if (manifest["version"] != 1 or manifest["scope"] != "TELECARE_LOCAL_WORKER_QUEUE_BACKUP"
+                or sha256(queue_bytes).hexdigest() != manifest["queue_sha256"]):
+            raise WorkerViolation("BACKUP_INTEGRITY_ERROR")
+        current_pipeline = sha256(canonical(pipeline_snapshot(self.pipeline, clock=self.clock))).hexdigest()
+        if current_pipeline != manifest["pipeline_fingerprint"]:
+            raise WorkerViolation("BACKUP_PIPELINE_CHANGED")
+        with closing(sqlite3.connect(root / "queue.sqlite")) as db:
+            self._read(db)
+        return {"status": "VERIFIED", "queue_sha256": manifest["queue_sha256"],
+                "pipeline_fingerprint": manifest["pipeline_fingerprint"]}
+
+    def restore_backup(self, source: Path, target_queue: Path):
+        """Restore only to a new queue path; never overwrite live state."""
+        self.verify_backup(source)
+        target = Path(target_queue)
+        if (target.exists() or target.is_symlink() or target.resolve().is_relative_to(self.inbox)
+                or target.resolve().is_relative_to(self.pipeline)):
+            raise WorkerViolation("RESTORE_TARGET_INVALID")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((Path(source) / "queue.sqlite").read_bytes())
+        restored = LocalIntakeWorker(target, inbox=self.inbox, pipeline=self.pipeline,
+                                     key=self.key, clock=self.clock)
+        return {"status": "RESTORED_TO_NEW_PATH", "queue": str(target.resolve()),
+                "jobs": len(restored.snapshot()["jobs"])}
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -230,6 +403,20 @@ def main():
     watch.add_argument("--interval-seconds", type=int, default=5)
     for name in ("status", "pause", "resume"):
         commands.add_parser(name)
+    recover = commands.add_parser("recover")
+    recover.add_argument("job_id")
+    recover.add_argument("--decision", required=True,
+                         choices=("ABSTAIN", "CONFIRM_COMPLETED", "REQUEUE_EXACT_INPUT"))
+    recover.add_argument("--actor-id", required=True)
+    recover.add_argument("--reason", required=True)
+    recover.add_argument("--recovery-key-file", type=Path, required=True)
+    backup = commands.add_parser("backup")
+    backup.add_argument("destination", type=Path)
+    verify_backup = commands.add_parser("verify-backup")
+    verify_backup.add_argument("source", type=Path)
+    restore_backup = commands.add_parser("restore-backup")
+    restore_backup.add_argument("source", type=Path)
+    restore_backup.add_argument("target_queue", type=Path)
     args = parser.parse_args()
     if args.key_file.is_symlink() or args.key_file.resolve().is_relative_to(args.inbox.resolve()):
         raise WorkerViolation("KEY_MUST_BE_OUTSIDE_INBOX")
@@ -243,6 +430,20 @@ def main():
     elif args.command in {"pause", "resume"}:
         worker.set_paused(args.command == "pause")
         result = {"paused": args.command == "pause"}
+    elif args.command == "recover":
+        if (args.recovery_key_file.is_symlink()
+                or args.recovery_key_file.resolve().is_relative_to(args.inbox.resolve())):
+            raise WorkerViolation("RECOVERY_KEY_MUST_BE_OUTSIDE_INBOX")
+        recovery_key = args.recovery_key_file.read_bytes()
+        receipt = worker.recovery_receipt(args.job_id, decision=args.decision,
+            actor_id=args.actor_id, reason=args.reason, recovery_key=recovery_key)
+        result = worker.recover(receipt, recovery_key=recovery_key)
+    elif args.command == "backup":
+        result = worker.create_backup(args.destination)
+    elif args.command == "verify-backup":
+        result = worker.verify_backup(args.source)
+    elif args.command == "restore-backup":
+        result = worker.restore_backup(args.source, args.target_queue)
     else:
         result = worker.snapshot()
     print(json.dumps(result, indent=2))
