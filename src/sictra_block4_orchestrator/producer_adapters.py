@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
 import hmac
+from typing import Callable
 
 from sictra_block2_design.design_context import CreateDesignRequest, compile_design_context
 from sictra_block2_design.reference_fixture import reference_run_input
@@ -201,7 +202,7 @@ class SupervisedFederatedRunner:
         self.store, self.block2, self.block3 = store, block2, block3
 
     def execute(self, package: dict, *, precision_request: PrecisionInput,
-                adaptive_planning: AdaptivePlanningPolicyBundle,
+                adaptive_planning: AdaptivePlanningPolicyBundle | Callable[[str], AdaptivePlanningPolicyBundle],
                 now: datetime | None = None):
         current = _now(now)
         snapshot = self.store.ingest(package, now=current)
@@ -218,9 +219,12 @@ class SupervisedFederatedRunner:
             raise FederatedContractError("BLOCK2_EXECUTION_RECEIPT_MISSING")
         block3_receipt = next((receipt for receipt in reversed(receipts) if receipt.producer == "BLOCK3"), None)
         if block3_receipt is None:
+            planning = adaptive_planning(block2_receipt.fingerprint) if callable(adaptive_planning) else adaptive_planning
+            if not isinstance(planning, AdaptivePlanningPolicyBundle):
+                raise FederatedContractError("ADAPTIVE_PLANNING_INVALID")
             block3_receipt = self.block3.execute(case_id=package["case_id"], run_id=package["run_id"],
                 parent_fingerprint=block2_receipt.fingerprint, request=precision_request,
-                planning=adaptive_planning, now=int(current.timestamp()))
+                planning=planning, now=int(current.timestamp()))
             snapshot = self.store.record_execution(block3_receipt, now=current)
         if snapshot.state == "BLOCK3_GOVERNED":
             snapshot = self.store.stop_for_human_review(snapshot.case_id, now=current)

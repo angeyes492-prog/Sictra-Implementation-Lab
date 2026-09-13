@@ -39,3 +39,18 @@ signed queue backups and restore only to a new path. Full local regression passe
 `34782288197` passed on exact implementation SHA
 `9a3222e78055e0f40bfffd15a34cbfa1119713c9`. This closes the bounded technical
 increment, not the final MAR, human approval or production gate.
+
+## Continuous autonomy delta — 2026-09-13
+
+`SupervisedAutonomyWorker` now reads eligible durable Block 1 dossiers from
+the configured local pipeline, exports each current signed package, resolves a
+preconfigured Precision plan, and advances it through the real Block 2 and
+Block 3 adapters to `HUMAN_REVIEW_REQUIRED`. Exact polling replay is
+idempotent. A missing or malformed dossier-to-Precision plan records
+`RETURN_UPSTREAM` before either downstream runtime is invoked.
+
+This is a local candidate execution loop, not an authority to infer target
+profiles, acquire data, publish, deliver, contact, or schedule production
+work. The plan resolver remains the explicit boundary for the pending
+dossier-to-Precision semantic decision. Focused autonomy and all Block 4
+tests passed; the full local regression passed 734 tests on the working tree.
