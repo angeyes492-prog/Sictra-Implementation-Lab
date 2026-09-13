@@ -47,10 +47,10 @@
   {
     "identifier": "B4-SIGNED-ADAPTERS",
     "title": "Real producer adapters with separate evidence and execution receipts",
-    "state": "READY_FOR_TECHNICAL_WORK",
+    "state": "IMPLEMENTED_LOCAL_AWAITING_CI",
     "risk": 5, "dependency_impact": 5, "evidence_gap": 5, "irreversibility": 3,
-    "next_action": "Build isolated candidate adapters and end-to-end rejection tests. Keep activation and shared contract acceptance at final MAR.",
-    "evidence": "Current B2/B3 receipts represent local coordination only; they do not execute the producer runtimes.",
+    "next_action": "Obtain hosted CI on the exact commit, then retain activation, dossier-to-precision semantics, M06-M08 and shared contract acceptance for final MAR.",
+    "evidence": "The isolated candidate invokes real Block 2 E01-E08 and Block 3 M01-M05 runtimes, persists producer-specific signed receipts and resumes from a verified checkpoint. Seven focused integration/adversarial tests and the full 726-test local regression passed on 2026-09-13. Coordination-only paths remain explicitly distinct.",
     "dependencies": []
   },
   {

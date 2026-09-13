@@ -14,7 +14,7 @@ import hmac
 import json
 from pathlib import Path
 import sqlite3
-from typing import Any
+from typing import Any, Mapping
 
 
 CONTRACT_VERSION = "0.1.0"
@@ -125,11 +125,19 @@ class FederatedCase:
 class FederatedOrchestratorStore:
     """A local HMAC-attested journal with bounded autonomous progression."""
 
-    def __init__(self, path: str | Path, *, integrity_key: bytes):
+    def __init__(self, path: str | Path, *, integrity_key: bytes,
+                 producer_keys: Mapping[str, bytes] | None = None):
         if not isinstance(integrity_key, bytes) or len(integrity_key) < 16:
             raise ValueError("integrity_key must contain at least 16 bytes")
         self.path = Path(path)
         self.key = integrity_key
+        self.producer_keys = dict(producer_keys or {})
+        if self.producer_keys:
+            if (set(self.producer_keys) != {"BLOCK2", "BLOCK3"}
+                    or any(not isinstance(key, bytes) or len(key) < 32 for key in self.producer_keys.values())
+                    or len(set(self.producer_keys.values())) != 2
+                    or self.key in self.producer_keys.values()):
+                raise ValueError("producer_keys must contain distinct BLOCK2 and BLOCK3 keys")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._init()
         self._verify_chain()
@@ -272,6 +280,134 @@ class FederatedOrchestratorStore:
     def process_pending(self, *, now: datetime | None = None) -> tuple[FederatedCase, ...]:
         current = _now(now)
         return tuple(self.process_to_human_gate(item.case_id, now=current) for item in self.list_cases() if item.state not in TERMINAL)
+
+    def execution_receipts(self, case_id: str) -> tuple[Any, ...]:
+        """Return only producer receipts whose journal and producer signatures verify."""
+        from .execution_receipt import ExecutionReceipt, verify_receipt
+
+        receipts = []
+        for event in self.audit_events(case_id):
+            material = event["payload"].get("execution_receipt")
+            if material is None:
+                continue
+            receipt = ExecutionReceipt(**{
+                **material,
+                "executed_components": tuple(material["executed_components"]),
+                "restrictions": tuple(material["restrictions"]),
+            })
+            producer_key = self.producer_keys.get(receipt.producer)
+            if producer_key is None:
+                raise FederatedContractError("PRODUCER_KEYS_NOT_CONFIGURED")
+            verify_receipt(receipt, producer_key)
+            receipts.append(receipt)
+        return tuple(receipts)
+
+    def record_execution(self, receipt: Any, *, now: datetime | None = None) -> FederatedCase:
+        """Advance only from a verified receipt emitted by an invoked producer runtime."""
+        from dataclasses import asdict
+        from .execution_receipt import ExecutionReceipt, verify_receipt
+
+        if not isinstance(receipt, ExecutionReceipt):
+            raise FederatedContractError("EXECUTION_RECEIPT_TYPE_INVALID")
+        producer_key = self.producer_keys.get(receipt.producer)
+        if producer_key is None:
+            raise FederatedContractError("PRODUCER_KEYS_NOT_CONFIGURED")
+        verify_receipt(receipt, producer_key)
+        current = _now(now)
+        if _iso(receipt.created_at) > current:
+            raise FederatedContractError("EXECUTION_RECEIPT_FROM_FUTURE")
+        with closing(self._connect()) as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._verify_chain(db)
+            row = db.execute("SELECT * FROM cases WHERE case_id=?", (receipt.case_id,)).fetchone()
+            if row is None: raise FederatedContractError("CASE_NOT_FOUND")
+            package = json.loads(row["package_json"])
+            if receipt.run_id != row["run_id"]:
+                raise FederatedContractError("EXECUTION_RUN_IDENTITY_MISMATCH")
+            if _iso(receipt.created_at) < _iso(package["observed_at"]):
+                raise FederatedContractError("EXECUTION_RECEIPT_PREDATES_PACKAGE")
+            if _iso(package["expires_at"]) <= current:
+                db.execute("UPDATE cases SET state='RETURN_UPSTREAM',updated_at=? WHERE case_id=?", (current.isoformat(), receipt.case_id))
+                self._append(db, case_id=receipt.case_id, event_type="EXPIRED_BEFORE_EXECUTION_RECEIPT",
+                             state="RETURN_UPSTREAM", payload={"source_hash": package["source_hash"]}, now=current)
+                db.commit()
+                return self.get_case(receipt.case_id)
+            prior_receipts = []
+            for event in db.execute("SELECT payload_json FROM events WHERE case_id=? ORDER BY sequence", (receipt.case_id,)):
+                payload = json.loads(event["payload_json"])
+                if isinstance(payload, dict) and isinstance(payload.get("execution_receipt"), dict):
+                    prior_receipts.append(payload["execution_receipt"])
+            material = asdict(receipt)
+            normalized_receipts = [ExecutionReceipt(**{
+                **previous,
+                "executed_components": tuple(previous["executed_components"]),
+                "restrictions": tuple(previous["restrictions"]),
+            }) for previous in prior_receipts]
+            if any(asdict(previous) == material for previous in normalized_receipts):
+                db.rollback(); return self._snapshot_row(row)
+            if any(previous.execution_id == receipt.execution_id for previous in normalized_receipts):
+                raise FederatedContractError("EXECUTION_RECEIPT_IDENTITY_COLLISION")
+            expected_producer = "BLOCK2" if row["state"] == "BLOCK1_ATTESTED" else "BLOCK3" if row["state"] == "BLOCK2_CANDIDATE" else None
+            if receipt.producer != expected_producer:
+                raise FederatedContractError("EXECUTION_TRANSITION_INVALID")
+            if receipt.producer == "BLOCK2":
+                expected_parent = row["fingerprint"]
+            else:
+                block2 = next((item for item in reversed(normalized_receipts) if item.producer == "BLOCK2"), None)
+                if block2 is None: raise FederatedContractError("BLOCK2_EXECUTION_RECEIPT_MISSING")
+                expected_parent = block2.fingerprint
+            if receipt.parent_fingerprint != expected_parent:
+                raise FederatedContractError("EXECUTION_PARENT_MISMATCH")
+            if not {"NO_PUBLICATION", "NO_DELIVERY"}.issubset(receipt.restrictions):
+                raise FederatedContractError("EXECUTION_AUTHORITY_BOUNDARY_MISSING")
+            if receipt.producer == "BLOCK2":
+                accepted = (receipt.disposition == "COMPLETED"
+                            and receipt.payload.get("completed") is True
+                            and receipt.payload.get("publication_state") == "NOT_PUBLISHED"
+                            and receipt.payload.get("acceptance_state") == "NOT_ACCEPTED"
+                            and receipt.executed_components == tuple(f"E0{number}" for number in range(1, 9)))
+                next_state = "BLOCK2_CANDIDATE" if accepted else "RETURN_UPSTREAM"
+            else:
+                accepted = (receipt.disposition in {"ACCEPTED", "PARTIAL"}
+                            and receipt.payload.get("decision_present") is True
+                            and {"M01", "M02", "M03", "M04", "M05"}.issubset(receipt.executed_components))
+                next_state = "BLOCK3_GOVERNED" if accepted else "RETURN_UPSTREAM"
+            event_type = receipt.producer + ("_RUNTIME_EXECUTED" if accepted else "_RUNTIME_RETURNED")
+            db.execute("UPDATE cases SET state=?,updated_at=? WHERE case_id=?", (next_state, current.isoformat(), receipt.case_id))
+            self._append(db, case_id=receipt.case_id, event_type=event_type, state=next_state,
+                         payload={"execution_receipt": material, "source_hash": package["source_hash"]}, now=current)
+            db.commit()
+        return self.get_case(receipt.case_id)
+
+    def stop_for_human_review(self, case_id: str, *, now: datetime | None = None) -> FederatedCase:
+        """Enter the human gate only after a verified Block 3 runtime receipt."""
+        current = _now(now)
+        receipts = self.execution_receipts(case_id)
+        if not receipts or receipts[-1].producer != "BLOCK3":
+            raise FederatedContractError("BLOCK3_EXECUTION_RECEIPT_MISSING")
+        with closing(self._connect()) as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._verify_chain(db)
+            row = db.execute("SELECT * FROM cases WHERE case_id=?", (case_id,)).fetchone()
+            if row is None:
+                raise FederatedContractError("CASE_NOT_FOUND")
+            if row["state"] == "HUMAN_REVIEW_REQUIRED":
+                db.rollback()
+                return self._snapshot_row(row)
+            if row["state"] != "BLOCK3_GOVERNED":
+                raise FederatedContractError("HUMAN_GATE_TRANSITION_INVALID")
+            package = json.loads(row["package_json"])
+            if _iso(package["expires_at"]) <= current:
+                next_state, event_type = "RETURN_UPSTREAM", "EXPIRED_BEFORE_HUMAN_GATE"
+            else:
+                next_state, event_type = "HUMAN_REVIEW_REQUIRED", "HUMAN_GATE_REACHED"
+            db.execute("UPDATE cases SET state=?,updated_at=? WHERE case_id=?",
+                       (next_state, current.isoformat(), case_id))
+            self._append(db, case_id=case_id, event_type=event_type, state=next_state,
+                         payload={"source_hash": package["source_hash"],
+                                  "block3_receipt_fingerprint": receipts[-1].fingerprint}, now=current)
+            db.commit()
+        return self.get_case(case_id)
 
     def invalidate(self, case_id: str, reason: str, *, now: datetime | None = None) -> FederatedCase:
         if not isinstance(reason, str) or not reason.strip(): raise FederatedContractError("INVALIDATION_REASON_REQUIRED")

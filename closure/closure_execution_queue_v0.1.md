@@ -7,7 +7,7 @@ It prioritizes work but never converts a human, independent-review, or architect
 
 | Priority | Item | State | Evidence | Next action |
 | --- | --- | --- | --- | --- |
-| 56 | `B4-SIGNED-ADAPTERS` — Real producer adapters with separate evidence and execution receipts | `READY_FOR_TECHNICAL_WORK` | Current B2/B3 receipts represent local coordination only; they do not execute the producer runtimes. | Build isolated candidate adapters and end-to-end rejection tests. Keep activation and shared contract acceptance at final MAR. |
+| 56 | `B4-SIGNED-ADAPTERS` — Real producer adapters with separate evidence and execution receipts | `IMPLEMENTED_LOCAL_AWAITING_CI` | The isolated candidate invokes real Block 2 E01-E08 and Block 3 M01-M05 runtimes, persists producer-specific signed receipts and resumes from a verified checkpoint. Seven focused integration/adversarial tests and the full 726-test local regression passed on 2026-09-13. Coordination-only paths remain explicitly distinct. | Obtain hosted CI on the exact commit, then retain activation, dossier-to-precision semantics, M06-M08 and shared contract acceptance for final MAR. |
 | 53 | `OPS-RECOVERY-IDENTITY` — Recovery, identity, secrets and bounded scheduling for sustained operation | `READY_FOR_TECHNICAL_WORK` | Candidate local_worker now runs explicit hash-bound files through the real Block 1 pipeline with signed queue state, bounded polling, pause and crash/review stops; eight focused tests pass. Full job recovery, deployment identity, rollback anchors and production secret management remain unfinished. | Build backup/restore exercises, configured identities, resource limits, stop/resume controls and deployment checks before the final review. |
 
 ## Human / architecture gates

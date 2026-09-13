@@ -44,15 +44,21 @@ does not alter historical events.
 The first slice consumes only an operator-supplied, signed local package. It
 does not attach to Block 1's internal key stores or perform network acquisition.
 This deliberately avoids secret sharing and preserves each block's storage
-boundary. Real adapters, a common key service, tenancy, scheduling infrastructure
-and production promotion require the open Master Architecture Review.
+boundary. A later isolated candidate invokes the real Block 2 E01–E08 mechanism
+and Block 3 M01–M05 foundation and persists separate signed execution receipts;
+it remains inactive by default and does not replace the accepted handoff
+contract. Shared key custody, semantic dossier-to-precision mapping, M06–M08,
+tenancy, scheduling infrastructure and production promotion require the open
+Master Architecture Review.
 
 ## Observability and validation
 
 The local console exposes cases, state, restrictions, failures, review queue,
 checkpoints and links to independent consoles. Tests cover successful progression,
 tamper, expiry, lineage substitution, illegal transition, collision, retry cap
-and restart recovery. Fixture execution is laboratory evidence only.
+and restart recovery. The optional signed-receipt suite separately tests real
+producer invocation and verified checkpoint recovery. Fixture and candidate
+adapter execution remain laboratory evidence only.
 
 ## Downstream impact / Master Architecture Review
 
