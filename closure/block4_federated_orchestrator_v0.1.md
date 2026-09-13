@@ -5,11 +5,11 @@ Date: 2026-09-12. Target boundary: `LABORATORY_INTERNAL_SUPERVISED`.
 | GATE | STATUS | EVIDENCE | TEST | DEPENDENCIES | CONFIDENCE | NEXT REASSESSMENT |
 | --- | --- | --- | --- | --- | --- | --- |
 | Federated identity contract | `VERIFIED / B` local | v0.1 typed envelope with immutable case/run/evidence/dossier identity | schema, collision and lineage rejection | MAR ownership decision | B | independent contract review |
-| Orchestration state machine | `VERIFIED / B` local | append-only HMAC journal and bounded progression | positive path, expiry, contradiction and retry cap | real producer adapters | B | cross-block runtime execution |
-| Recovery and audit | `VERIFIED / B` local | restart rehydrates checkpoint; altered journal fails closed | recovery/tamper vectors | local key file / SQLite | B | backup-restore exercise |
+| Orchestration state machine | `VERIFIED / A` bounded | append-only HMAC journal, producer-specific execution receipts and bounded progression | positive path, expiry, contradiction, wrong-key, collision and retry cap | final MAR activation | A | final architecture review |
+| Recovery and audit | `VERIFIED / A` bounded | checkpoint resume, separate-key recovery receipts and signed non-overwriting backup/restore | recovery, stale receipt, tamper, pipeline drift and overwrite vectors | external rollback anchor | A | final architecture review |
 | Command Center | `VERIFIED / B` local | loopback console with independent block links and human queue | hostile host/origin/mutation vectors | local services running | B | browser/accessibility review |
-| Supervised autonomy | `VERIFIED / B` local | automatic progression halts at `HUMAN_REVIEW_REQUIRED` | no publication/delivery/acceptance path | authenticated human review design | B | MAR decision |
-| Production / global acceptance | `INSUFFICIENT EVIDENCE` | none claimed | none | all MAR decisions, real adapters, review | E | explicitly blocked |
+| Supervised autonomy | `VERIFIED / A` bounded | real dossier export → E01-E08 → M01-M07 candidate → signed human gate | no publication/delivery/acceptance path; real M08 prerequisite preserved | authenticated human review design | A | MAR decision |
+| Production / global acceptance | `INSUFFICIENT EVIDENCE` | none claimed | none | all MAR decisions, organizational identity/secrets, external rollback anchor and final review | E | explicitly blocked |
 
 ## Closure delta
 
@@ -24,3 +24,18 @@ semantics.
 Hosted CI run `34732725511` passed on the exact implementation SHA
 `4c76a4106f77e401b1b22f1719c93badfe255f4a`. The documentation SHA and all
 human/MAR gates remain separate from this bounded result.
+
+## Integrated runtime delta — 2026-09-13
+
+The inactive-by-default candidate now verifies a real durable Block 1 dossier,
+executes Block 2 E01–E08, executes the Block 3 M01–M07 no-effect candidate path,
+persists distinct signed producer receipts, resumes from a verified checkpoint
+and stops at `HUMAN_REVIEW_REQUIRED`. M08 is not precomputed: it remains
+conditional on a real delivery receipt and externally observed outcome.
+
+The worker adds authenticated, short-lived recovery decisions, separate keys,
+signed queue backups and restore only to a new path. Full local regression passed
+732 tests; four JavaScript tests and compilation passed. Hosted CI run
+`34782288197` passed on exact implementation SHA
+`9a3222e78055e0f40bfffd15a34cbfa1119713c9`. This closes the bounded technical
+increment, not the final MAR, human approval or production gate.

@@ -47,10 +47,10 @@
   {
     "identifier": "B4-SIGNED-ADAPTERS",
     "title": "Real producer adapters with separate evidence and execution receipts",
-    "state": "IMPLEMENTED_LOCAL_AWAITING_CI",
+    "state": "DONE",
     "risk": 5, "dependency_impact": 5, "evidence_gap": 5, "irreversibility": 3,
-    "next_action": "Obtain hosted CI for the M01-M07 increment, then retain activation, dossier-to-precision semantics, post-delivery M08 and shared contract acceptance for final MAR.",
-    "evidence": "c2168204af913915a8937a1b6864a5e4d2a8662c already has hosted CI 34781446702 success for the E01-E08/M01-M05 receipt path. The current local increment exports a real current Block 1 durable dossier without interpretation, runs M06-M07 with a Block 2 receipt-bound asset, emits only a no-effect SEND_CANDIDATE, and rejects stale/tampered dossier state or unbound assets; nine focused tests and the full 732-test regression pass. M08 correctly remains downstream of real delivery and observed outcome.",
+    "next_action": "Retain activation, dossier-to-precision semantics, post-delivery M08 and shared contract acceptance for final MAR. DONE denotes the bounded technical adapter increment, not production acceptance.",
+    "evidence": "9a3222e78055e0f40bfffd15a34cbfa1119713c9: hosted CI 34782288197 success. The candidate exports a real current Block 1 durable dossier without interpretation, executes Block 2 E01-E08 and Block 3 M01-M07 with a receipt-bound asset, emits only a no-effect SEND_CANDIDATE, and rejects stale/tampered dossier state or unbound assets. Nine focused tests and the full 732-test regression passed. M08 correctly remains downstream of real delivery and observed outcome.",
     "dependencies": []
   },
   {
