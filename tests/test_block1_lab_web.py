@@ -51,6 +51,10 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertIn(b"Mesa editorial", body)
         self.assertIn(b"Expedientes disponibles", body)
         self.assertIn(b"Ruta de operaci", body)
+        self.assertIn(b"command-center", body)
+        self.assertIn(b"priority-inspector", body)
+        self.assertIn(b"LABORATORY_INTERNAL_SUPERVISED", body)
+        self.assertIn(b"Sin publicaci", body)
         self.assertIn(b"Aqu\xc3\xad empiezan las investigaciones", body)
         self.assertIn(b"Aqu\xc3\xad se almacenan los cambios verificables", body)
         self.assertIn(b"data-view-label", body)
@@ -59,6 +63,15 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("text/css", content_type)
         self.assertIn(b"scope-lens", body)
+        for asset in (
+            "telecare-hero-port.png", "evidence-documents.png",
+            "evidence-inspection.png", "evidence-traceability.png",
+            "human-review.png",
+        ):
+            status, content_type, body = self.request("GET", f"/assets/{asset}")
+            self.assertEqual(status, 200)
+            self.assertEqual(content_type, "image/png")
+            self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
         status, content_type, body = self.request("GET", "/brand-mark.png")
         self.assertEqual(status, 200)
         self.assertEqual(content_type, "image/png")
@@ -76,6 +89,8 @@ class Block1LabWebTests(unittest.TestCase):
         self.assertIn(b"openDurableDossier", body)
         self.assertIn(b"/api/pipeline", body)
         self.assertIn(b"pipelineReady", body)
+        self.assertIn(b"renderPriorityInspector", body)
+        self.assertIn(b"RETURN_UPSTREAM", body)
         status, _, body = self.request("GET", "/health")
         self.assertEqual(status, 200)
         health = json.loads(body)
@@ -315,6 +330,10 @@ class Block1LabWebTests(unittest.TestCase):
         status, _, _ = self.request("GET", "/unexpected")
         self.assertEqual(status, 404)
         status, _, _ = self.request("GET", "/../../AGENTS.md")
+        self.assertEqual(status, 404)
+        status, _, _ = self.request("GET", "/assets/../app.js")
+        self.assertEqual(status, 404)
+        status, _, _ = self.request("GET", "/assets/unapproved.png")
         self.assertEqual(status, 404)
         status, _, body = self.request("POST", "/api/scenarios/valid", body=b"{}")
         self.assertEqual(status, 400)

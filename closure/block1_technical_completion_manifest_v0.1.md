@@ -15,9 +15,9 @@ acceptance.
 | 3. Intelligence dossier | Atomic HMAC dossier store separates literal facts from empty interpretations/hypotheses; second-release pipeline integration tested. | `VERIFIED / B` | Complete with an independently constructed synthetic delta; real-source dossier creation remains conditional on a real change. |
 | 4. E01–E08 integration | Current attested evidence reaches the runtime; stale, ambiguous and altered evidence rejects. | `VERIFIED / B` | No open local implementation blocker. |
 | 5. Editorial bridge | Verified dossier composes only as `RESEARCH_NEEDED` / `BLOCKED`, no handoff. | `VERIFIED / B` | Complete; independent root and human interpretation are later human/source inputs, not bypassable code tasks. |
-| 6. Laboratory UI | Signed dossier reader plus sanitized retained-pipeline status expose evidence/watchlist state without keys or production claims. The navigation now names each workspace action and its storage boundary, with a four-step route from local draft through retained evidence and dossier to editorial review. | `VERIFIED / B` | No open local implementation blocker. |
+| 6. Laboratory UI | The Telecare OS editorial command center exposes evidence, uncertainty, scope filters, priority review, dossiers and Block 1–4 lineage from synthetic workspace data. Its persistent inspector preserves source/disposition context, and the navigation keeps Block 2 and Block 3 at separate local addresses. | `VERIFIED / B` | No open local implementation blocker; this remains a supervised laboratory interface, not a publication surface. |
 | 7. Local operation | Windows launch/import/backup/restore commands initialize keys outside OneDrive/Git and recover all pipeline ledgers only under original keys. | `VERIFIED / B` | Not a cross-device key recovery or production backup. |
-| 8. Closure | 282 local tests passed; compile, JavaScript syntax and E01-E08 demo passed. GitHub Actions runs `34303522368` and `34303518680` passed on exact implementation SHA `e73cc427f7dd55983916cbe5b06cc59624fe45da`. | `VERIFIED / A` for the implementation SHA | The commit containing this final ledger must pass the same workflow; afterward only independent review and final owner approval remain. |
+| 8. Closure | 282 local tests passed; compile, JavaScript syntax and E01-E08 demo passed. GitHub Actions runs `34303522368` and `34303518680` passed on exact implementation SHA `e73cc427f7dd55983916cbe5b06cc59624fe45da`. | `VERIFIED / A` for that prior implementation SHA; `VERIFIED / B` locally for the new UI increment | The new UI commit must pass CI on its exact SHA; afterward only independent review and final owner approval remain. |
 
 ## Completed technical chain
 
@@ -66,3 +66,15 @@ CI #370 passed on the exact runtime-hardening SHA above.
   inputs. Their absence correctly blocks that candidate, not the laboratory.
 - Independent review and final owner approval are the only remaining gate
   actions. They cannot be represented as completed by this implementation.
+
+## Latest closure delta — 2026-09-12
+
+The Block 1 laboratory interface now implements the selected Telecare OS
+Editorial Command Center design with unbranded raster assets, a bounded priority
+queue, scope filters, persistent evidence inspection, dossier/trace navigation
+and explicit Block 1–4 lineage. Asset serving is fail-closed: only five approved
+PNG paths are available, while traversal and unknown asset requests return
+`404`. Visual QA passed at 1536 × 1092 with no browser console warnings or
+errors; JavaScript syntax, 17 focused web tests and the full 282-test regression
+all passed locally. This delta remains `LABORATORY_INTERNAL_SUPERVISED`; exact-SHA
+CI and the human gate are still required.
