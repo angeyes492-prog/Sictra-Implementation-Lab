@@ -2,14 +2,10 @@
 
 ## Active
 
-- [ ] **Cierre técnico estricto de Telecare OS** - Codex mantiene como fuente de verdad el manifiesto de cierre y no abre alcance nuevo. Sólo implementa decisiones aprobadas del MAR o acciones de despliegue autorizadas.
-  - Criterio de salida: cada cambio tiene prueba adversarial, regresión, SHA y CI exacta; el cambio se incorpora al manifiesto o se devuelve a revisión.
-  - Límite: `LABORATORY_INTERNAL_SUPERVISED`; no publicación, contacto, CRM, entrega ni promoción automática.
-
 ## Waiting On
 
 - [ ] **Revisión final del PR #15** - para reviewer designado, desde 2026-09-13.
-  - Validar el SHA final `3fc2917cdb94f2f0c8d8a2b7e4b9dfb5423ae103` y CI `34782410675` aprobada.
+  - Validar el SHA que GitHub muestre como Head actual del PR y la CI exitosa de ese mismo SHA; no reutilizar una aprobación de un commit anterior.
   - Cierre: aprobación explícita o comentarios accionables sobre el PR.
 
 - [ ] **Master Architecture Review** - para autoridad arquitectónica, desde 2026-09-13.
@@ -29,6 +25,11 @@
 - [ ] **M08 con resultados observados** - sólo después de una entrega autorizada, consentimiento aplicable y recibo de entrega real.
 
 ## Done
+
+- [x] ~~Cierre técnico estricto de Telecare OS~~ (2026-09-13)
+  - Fuente de verdad consolidada, alcance congelado y lista única de cierre incorporada al PR #15.
+  - SHA `b86898e33d47b79da8306aafcc85d7b365537d1c`; CI `34783166005` aprobada.
+  - Límite conservado: `LABORATORY_INTERNAL_SUPERVISED`; sin publicación, contacto, CRM, entrega ni promoción automática.
 
 - [x] ~~Cierre técnico integrado de Bloques 1–4~~ (2026-09-13)
   - Dossier durable → E01–E08 → M01–M07 → Orchestrator → revisión humana.
