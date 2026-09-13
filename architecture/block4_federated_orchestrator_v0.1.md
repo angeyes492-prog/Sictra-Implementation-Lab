@@ -44,12 +44,14 @@ does not alter historical events.
 The first slice consumes only an operator-supplied, signed local package. It
 does not attach to Block 1's internal key stores or perform network acquisition.
 This deliberately avoids secret sharing and preserves each block's storage
-boundary. A later isolated candidate invokes the real Block 2 E01–E08 mechanism
-and Block 3 M01–M05 foundation and persists separate signed execution receipts;
-it remains inactive by default and does not replace the accepted handoff
-contract. Shared key custody, semantic dossier-to-precision mapping, M06–M08,
-tenancy, scheduling infrastructure and production promotion require the open
-Master Architecture Review.
+boundary. A later isolated candidate explicitly reopens a configured Block 1
+operator pipeline and exports only a current, verified durable dossier. It then
+invokes the real Block 2 E01–E08 mechanism and Block 3 M01–M07 candidate path and
+persists separate signed execution receipts. The candidate remains inactive by
+default and does not replace the accepted handoff contract. M08 remains
+downstream of a real delivery receipt and observed outcome.
+Shared key custody, semantic dossier-to-precision mapping, tenancy, scheduling
+infrastructure and production promotion require the open Master Architecture Review.
 
 ## Observability and validation
 

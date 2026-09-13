@@ -11,7 +11,8 @@ from typing import Any
 from .runtime import CONTRACT_VERSION, FederatedContractError
 
 _PRODUCERS = frozenset({"BLOCK2", "BLOCK3"})
-_DISPOSITIONS = frozenset({"COMPLETED", "ACCEPTED", "PARTIAL", "RETURN_UPSTREAM", "CONTRADICTED", "DO_NOT_SEND"})
+_DISPOSITIONS = frozenset({"COMPLETED", "ACCEPTED", "PARTIAL", "SEND_CANDIDATE", "WAIT",
+                           "RETURN_UPSTREAM", "CONTRADICTED", "DO_NOT_SEND"})
 
 
 def _plain(value: Any) -> Any:

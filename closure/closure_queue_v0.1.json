@@ -47,19 +47,19 @@
   {
     "identifier": "B4-SIGNED-ADAPTERS",
     "title": "Real producer adapters with separate evidence and execution receipts",
-    "state": "DONE",
+    "state": "IMPLEMENTED_LOCAL_AWAITING_CI",
     "risk": 5, "dependency_impact": 5, "evidence_gap": 5, "irreversibility": 3,
-    "next_action": "Retain activation, dossier-to-precision semantics, M06-M08 and shared contract acceptance for final MAR. DONE denotes this bounded technical increment only.",
-    "evidence": "c2168204af913915a8937a1b6864a5e4d2a8662c: hosted CI 34781446702 success. The isolated candidate invokes real Block 2 E01-E08 and Block 3 M01-M05 runtimes, persists producer-specific signed receipts and resumes from a verified checkpoint. Seven focused integration/adversarial tests and the full 726-test local regression passed on 2026-09-13. Coordination-only paths remain explicitly distinct.",
+    "next_action": "Obtain hosted CI for the M01-M07 increment, then retain activation, dossier-to-precision semantics, post-delivery M08 and shared contract acceptance for final MAR.",
+    "evidence": "c2168204af913915a8937a1b6864a5e4d2a8662c already has hosted CI 34781446702 success for the E01-E08/M01-M05 receipt path. The current local increment exports a real current Block 1 durable dossier without interpretation, runs M06-M07 with a Block 2 receipt-bound asset, emits only a no-effect SEND_CANDIDATE, and rejects stale/tampered dossier state or unbound assets; nine focused tests and the full 732-test regression pass. M08 correctly remains downstream of real delivery and observed outcome.",
     "dependencies": []
   },
   {
     "identifier": "OPS-RECOVERY-IDENTITY",
     "title": "Recovery, identity, secrets and bounded scheduling for sustained operation",
-    "state": "IMPLEMENTED_LOCAL_AWAITING_CI",
+    "state": "DONE",
     "risk": 5, "dependency_impact": 4, "evidence_gap": 5, "irreversibility": 3,
-    "next_action": "Obtain hosted CI on the exact commit. Retain external monotonic rollback anchoring, organizational deployment identity and production secret custody for the final architecture decision.",
-    "evidence": "The candidate worker runs explicit hash-bound files through the real Block 1 pipeline with signed queue state, bounded polling and pause/review/crash stops. It now supports separate-key, short-lived, snapshot-bound recovery receipts plus signed backup verification and non-overwriting restore. Twelve focused tests cover positive and rejection paths; the full local regression passed 730 tests on 2026-09-13.",
+    "next_action": "Retain external monotonic rollback anchoring, organizational deployment identity and production secret custody for the final architecture decision. DONE denotes bounded local recovery only.",
+    "evidence": "4d724337c7aafde9883ad3edacb42225084fd649: hosted CI 34781859586 success. The candidate worker runs explicit hash-bound files through the real Block 1 pipeline and supports separate-key, short-lived, snapshot-bound recovery receipts plus signed backup verification and non-overwriting restore. Twelve focused tests and the full 730-test regression passed.",
     "dependencies": []
   },
   {

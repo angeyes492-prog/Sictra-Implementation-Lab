@@ -99,7 +99,7 @@ backup verification, tampered backup rejection and non-overwriting restore. Test
 workbooks are synthetic and are not claimed as approved real-world source evidence.
 
 Still missing: real dossier export, a governed dossier-to-precision mapping,
-M06-M08 integration, an external rollback anchor, durable deployment identity
-and final acceptance.
+post-delivery M08 evidence, an external rollback anchor, durable deployment
+identity and final acceptance.
 These remain in the single closure ledger. No shared contract or gate is promoted
 by this candidate.

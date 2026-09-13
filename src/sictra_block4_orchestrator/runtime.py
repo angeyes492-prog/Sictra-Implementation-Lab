@@ -368,9 +368,14 @@ class FederatedOrchestratorStore:
                             and receipt.executed_components == tuple(f"E0{number}" for number in range(1, 9)))
                 next_state = "BLOCK2_CANDIDATE" if accepted else "RETURN_UPSTREAM"
             else:
-                accepted = (receipt.disposition in {"ACCEPTED", "PARTIAL"}
+                foundation_accepted = (receipt.disposition in {"ACCEPTED", "PARTIAL"}
                             and receipt.payload.get("decision_present") is True
                             and {"M01", "M02", "M03", "M04", "M05"}.issubset(receipt.executed_components))
+                adaptive_accepted = (receipt.disposition == "SEND_CANDIDATE"
+                            and receipt.payload.get("decision_present") is True
+                            and {"M01", "M02", "M03", "M04", "M05", "M06", "M07"}.issubset(receipt.executed_components)
+                            and "PROPOSAL_NOT_EXECUTION" in receipt.restrictions)
+                accepted = foundation_accepted or adaptive_accepted
                 next_state = "BLOCK3_GOVERNED" if accepted else "RETURN_UPSTREAM"
             event_type = receipt.producer + ("_RUNTIME_EXECUTED" if accepted else "_RUNTIME_RETURNED")
             db.execute("UPDATE cases SET state=?,updated_at=? WHERE case_id=?", (next_state, current.isoformat(), receipt.case_id))

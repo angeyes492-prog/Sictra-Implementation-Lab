@@ -34,16 +34,23 @@ key cannot be reused as a producer key.
   and the producer reports `NOT_PUBLISHED` and `NOT_ACCEPTED`. The candidate
   adapter uses the repository reference run input to prove mechanism execution;
   this is explicitly `REFERENCE_MECHANISM_NOT_CONTENT_ACCEPTANCE`.
-- Block 3 advances only for `ACCEPTED` or `PARTIAL` with a decision and runtime
-  evidence for `M01` through `M05`. This proves the bounded precision foundation,
-  not the adaptive `M06`–`M08` path and not a delivery decision.
+- Block 3 foundation-only execution advances only for `ACCEPTED` or `PARTIAL`
+  with a decision and runtime evidence for `M01` through `M05`. The supervised
+  runner additionally requires a Block 2 receipt-bound authorized asset and
+  executes `M06` and `M07`; only a `SEND_CANDIDATE` carrying
+  `PROPOSAL_NOT_EXECUTION` can reach the human gate. It never sends or contacts.
+- `M08` is intentionally not run in the pre-review route: it requires an actual
+  delivery receipt and externally observed outcome. Running it earlier would
+  manufacture learning evidence.
 - Any incomplete, blocked or nonconforming result becomes `RETURN_UPSTREAM`.
   A verified Block 3 receipt is required before Block 4 can enter
   `HUMAN_REVIEW_REQUIRED` through the verified runner.
 
-The supervised runner may resume from a verified Block 2 checkpoint. It still
-requires an explicit governed `PrecisionInput`; this contract does not invent a
-semantic mapping from an editorial dossier to professional/person context.
+The supervised runner may resume from a verified Block 2 checkpoint. The
+separate Block 1 dossier adapter can now export a real, current, signed dossier
+package without interpretation. The runner still requires an explicit governed
+`PrecisionInput`; neither contract invents a semantic mapping from an editorial
+dossier to professional/person context.
 
 ## Replay, failure and recovery
 
@@ -56,9 +63,10 @@ and then re-verifies stored producer receipts before resuming.
 ## Validation and known non-claims
 
 The focused suite invokes the real Block 2 E01–E08 implementation and the real
-Block 3 M01–M05 foundation, exercises checkpoint recovery, and attacks tamper,
+Block 3 M01–M07 candidate path, exercises checkpoint recovery, and attacks tamper,
 wrong keys, cross-case identity, replay, missing components, absent decisions,
-stale/expired/contradicted evidence and temporal substitution. Passing this
-suite is local integration evidence only. Activation, key custody, the dossier
-to precision mapping, M06–M08 integration and production acceptance remain
-outside this candidate contract and require the final architecture decision.
+unbound assets, stale/expired/contradicted evidence and temporal substitution.
+Passing this suite is local integration evidence only. Activation, key custody,
+the dossier-to-precision mapping, post-delivery M08 evidence and production
+acceptance remain outside this candidate contract and require the final
+architecture decision.
