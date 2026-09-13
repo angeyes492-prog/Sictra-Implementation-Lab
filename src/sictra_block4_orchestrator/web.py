@@ -9,7 +9,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 from .runtime import FederatedContractError, FederatedOrchestratorStore, build_controlled_block1_package
 
@@ -35,6 +35,8 @@ def _case_payload(item: Any) -> dict[str, Any]:
         "certainty": item.certainty, "disposition": item.disposition,
         "expires_at": item.expires_at, "lineage": list(item.lineage),
         "restrictions": list(item.restrictions),
+        "evidence_id": item.evidence_id, "dossier_id": item.dossier_id,
+        "uncertainty": list(item.uncertainty),
     }
 
 
@@ -83,7 +85,8 @@ class CommandCenterHandler(BaseHTTPRequestHandler):
                 cases = [_case_payload(item) for item in self.server.store.list_cases()]
                 self._json(HTTPStatus.OK, {"scope": UI_SCOPE, "fixture": "CONTROLLED_LOCAL_PACKAGES_ONLY", "cases": cases, "authority": {"publication": "PROHIBITED", "delivery": "PROHIBITED", "acceptance": "NOT_ACCEPTED"}}); return
             if path.startswith("/api/cases/") and path.endswith("/events"):
-                case_id = path.removeprefix("/api/cases/").removesuffix("/events").rstrip("/")
+                case_id = unquote(path.removeprefix("/api/cases/").removesuffix("/events"))
+                self.server.store.get_case(case_id)
                 self._json(HTTPStatus.OK, {"case_id": case_id, "events": self.server.store.audit_events(case_id)}); return
             if self._static(path): return
             self._json(HTTPStatus.NOT_FOUND, {"error": "Ruta no disponible."})

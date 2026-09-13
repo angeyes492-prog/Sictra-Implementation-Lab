@@ -117,6 +117,9 @@ class FederatedCase:
     expires_at: str
     lineage: tuple[str, ...]
     restrictions: tuple[str, ...]
+    evidence_id: str
+    dossier_id: str
+    uncertainty: tuple[str, ...]
 
 
 class FederatedOrchestratorStore:
@@ -149,15 +152,45 @@ class FederatedOrchestratorStore:
                 raise FederatedContractError("INTEGRITY_KEY_ID_MISMATCH")
             db.commit()
 
-    def _verify_chain(self) -> None:
+    def _verify_chain(self, db: sqlite3.Connection | None = None) -> None:
+        if db is None:
+            with closing(self._connect()) as connection:
+                connection.execute("BEGIN")
+                self._verify_chain(connection)
+            return
         prior = "GENESIS"
-        with closing(self._connect()) as db:
+        latest = {}
+        fingerprints = {}
+        retries = {}
+        try:
             for row in db.execute("SELECT * FROM events ORDER BY sequence"):
                 material = {"event_id": row["event_id"], "case_id": row["case_id"], "event_type": row["event_type"], "state": row["state"], "payload": json.loads(row["payload_json"]), "prior_hash": prior, "created_at": row["created_at"]}
                 expected = hmac.new(self.key, _canonical(material), "sha256").hexdigest()
                 if row["prior_hash"] != prior or not hmac.compare_digest(expected, row["event_hash"]):
                     raise FederatedContractError("JOURNAL_INTEGRITY_ERROR")
                 prior = row["event_hash"]
+                latest[row["case_id"]] = row["state"]
+                if row["event_type"] == "INGESTED":
+                    fingerprints[row["case_id"]] = material["payload"]["fingerprint"]
+                if row["event_type"] == "RETRY":
+                    retries[row["case_id"]] = material["payload"]["retry_count"]
+            checkpoints = db.execute("SELECT * FROM cases").fetchall()
+            if {row["case_id"] for row in checkpoints} != set(latest):
+                raise FederatedContractError("CHECKPOINT_INTEGRITY_ERROR")
+            for row in checkpoints:
+                package = json.loads(row["package_json"])
+                fingerprint = _fingerprint(_without_signature(package))
+                signature = hmac.new(self.key, _canonical(_without_signature(package)), "sha256").hexdigest()
+                if (row["state"] != latest[row["case_id"]]
+                    or row["retry_count"] != retries.get(row["case_id"], 0)
+                    or row["fingerprint"] != fingerprints.get(row["case_id"])
+                    or fingerprint != row["fingerprint"]
+                    or package["case_id"] != row["case_id"]
+                    or package["run_id"] != row["run_id"]
+                    or not hmac.compare_digest(signature, package["signature"])):
+                    raise FederatedContractError("CHECKPOINT_INTEGRITY_ERROR")
+        except (KeyError, TypeError, json.JSONDecodeError) as error:
+            raise FederatedContractError("JOURNAL_INTEGRITY_ERROR") from error
 
     def _append(self, db: sqlite3.Connection, *, case_id: str, event_type: str, state: str, payload: dict[str, Any], now: datetime) -> None:
         prior_row = db.execute("SELECT event_hash FROM events ORDER BY sequence DESC LIMIT 1").fetchone()
@@ -172,7 +205,7 @@ class FederatedOrchestratorStore:
         route = ["BLOCK1"]
         if row["state"] in {"BLOCK2_CANDIDATE", "BLOCK3_GOVERNED", "HUMAN_REVIEW_REQUIRED"}: route.append("BLOCK2")
         if row["state"] in {"BLOCK3_GOVERNED", "HUMAN_REVIEW_REQUIRED"}: route.append("BLOCK3")
-        return FederatedCase(row["case_id"], row["run_id"], row["state"], row["retry_count"], row["fingerprint"], package["source_hash"], package["provenance_root"], package["certainty"], package["disposition"], package["expires_at"], tuple(route), tuple(package["payload"]["limitations"]))
+        return FederatedCase(row["case_id"], row["run_id"], row["state"], row["retry_count"], row["fingerprint"], package["source_hash"], package["provenance_root"], package["certainty"], package["disposition"], package["expires_at"], tuple(route), tuple(package["payload"]["limitations"]), package["evidence_id"], package["dossier_id"], tuple(package["uncertainty"]))
 
     def get_case(self, case_id: str) -> FederatedCase:
         self._verify_chain()
@@ -194,6 +227,7 @@ class FederatedOrchestratorStore:
         state = "RETURN_UPSTREAM" if package["currentness"] != "CURRENT" or _iso(package["expires_at"]) <= current or package["certainty"] in {"CONTRADICTED", "INSUFFICIENT EVIDENCE"} else "BLOCK1_ATTESTED"
         with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
+            self._verify_chain(db)
             row = db.execute("SELECT * FROM cases WHERE case_id=?", (package["case_id"],)).fetchone()
             if row is not None:
                 if row["fingerprint"] != fingerprint:
@@ -207,6 +241,7 @@ class FederatedOrchestratorStore:
     def _advance(self, case_id: str, *, now: datetime) -> FederatedCase:
         with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
+            self._verify_chain(db)
             row = db.execute("SELECT * FROM cases WHERE case_id=?", (case_id,)).fetchone()
             if row is None: raise FederatedContractError("CASE_NOT_FOUND")
             package = json.loads(row["package_json"])
@@ -241,6 +276,7 @@ class FederatedOrchestratorStore:
         current = _now(now)
         with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
+            self._verify_chain(db)
             row = db.execute("SELECT * FROM cases WHERE case_id=?", (case_id,)).fetchone()
             if row is None: raise FederatedContractError("CASE_NOT_FOUND")
             db.execute("UPDATE cases SET state='RETURN_UPSTREAM',updated_at=? WHERE case_id=?", (current.isoformat(), case_id))
@@ -252,13 +288,20 @@ class FederatedOrchestratorStore:
         current = _now(now)
         with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
+            self._verify_chain(db)
             row = db.execute("SELECT * FROM cases WHERE case_id=?", (case_id,)).fetchone()
             if row is None: raise FederatedContractError("CASE_NOT_FOUND")
             if row["retry_count"] >= 3: raise FederatedContractError("RETRY_LIMIT_EXHAUSTED")
             if row["state"] not in {"RETURN_UPSTREAM", "REJECTED"}: raise FederatedContractError("RETRY_STATE_INVALID")
             next_count = row["retry_count"] + 1
-            db.execute("UPDATE cases SET retry_count=?,state='BLOCK1_ATTESTED',updated_at=? WHERE case_id=?", (next_count, current.isoformat(), case_id))
-            self._append(db, case_id=case_id, event_type="RETRY", state="BLOCK1_ATTESTED", payload={"retry_count": next_count}, now=current)
+            package = json.loads(row["package_json"])
+            invalidated = db.execute("SELECT 1 FROM events WHERE case_id=? AND event_type='INVALIDATED'", (case_id,)).fetchone()
+            admissible = (not invalidated and package["currentness"] == "CURRENT"
+                          and _iso(package["expires_at"]) > current
+                          and package["certainty"] not in {"CONTRADICTED", "INSUFFICIENT EVIDENCE"})
+            next_state = "BLOCK1_ATTESTED" if admissible else "RETURN_UPSTREAM"
+            db.execute("UPDATE cases SET retry_count=?,state=?,updated_at=? WHERE case_id=?", (next_count, next_state, current.isoformat(), case_id))
+            self._append(db, case_id=case_id, event_type="RETRY", state=next_state, payload={"retry_count": next_count}, now=current)
             db.commit()
         return self.process_to_human_gate(case_id, now=current)
 

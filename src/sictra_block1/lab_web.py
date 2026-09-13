@@ -47,6 +47,11 @@ _STATIC_FILES = {
     "/app.css": ("app.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/brand-mark.png": ("brand-mark.png", "image/png"),
+    "/assets/telecare-hero-port.png": ("assets/telecare-hero-port.png", "image/png"),
+    "/assets/evidence-documents.png": ("assets/evidence-documents.png", "image/png"),
+    "/assets/evidence-inspection.png": ("assets/evidence-inspection.png", "image/png"),
+    "/assets/evidence-traceability.png": ("assets/evidence-traceability.png", "image/png"),
+    "/assets/human-review.png": ("assets/human-review.png", "image/png"),
 }
 _MAX_REJECTED_PAYLOAD_BYTES = 65_536
 _MAX_EDITORIAL_PAYLOAD_BYTES = 4_096

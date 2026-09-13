@@ -89,6 +89,44 @@ class FederatedOrchestratorTests(unittest.TestCase):
         with self.assertRaisesRegex(FederatedContractError, "RETRY_LIMIT_EXHAUSTED"):
             self.store.retry("CASE-RETRY", now=NOW + timedelta(seconds=2))
 
+    def test_retry_does_not_erase_contradiction_or_invalidation(self):
+        for certainty in ("CONTRADICTED", "INSUFFICIENT EVIDENCE"):
+            item = self.store.ingest(self.package(case_id=certainty, certainty=certainty), now=NOW)
+            retried = self.store.retry(item.case_id, now=NOW)
+            self.assertEqual("RETURN_UPSTREAM", retried.state)
+            self.assertEqual(["INGESTED", "RETRY"], [e["event_type"] for e in self.store.audit_events(item.case_id)])
+        item = self.store.ingest(self.package(case_id="INVALIDATED"), now=NOW)
+        self.store.invalidate(item.case_id, "Source authorization withdrawn", now=NOW)
+        self.assertEqual("RETURN_UPSTREAM", self.store.retry(item.case_id, now=NOW).state)
+
+    def test_checkpoint_tamper_blocks_reads_and_writes_without_new_events(self):
+        item = self.store.ingest(self.package(), now=NOW)
+        db = sqlite3.connect(self.path)
+        try:
+            db.execute("UPDATE cases SET state='HUMAN_REVIEW_REQUIRED'")
+            db.commit()
+            for action in (self.store.list_cases,
+                           lambda: self.store.invalidate(item.case_id, "test", now=NOW),
+                           lambda: self.store.ingest(self.package(case_id="NEW"), now=NOW)):
+                with self.assertRaisesRegex(FederatedContractError, "CHECKPOINT_INTEGRITY_ERROR"):
+                    action()
+            self.assertEqual(1, db.execute("SELECT COUNT(*) FROM events").fetchone()[0])
+        finally:
+            db.close()
+
+    def test_package_tamper_cannot_change_displayed_source(self):
+        self.store.ingest(self.package(), now=NOW)
+        db = sqlite3.connect(self.path)
+        try:
+            package = json.loads(db.execute("SELECT package_json FROM cases").fetchone()[0])
+            package["source_hash"] = "f" * 64
+            db.execute("UPDATE cases SET package_json=?", (json.dumps(package),))
+            db.commit()
+        finally:
+            db.close()
+        with self.assertRaisesRegex(FederatedContractError, "CHECKPOINT_INTEGRITY_ERROR"):
+            self.store.list_cases()
+
 
 class FederatedCommandCenterTests(unittest.TestCase):
     def setUp(self):
@@ -109,6 +147,8 @@ class FederatedCommandCenterTests(unittest.TestCase):
         self.assertEqual(200, status); self.assertEqual("no-store", headers["Cache-Control"])
         self.assertEqual("CONTROLLED_LOCAL_PACKAGES_ONLY", payload["fixture"])
         self.assertEqual("HUMAN_REVIEW_REQUIRED", payload["cases"][0]["state"])
+        self.assertEqual("EVID-CASE-DEMO-001", payload["cases"][0]["evidence_id"])
+        self.assertEqual(["SYNTHETIC_FIELD_TEST_NOT_EVIDENCE"], payload["cases"][0]["uncertainty"])
         self.assertEqual("NOT_ACCEPTED", payload["authority"]["acceptance"])
         status, _, body = self.request("POST", "/api/cases")
         self.assertEqual(405, status); self.assertIn("sólo lectura", json.loads(body)["error"])
@@ -123,6 +163,15 @@ class FederatedCommandCenterTests(unittest.TestCase):
         self.assertIn("frame-ancestors 'none'", self.request("GET", "/")[1]["Content-Security-Policy"])
         for marker in (":focus-visible", "prefers-reduced-motion:reduce", "forced-colors:active"):
             self.assertIn(marker, css)
+
+    def test_audit_preserves_encoded_identity_and_rejects_unknown_case(self):
+        item = self.store.ingest(build_controlled_block1_package(integrity_key=KEY, case_id="CASE / A", now=NOW), now=NOW)
+        status, _, body = self.request("GET", "/api/cases/CASE%20%2F%20A/events")
+        self.assertEqual(200, status)
+        payload = json.loads(body)
+        self.assertEqual(item.case_id, payload["case_id"])
+        self.assertEqual("INGESTED", payload["events"][0]["event_type"])
+        self.assertEqual(409, self.request("GET", "/api/cases/UNKNOWN/events")[0])
 
 
 if __name__ == "__main__": unittest.main()
