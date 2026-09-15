@@ -86,7 +86,10 @@ PRUEBAS Y EVIDENCIA
 - Conserva evidencia de runtime separada de la documentación. No presentes mocks, datos sintéticos o resultados locales como datos de producción.
 
 CALIDAD DE PRODUCTO
-- La interfaz debe comportarse como un Command Center editorial: una sola navegación interna, estados comprensibles, inspector de evidencia, dossier, cola de revisión, trabajo actual, historial/auditoría y controles de operación seguros.
+- Bloque 4 es la pantalla principal de Telecare OS, no una pestaña aparte. Debe comportarse como un Command Center editorial compacto: navegación en la misma pestaña, estados comprensibles, inspector de evidencia, dossier, cola de revisión, trabajo actual, historial/auditoría y controles de operación seguros.
+- Sustituye la portada actual por: noticias relevantes de la semana, tendencias de mercado con su evidencia y límite epistemológico, informes/dossiers, insights que requieren revisión, actividad de la cola, cobertura de evidencia y eventos de recuperación. Cada tarjeta debe abrir el bloque y el mismo caso/correlación correspondiente; ninguna tarjeta puede ser decorativa.
+- Conserva las fronteras federadas: cada bloque conserva datos, sesión y autoridad. Usa descriptores de navegación allowlisted y en la misma ventana; no incrustes bloques, no hagas fetch de sus APIs desde la interfaz y no conviertas un enlace o una proyección en prueba de ejecución.
+- Cuando no haya evidencia actual, muestra un estado vacío útil; cuando esté vencida, contradicha o fuera de alcance, muestra el motivo y suprime el efecto descendente. No inventes barras, porcentajes, noticias o indicadores verdes.
 - Mantén la dirección visual editorial acordada: jerarquía fuerte, azul profundo/verde turquesa, imágenes logísticas contextualizadas, tarjetas de evidencia, iconografía consistente, tipografía legible y mensajes claros sobre incertidumbre y revisión humana.
 - La innovación debe ser verificable: una capacidad nueva solo cuenta cuando tiene contrato, estados de fallo, observabilidad, pruebas y una frontera de autoridad explícita.
 
