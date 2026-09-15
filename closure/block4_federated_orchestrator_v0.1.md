@@ -26,3 +26,19 @@ semantics.
 Hosted CI run `34732725511` passed on the exact implementation SHA
 `4c76a4106f77e401b1b22f1719c93badfe255f4a`. The documentation SHA and all
 human/MAR gates remain separate from this bounded result.
+
+## Control-plane closure delta — 2026-09-15
+
+Commit `c3c108241e44dee1ee58608af670ba58ec4c66f5` added the local control
+plane contract, HMAC-attested availability state, idempotent control receipts,
+loopback-only endpoint and the Evidence Atlas Command Center. Its exact hosted
+CI run `34937620701` passed. Local regression executed `514` tests; the Block
+4 suite specifically covered pause/resume/stop/start, controlled retry,
+request replay/collision, restart recovery, journal tampering, malformed input,
+hostile origin and the operable accessible control deck.
+
+This supports `VERIFIED / B` only for the bounded local SUT. It does not show
+that any producer runtime ran, that a real source was valid, that a human
+reviewed a result, or that an external action is permitted. The open MAR,
+independent review, cross-block integration and production/global acceptance
+remain `INSUFFICIENT EVIDENCE`.
