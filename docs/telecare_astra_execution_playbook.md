@@ -191,3 +191,142 @@ revalidarlo antes de basar una decisión o un commit en él.
 3. Sólo después actualiza la cola con un delta de cierre concreto. No rebase,
    fusiones ni promociones de B4 cambian por sí mismas el estado de B1 ni
    convierten un borrador editorial en publicación.
+
+## Addendum de cierre final Astra 2026 09 15
+
+Este addendum reemplaza el handoff anterior cuando discrepe con él. Es un
+estado de implementación verificado para iniciar la **última sesión prevista de
+construcción local**. La meta de esa sesión es dejar Telecare OS cerrado en su
+frontera `LABORATORY_INTERNAL_SUPERVISED`, no prometer producción ni ocultar una
+dependencia humana o externa real.
+
+### Estado actual que debes confirmar antes de actuar
+
+- El trabajo integrado está en el worktree
+  `C:/Users/angel/AppData/Local/Temp/telecare-astra-closure`, rama
+  `codex/astra-telecare-closure`. El commit de producto desplegado es
+  `eb6f5be2fb165d8d0f358fab6e484678ff5d50d3`.
+- La CI `SICTrA bounded runtime validation` terminó correctamente para ese SHA:
+  [run 34975973919](https://github.com/angeyes492-prog/Sictra-Implementation-Lab/actions/runs/34975973919).
+  En ese ciclo pasaron 763 pruebas Python y 9 pruebas JavaScript. No reutilices
+  esta afirmación para cambios posteriores: todo nuevo commit exige su propia
+  regresión y CI exacta.
+- La instalación local está desacoplada en
+  `C:/Users/angel/AppData/Local/TelecareOS/Application`, en HEAD separado
+  `eb6f5be`. Los cuatro bloques 8765–8768 están activos. B4 está `RUNNING`,
+  con vigilancia local activa, `evidence_review_deferred=true`,
+  `publication=BLOCKED` y alcance `LABORATORY_INTERNAL_SUPERVISED`.
+- El estado operacional real puede tener cero boletines. Es correcto: no se
+  incorporaron fuentes reales para fabricar una demostración. El estado vacío
+  debe continuar siendo útil y explícito, nunca sustituido por métricas,
+  titulares o expedientes sintéticos.
+- Existe un respaldo previo al despliegue en
+  `C:/Users/angel/AppData/Local/TelecareOS/Backups/astra-pre-eb6f5be`. Conserva
+  los datos y las claves fuera del archivo tal como están; no borres ni migres
+  archivos del operador para “limpiar” el cierre.
+- En el worktree de Astra hay un delta local aún sin commit que preserva las
+  rutas antiguas de intake y Design entre inicios mediante
+  `telecare_launch_paths.ps1`, `launch-paths.json` y pruebas de rechazo. La
+  regresión local posterior pasó: 763 Python y 9 JavaScript. Falta comprobar
+  diff, hacer un commit limitado, obtener CI de ese SHA, actualizar la
+  instalación y verificar el reinicio idempotente. No declares ese delta
+  desplegado hasta completar esos pasos.
+
+### Logros que no se deben reconstruir ni degradar
+
+1. B1 retiene fuente, delta y dossier; B2 y B3 leen exclusivamente la
+   proyección vigente del mismo artefacto; B4 controla el ciclo, recuperación,
+   pausa y STOP. Los enlaces preservan `artifact` y `dossier`; una identidad
+   ausente, vencida o alterada no puede sustituirse por otra.
+2. La política opcional de revisión diferida cierra sólo esperas de deltas
+   válidos por una abstención registrada `DEFERRED_REVIEW`. No crea una persona,
+   aceptación, insight verificado ni autoridad de publicación. Errores,
+   alteraciones, vencimiento, pausa y STOP siguen bloqueando.
+3. La recuperación offline valida inventario, hashes, claves retenidas fuera del
+   archivo, path original, lock y STOP de recuperación. Restaura pausado. No
+   amplíes esta afirmación a anti-rollback de producción, cifrado de custodia o
+   atacante privilegiado.
+4. La interfaz B4 usa una escena logística ilustrativa y tarjetas compactas con
+   estados de runtime reales. B1–B4 comparten navegación, pero no una autoridad
+   ni llamadas cross-origin. El piloto sintético es sólo evidencia de prueba y
+   debe permanecer visualmente etiquetado y separado del estado del operador.
+
+### Innovación obligatoria con criterio de producto
+
+Usa al máximo el razonamiento para encontrar mejoras de cierre que conviertan
+el sistema en una superficie de decisión más clara, recuperable y operable. No
+añadas una plataforma, proveedor, modelo de IA, scraping ni efecto externo por
+“innovar”. Toda mejora debe pasar esta prueba antes de implementarse:
+
+`problema verificable → usuario/decisor → objeto y contrato → autoridad →
+estado de fallo → observabilidad → prueba independiente → rollback`.
+
+Antes de escoger una mejora, busca y lee fuentes primarias actuales en la web.
+Úsalas como inspiración de patrón, no como autoridad arquitectónica. La
+investigación ya identificó cuatro patrones especialmente relevantes:
+
+- **Modelo operacional de decisiones.** La Ontology de Palantir conecta objetos,
+  vínculos, acciones, lógica y seguridad para representar decisiones, no sólo
+  datos. Adapta esto a Telecare con objetos locales y tipados `SourceVersion`,
+  `Dossier`, `ReviewTask`, `EditorialCandidate`, `Run`, `RecoveryReceipt` y
+  `ActionProposal`, sus enlaces y transiciones permitidas; una acción externa
+  debe permanecer una propuesta bloqueada. [Referencia primaria de Palantir](https://www.palantir.com/docs/foundry/ontology/overview)
+- **Bandeja de atención gobernada.** ServiceNow concentra trabajo por propietario,
+  tipo y vencimiento, incluyendo elementos sin asignar. Construye, si falta, una
+  única vista B4 de atención con dueño, razón de bloqueo, siguiente acción local
+  segura, antigüedad verificable y vínculo al objeto. No inventes prioridad ni
+  asignes personas. [Referencia primaria de ServiceNow](https://www.servicenow.com/docs/r/intelligent-experiences/aict-activity-center.html?contentId=oy_DxZ1W5~hQpegIsNmC1g)
+- **Ficha de hechos por activo y corrida.** IBM agrupa historia, evaluación y
+  monitoreo en factsheets. Añade una ficha local exportable y verificable por
+  `Run`/`EditorialCandidate`: hashes de entrada, versiones de contrato,
+  procedencia, controles aplicados, resultado, incertidumbre, pruebas,
+  recibos de recuperación y límites. Nunca la llames aprobación. [Referencia primaria de IBM](https://www.ibm.com/docs/en/watsonx/w-and-w/2.4.x?topic=ai-governing-assets-watsonxgovernance)
+- **Observabilidad y aprobación humana en puntos críticos.** Microsoft recomienda
+  revisión humana para decisiones críticas contra sistemas externos y logging
+  trazable. Convierte cualquier efecto futuro en una `ActionProposal` revisable,
+  con simulación/replay local sin escritura, allowlist y kill-switch; no actives
+  el efecto externo. [Referencia primaria de Microsoft](https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-v2-artificial-intelligence-security)
+
+Elige como máximo una mejora transversal de alto valor, más las reparaciones de
+cierre pendientes. Si el modelo de objetos, la bandeja o la ficha no puede
+tener contrato, prueba adversarial y rollback en esta sesión, documenta la
+propuesta como `DEFERRED_DESIGN`, no como capacidad construida.
+
+### Secuencia innegociable de la última sesión
+
+1. Inspecciona worktrees, SHA, CI, cambios locales, servicios y el estado de la
+   instalación. Protege los cambios ajenos del checkout original: `AGENTS.md`
+   y `.work-block1/` no pertenecen a Astra.
+2. Termina el delta de preservación de rutas: añade pruebas de ruta corrupta,
+   rutas relativas, override explícito, backup/restore e inicio repetido;
+   ejecuta regresión completa; commit mínimo; push y CI del SHA exacto; instala
+   ese SHA; prueba el arranque repetido sin crear un estado vacío paralelo.
+3. Ejecuta la verificación integrada real sin introducir datos falsos: B4 en
+   `RUNNING`, B1 pipeline disponible, B2/B3 proyección disponible, navegación
+   B4→B1→B2→B3→B4 y estado vacío honesto. Para flujo con datos, usa sólo el
+   piloto sintético separado y etiqueta cada captura y recibo como tal.
+4. Implementa sólo la mejora transversal que supere el filtro anterior. Incluye
+   contrato versionado, límites de autoridad, control de fallo, prueba positiva,
+   una prueba de rechazo/tamper/replay y observabilidad en interfaz. Ejecuta
+   nuevamente regresión, commit, push, CI exacta y actualización local.
+5. Cierra la cola y crea el manifest técnico final: SHA, CI, pruebas, capacidades
+   instaladas, datos reales frente a piloto, respaldo, caminos de recuperación,
+   controles bloqueados, contradicciones, riesgos residuales y el único conjunto
+   de decisiones externas que no puede ser resuelto localmente.
+
+### Criterio de salida y comportamiento de Astra
+
+Esta debe ser la última sesión **de construcción local planificada**. Continúa
+sin pedir permiso para acciones internas hasta completar todos los puntos
+realizables y verificables. No termines con “siguiente paso” si queda una
+reparación, prueba, manifiesto, documentación, despliegue o limpieza segura
+dentro del repositorio. Sólo se permite un handoff final para una autoridad
+humana, fuente externa, credencial, revisión independiente o publicación que
+realmente no pueda construirse localmente.
+
+No simules cierre. Si hay una regresión fallida, CI pendiente o instalación no
+verificada, repárala y reintenta. Si el límite es externo, conserva el sistema
+funcional, bloqueado y honesto, con una tarjeta que nombre el dato faltante, su
+propietario, la evidencia disponible y la frontera exacta que no puede cruzarse.
+El resultado máximo que puedes declarar sin esa autoridad sigue siendo
+`LABORATORY_INTERNAL_SUPERVISED`.
