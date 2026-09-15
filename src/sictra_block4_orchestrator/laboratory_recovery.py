@@ -19,7 +19,7 @@ from sictra_block1.operator_pipeline import pipeline_snapshot
 
 FIXED = {'operations.sqlite', 'intake.sqlite', 'cases.sqlite',
          'pipeline/pipeline-state.json', 'pipeline/source-control.json'}
-OPTIONAL = {'STOP', 'research-intake.json', 'design-console.sqlite',
+OPTIONAL = {'STOP', 'research-intake.json', 'design-console.sqlite', 'launch-paths.json',
             'pipeline/evidence.json', 'pipeline/watchlist.json',
             'pipeline/dossiers.json', 'pipeline/runtime.sqlite3'}
 

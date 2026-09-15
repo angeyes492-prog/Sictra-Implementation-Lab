@@ -33,6 +33,8 @@ class LaboratoryRecoveryTests(unittest.TestCase):
         self.service.stop();self.temp.cleanup()
 
     def test_full_restore_retains_sources_dossiers_and_outputs_but_stays_paused(self):
+        launch_config = b'{"schema":"TELECARE_LOCAL_PATHS_V1","intake_store":"legacy","design_trace":"legacy"}'
+        (self.root / 'launch-paths.json').write_bytes(launch_config)
         before = self.service.store.latest('OUTPUT')
         result = backup(self.root, self.archive)
         self.assertFalse(result['keys_included'])
@@ -42,6 +44,7 @@ class LaboratoryRecoveryTests(unittest.TestCase):
         self.assertEqual('RESTORED_PAUSED', restore(self.archive, self.root, retired)['status'])
         recovered = OperationsService(self.root, clock=lambda:1789300800)
         self.assertTrue(recovered.is_paused())
+        self.assertEqual(launch_config, (self.root / 'launch-paths.json').read_bytes())
         self.assertEqual(before, recovered.store.latest('OUTPUT'))
         output = next(iter(before.values()))
         self.assertIn('12.5', recovered.output(output['id'])['plain_text'])

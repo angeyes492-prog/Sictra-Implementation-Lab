@@ -8,6 +8,11 @@ boletín operativo. Sus herramientas de motores sintéticos permanecen separadas
 Un puerto con otra versión produce un error explícito, no abre la UI antigua.
 Opciones PowerShell: `-StatePath`, `-IntakeStore`, `-DesignTrace`, `-NoBrowser`.
 Las rutas personalizadas mantienen datos anteriores; no se borran ni migran.
+Para conservarlas también al iniciar sesión o abrir el acceso habitual, usa
+`launch-paths.json` dentro del estado: `schema: TELECARE_LOCAL_PATHS_V1`,
+`intake_store` y `design_trace` con rutas absolutas. Opciones explícitas prevalecen;
+una configuración corrupta detiene el arranque, nunca abre datos vacíos sustitutos.
+El respaldo conserva esta configuración, no los archivos externos que referencia.
 
 En «Revisiones diferidas», activa el modo autorizado por el propietario para
 cerrar entradas válidas por abstención y permitir ciclos sucesivos. Los datos

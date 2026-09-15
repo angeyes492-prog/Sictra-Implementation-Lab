@@ -5,8 +5,10 @@ if ($Port -ne 8768) { throw 'La suite federada usa los puertos 8765–8768. Usa 
 if (-not $env:LOCALAPPDATA) { throw 'LOCALAPPDATA no disponible.' }
 $projectPath = $PSScriptRoot
 $statePath = if ($StatePath) { [IO.Path]::GetFullPath($StatePath) } else { Join-Path $env:LOCALAPPDATA 'TelecareOS\Operations' }
-if (-not $IntakeStore) { $IntakeStore = Join-Path $statePath 'research-intake.json' }
-if (-not $DesignTrace) { $DesignTrace = Join-Path $statePath 'design-console.sqlite' }
+. (Join-Path $projectPath 'telecare_launch_paths.ps1')
+$launchPaths = Resolve-TelecareLaunchPaths $statePath $IntakeStore $DesignTrace
+$IntakeStore = $launchPaths.IntakeStore
+$DesignTrace = $launchPaths.DesignTrace
 $pythonPath = (Get-Command python -ErrorAction Stop).Source
 $env:PYTHONPATH = Join-Path $projectPath 'src'
 & $pythonPath -m sictra_block4_orchestrator.operations --state $statePath init
@@ -19,7 +21,7 @@ function Start-VerifiedBlock([int]$BlockPort, [string[]]$Arguments, [string]$Htm
     }
     $ready = $false
     for ($attempt = 0; $attempt -lt 20; $attempt++) {
-        try { $page = Invoke-WebRequest "http://127.0.0.1:$BlockPort/" -TimeoutSec 2; $ready = $true; break } catch { Start-Sleep -Milliseconds 250 }
+        try { $page = Invoke-WebRequest "http://127.0.0.1:$BlockPort/" -UseBasicParsing -TimeoutSec 2; $ready = $true; break } catch { Start-Sleep -Milliseconds 250 }
     }
     if (-not $ready) { throw "El bloque en $BlockPort no respondió. Revisa $statePath\$LogName.stderr.log" }
     if ($page.Content -cne $expected) { throw "Otra versión ocupa el puerto $BlockPort. No se abrió una interfaz antigua: actualiza o reinicia ese bloque desde esta misma instalación." }
