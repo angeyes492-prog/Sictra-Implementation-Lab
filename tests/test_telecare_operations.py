@@ -50,6 +50,7 @@ class OperationsTests(unittest.TestCase):
 
     def test_complete_content_design_preserves_numbers_and_has_evidence_first_structure(self):
         output = self.ready()
+        self.assertEqual(self.root.absolute(), self.service.root)
         self.assertIn("12.5", output["plain_text"])
         self.assertIn("14 miles de toneladas", output["plain_text"])
         self.assertIn("1.5 miles de toneladas", output["plain_text"])

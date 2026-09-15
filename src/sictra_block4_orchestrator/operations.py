@@ -47,7 +47,13 @@ def initialize(root, *, now=None):
 
 class OperationsService:
     def __init__(self, root, *, clock=time.time):
-        self.root = Path(root).resolve()
+        # Keep the operator-selected lexical path.  On packaged Windows
+        # runtimes ``resolve()`` can rewrite it into an app-local virtual
+        # directory, leaving the operator unable to locate the configured
+        # inbox, backup, or recovery boundary.
+        self.root = Path(root).absolute()
+        if self.root.is_symlink():
+            raise OperationsError("STATE_PATH_INVALID")
         self.clock = clock
         self.lock = threading.RLock()
         self.stop_event = threading.Event()
