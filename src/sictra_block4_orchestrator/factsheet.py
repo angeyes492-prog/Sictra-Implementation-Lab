@@ -1,5 +1,6 @@
 """Read-only facts about a current local editorial candidate."""
 from hashlib import sha256
+from datetime import datetime, timezone
 from html import escape
 import json
 import re
@@ -55,11 +56,16 @@ def build_factsheet(service, identity):
 def render_factsheet(value):
     def e(text):
         return escape(str(text), quote=True)
-    stages = ''.join('<li>' + e(stage) + '</li>' for stage in value['stages'])
+    labels = {'BLOCK1_DOSSIER_VERIFIED': 'Intelligence · dossier retenido y verificado',
+              'BLOCK2_CONTENT_DESIGN': 'Design · composición del boletín',
+              'BLOCK3_AUDIENCE_ADAPTATION': 'Precision · adaptación al perfil declarado'}
+    stages = ''.join('<li>' + e(labels.get(stage, stage)) + '</li>' for stage in value['stages'])
+    date = lambda stamp: datetime.fromtimestamp(stamp, timezone.utc).strftime('%d/%m/%Y %H:%M UTC')
     rows = [('Dossier', value['dossier_id']), ('Evidencia', value['source']['evidence_id']),
             ('Huella del contenido normalizado', value['source']['source_hash']), ('Audiencia', value['audience']['label']),
-            ('Clase de datos', value['data_class']), ('Creado · Unix UTC', value['created_at']),
-            ('Lectura · Unix UTC', value['observed_at']), ('Estado de revisión', value['review']),
+            ('Clase de datos', 'Prueba sintética' if value['data_class'] == 'SYNTHETIC_PILOT' else 'Archivos aportados por el operador'),
+            ('Creado', date(value['created_at'])), ('Lectura', date(value['observed_at'])),
+            ('Estado de revisión', 'Revisión humana pendiente'),
             ('Revisiones diferidas de este dossier', len(value['deferred_reviews'])),
             ('Recuperaciones del almacén', value['store_recovery_count'])]
     details = ''.join('<dt>' + e(k) + '</dt><dd>' + e(v) + '</dd>' for k, v in rows)

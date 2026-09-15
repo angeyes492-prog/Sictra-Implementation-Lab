@@ -38,9 +38,13 @@ class FactsheetTests(unittest.TestCase):
         before = self.service.store.records()
         value = build_factsheet(self.service, self.identity)
         self.assertEqual('TELECARE_FACTSHEET_V1', value['schema'])
-        # Known canonical mapped-content digest for the fixed two-row fixture;
-        # source_hash describes normalized source content, not XLSX container bytes.
-        self.assertEqual('210cb53a84f285147bb544e89ceb9cad69d0d7879d924e73adb58978755547e2', value['source']['source_hash'])
+        # Independently hash the last retained input, not the factsheet/design
+        # projection. ZIP metadata legitimately differs across operating systems.
+        evidence = json.loads((self.root/'pipeline'/'evidence.json').read_text(encoding='utf-8'))['records'][-1]
+        retained = evidence['evidence']['content']
+        self.assertEqual(sha256(self.raw).hexdigest(), json.loads(retained)['provenance']['source_file_sha256'])
+        self.assertEqual(sha256(retained.encode()).hexdigest(), value['source']['source_hash'])
+        self.assertEqual(evidence['evidence_id'], value['source']['evidence_id'])
         self.assertEqual(self.identity, value['id'])
         self.assertEqual(1, len(value['deferred_reviews']))
         self.assertEqual('NOT_ACCEPTED', value['deferred_reviews'][0]['acceptance'])
