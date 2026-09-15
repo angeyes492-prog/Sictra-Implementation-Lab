@@ -11,8 +11,8 @@ import time
 import unittest
 from unittest.mock import patch
 
-from sictra_block2_design.research_draft import render_research_brief
-from sictra_block3_precision.audience_draft import AudiencePolicyError
+from sictra_block2_design.design_artifact import DesignArtifactError, fingerprint, render_designed_review_artifact
+from sictra_block3_precision.audience_draft import AudiencePolicyError, adapt_content_design
 from sictra_block4_orchestrator.operations import initialize, OperationsService
 from sictra_block4_orchestrator.operations_store import OperationsError, OperationsStore, process_lock
 from sictra_block4_orchestrator.operations_web import create_operations_server
@@ -48,18 +48,21 @@ class OperationsTests(unittest.TestCase):
         self.service.tick()
         return next(iter(self.service.store.latest("OUTPUT").values()))
 
-    def test_complete_source_draft_adaptation_is_numeric_traceable_and_not_reference_copy(self):
+    def test_complete_content_design_preserves_numbers_and_has_evidence_first_structure(self):
         output = self.ready()
         self.assertIn("12.5", output["plain_text"])
         self.assertIn("14 miles de toneladas", output["plain_text"])
         self.assertIn("1.5 miles de toneladas", output["plain_text"])
         self.assertIn("No independent source corroboration", output["plain_text"])
         self.assertNotIn("Synthetic approved copy", output["plain_text"])
-        self.assertEqual(["BLOCK1_DOSSIER_VERIFIED", "BLOCK2_SOURCE_DRAFT", "BLOCK3_AUDIENCE_ADAPTATION"], output["stages"])
-        self.assertEqual("RESEARCH_NEEDED", output["state"])
+        self.assertEqual(["BLOCK1_DOSSIER_VERIFIED", "BLOCK2_CONTENT_DESIGN", "BLOCK3_AUDIENCE_ADAPTATION"], output["stages"])
+        self.assertEqual("DESIGN_REVIEW_REQUIRED", output["state"])
         self.assertEqual("BLOCKED", output["publication"])
         self.assertEqual("NONE", output["delivery"])
-        self.assertIn(output["draft"]["evidence_id"], output["plain_text"])
+        self.assertIn(output["design_artifact"]["evidence_id"], output["plain_text"])
+        self.assertEqual("CONTENT_DESIGN_CANDIDATE", output["design_artifact"]["artifact_type"])
+        self.assertEqual("EVIDENCE_FIRST", output["design_artifact"]["design_system"]["hierarchy"])
+        self.assertIn("UNCERTAINTY", [block["kind"] for block in output["adaptation"]["content_blocks"]])
         self.assertEqual(output, self.service.output(output["id"]))
 
     def test_restart_and_repeated_cycles_preserve_single_output(self):
@@ -80,8 +83,47 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual(2, len(variants))
         alternate = next(v for v in variants if v["profile"]["id"] == "executive")
         self.assertNotEqual(output["adaptation"]["heading"], alternate["adaptation"]["heading"])
-        self.assertEqual(output["draft"]["claims"], alternate["draft"]["claims"])
+        self.assertEqual(output["design_artifact"]["claims"], alternate["design_artifact"]["claims"])
         self.assertNotEqual(output["adaptation"]["framing"], alternate["adaptation"]["framing"])
+
+    def test_design_is_evidence_first_and_precision_cannot_tamper_with_it(self):
+        output = self.ready()
+        design = output["design_artifact"]
+        kinds = [block["kind"] for block in design["content_blocks"]]
+        self.assertEqual("CONTEXT", kinds[0])
+        self.assertLess(kinds.index("UNCERTAINTY"), kinds.index("PROVENANCE"))
+        claim_ids = {claim["id"] for claim in design["claims"]}
+        rendered_ids = {claim_id for block in output["adaptation"]["content_blocks"]
+                        for claim_id in block["source_claim_ids"]}
+        self.assertEqual(claim_ids, rendered_ids)
+        altered = deepcopy(design)
+        altered["content_blocks"][1]["body"] = "una conclusión comercial inventada"
+        with self.assertRaisesRegex(AudiencePolicyError, "DESIGN_ARTIFACT_INVALID"):
+            adapt_content_design(altered, output["profile"], now=self.now)
+        altered_adaptation = deepcopy(output["adaptation"])
+        altered_adaptation["artifact_fingerprint"] = "0" * 64
+        with self.assertRaisesRegex(DesignArtifactError, "ADAPTATION_ARTIFACT_BINDING"):
+            render_designed_review_artifact(design, altered_adaptation)
+        unsupported = deepcopy(design)
+        unsupported["version"] = 2
+        unsupported["fingerprint"] = fingerprint({k: v for k, v in unsupported.items() if k != "fingerprint"})
+        with self.assertRaisesRegex(AudiencePolicyError, "UNSUPPORTED_CONTENT_DESIGN_VERSION"):
+            adapt_content_design(unsupported, output["profile"], now=self.now)
+        missing_provenance = deepcopy(design)
+        missing_provenance["content_blocks"] = [block for block in missing_provenance["content_blocks"]
+                                                  if block["kind"] != "PROVENANCE"]
+        missing_provenance["fingerprint"] = fingerprint({k: v for k, v in missing_provenance.items() if k != "fingerprint"})
+        with self.assertRaisesRegex(AudiencePolicyError, "REQUIRED_BLOCK_MISSING"):
+            adapt_content_design(missing_provenance, output["profile"], now=self.now)
+
+    def test_legacy_source_draft_output_cannot_be_rendered_as_current_design(self):
+        output = self.ready()
+        legacy = deepcopy(output)
+        legacy.pop("design_artifact")
+        legacy["id"] = "legacy-source-draft"
+        self.service.store.put("OUTPUT", legacy["id"], legacy, immutable=True)
+        with self.assertRaisesRegex(OperationsError, "LEGACY_OUTPUT_REQUIRES_MIGRATION"):
+            self.service.output(legacy["id"])
 
     def test_expired_or_superseded_profiles_and_sources_cannot_be_served(self):
         output = self.ready()
@@ -136,9 +178,10 @@ class OperationsTests(unittest.TestCase):
 
     def test_markup_is_escaped_and_unknown_geography_is_waiting(self):
         output = self.ready()
-        draft, adaptation = deepcopy(output["draft"]), deepcopy(output["adaptation"])
+        design, adaptation = deepcopy(output["design_artifact"]), deepcopy(output["adaptation"])
         adaptation["heading"] = '<script>alert("x")</script>'
-        html, _ = render_research_brief(draft, adaptation)
+        adaptation["fingerprint"] = fingerprint({k: v for k, v in adaptation.items() if k != "fingerprint"})
+        html, _ = render_designed_review_artifact(design, adaptation)
         self.assertNotIn('<script>', html)
         self.assertIn('&lt;script&gt;', html)
         profile = {**output["profile"], "id": "unmatched", "geo_codes": ["ES"]}
@@ -195,7 +238,7 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual(1, len(pending))
         self.service.abstain_intake(pending[0]['job_id'], 'Retain the dossier without editorial acceptance')
         self.assertFalse(self.service.snapshot()['intake_waiting'])
-        self.assertEqual('RESEARCH_NEEDED', self.service.output(output['id'])['state'])
+        self.assertEqual('DESIGN_REVIEW_REQUIRED', self.service.output(output['id'])['state'])
         self.assertEqual('BLOCKED', self.service.output(output['id'])['publication'])
 
     def test_http_control_requires_same_origin_token_and_artifacts_are_current(self):

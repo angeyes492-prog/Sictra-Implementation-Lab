@@ -1,6 +1,6 @@
 # Telecare local operations — validation record, 2026-09-13
 
-Gate: actual local source-to-draft operations. Status: YELLOW, no promotion.
+Gate: actual local source-to-design operations. Status: YELLOW, no promotion.
 Scope: LABORATORY_INTERNAL_SUPERVISED. Reviewer/validator: implementation agent;
 independent review deferred. Confidence B for locally executed behavior, not
 system acceptance. Version: candidate implementation; exact SHA/CI follows in
@@ -9,8 +9,9 @@ Git history. Next reassessment: final regression/CI and real approved-source pil
 ## Closure delta
 
 - Persistent process and signed SQLite output history; bounded cyclic scheduling.
-- B1 approved maritime XLSX versions become literal dossiers; B2 drafts actual
-  numbers with evidence; B3 changes presentation for declared generic audiences.
+- B1 approved maritime XLSX versions become literal dossiers; B2 creates an
+  evidence-first content-design artifact with actual numbers and visible limits;
+  B3 changes only its presentation for declared generic audiences.
 - Readable HTML/text in B4, profile entry, hash-bound upload, opt-in local folder
   watching, pause, stop and explicit abstention recovery. No publication/delivery.
 - Current-source/profile revalidation before serving an output. HTML is escaped
@@ -51,8 +52,9 @@ NONE. Synthetic data are visibly labeled; this is not an approved real-data pilo
 
 Historical technical-closure wording exceeded demonstrated product capability.
 Reference adapter `reference_run_input` uses synthetic approved copy/selection;
-executed receipts cannot prove source-grounded editorial quality. Preserve that
-history, qualify its scope and keep actual research drafts RESEARCH_NEEDED.
+executed receipts cannot prove source-grounded editorial quality. A later
+architecture correction makes the active B2 output a content-design candidate,
+not a research draft. Preserve history and keep all artifacts review-required.
 
 Not closed: multi-source research and synthesis, accepted editorial quality,
 real-account precision mapping, whole-system disaster recovery, external identity

@@ -13,22 +13,25 @@ The previous autonomy loop also lacks an entry point, persistent scheduler,
 configured profiles and visible output; fixed-size prefix selection starves
 later dossiers. Existing closure claims are restricted to those tested slices.
 
-The new operations service schedules source-bound research briefs. Block 1's
-approved Eurostat file pipeline retains evidence and literal change dossiers.
-Block 2 authors a source-based research draft and renders escaped local HTML.
+The new operations service schedules source-bound content-design candidates.
+Block 1's approved Eurostat file pipeline retains evidence and literal change
+dossiers. Block 2 owns an evidence-first information hierarchy, visual component
+structure and deterministic local render; it does not acquire research semantics.
 Block 3 applies a declared generic audience presentation policy (role, depth,
-tone, geographic selection). It never invents a person, account fact, consent,
-or M01-M07 acceptance. Block 4 persists the output, revision identity, execution
-stages, waits and failures. Uninterpreted dossiers remain research-needed;
-preparing a review artifact does not enable editorial handoff or publication.
+tone, geographic selection) to that fixed design. It never invents a person,
+account fact, consent, or M01-M07 acceptance. Block 4 persists the output,
+revision identity, execution stages, waits and failures. Uninterpreted dossiers
+remain review-needed; preparing a design artifact never enables editorial
+handoff or publication.
 
 ## Interfaces, invariants, failure and recovery
 
 Input: approved file bytes via explicit registration; signed local config
-contains versioned generic profiles. Output: draft plus adaptation, source and
-profile hashes, facts, uncertainties, missing evidence and questions. The local
-renderer is deterministic and makes no external model requests. A separate
-provider integration would require its own tests and configured credentials.
+contains versioned generic profiles. Output: Block 2 design artifact plus Block
+3 adaptation, source and profile hashes, literal facts, uncertainty, missing
+evidence and questions. The local renderer is deterministic and makes no
+external model requests. A separate provider integration would require its own
+tests and configured credentials.
 
 The operation journal is SQLite with HMAC-chained immutable events. Each output
 is appended atomically; pure draft construction can repeat after interruption

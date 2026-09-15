@@ -1,6 +1,6 @@
 """Explicit generic audience presentation policy; no person/intent inference."""
 from copy import deepcopy
-from sictra_block2_design.research_draft import fingerprint
+from sictra_block2_design.design_artifact import fingerprint
 
 
 class AudiencePolicyError(ValueError):
@@ -26,28 +26,55 @@ def validate_profile(profile, *, now):
         raise AudiencePolicyError("PROFILE_EXPIRED")
 
 
-def adapt_research_draft(draft, profile, *, now):
+def adapt_content_design(design, profile, *, now):
     validate_profile(profile, now=now)
-    if draft.get("fingerprint") != fingerprint({k: v for k, v in draft.items() if k != "fingerprint"}):
-        raise AudiencePolicyError("DRAFT_FINGERPRINT_INVALID")
-    selected = [deepcopy(c) for c in draft["claims"]
+    if design.get("version") != 1:
+        raise AudiencePolicyError("UNSUPPORTED_CONTENT_DESIGN_VERSION")
+    if (design.get("artifact_type") != "CONTENT_DESIGN_CANDIDATE"
+            or design.get("fingerprint") != fingerprint({k: v for k, v in design.items() if k != "fingerprint"})):
+        raise AudiencePolicyError("DESIGN_ARTIFACT_INVALID")
+    blocks_by_kind = {block.get("kind") for block in design.get("content_blocks", ()) if isinstance(block, dict)}
+    required = {"CONTEXT", "REVIEW_QUESTIONS", "EVIDENCE_GAP", "UNCERTAINTY", "LIMITATION", "PROVENANCE"}
+    if not required.issubset(blocks_by_kind):
+        raise AudiencePolicyError("DESIGN_ARTIFACT_REQUIRED_BLOCK_MISSING")
+    claim_ids = {claim.get("id") for claim in design.get("claims", ()) if isinstance(claim, dict)}
+    observed_ids = {claim_id for block in design["content_blocks"] if block["kind"] == "OBSERVED_CHANGE"
+                    for claim_id in block.get("source_claim_ids", ())}
+    if not claim_ids or observed_ids != claim_ids:
+        raise AudiencePolicyError("DESIGN_ARTIFACT_CLAIM_LINEAGE_INVALID")
+    selected = [deepcopy(c) for c in design["claims"]
                 if not profile["geo_codes"] or c["geo_code"] in profile["geo_codes"]]
     if not selected:
         raise AudiencePolicyError("NO_GEOGRAPHIC_MATCH")
     total = len(selected)
     if profile["depth"] == "BRIEF":
         selected = selected[:3]
-    heading = ("Resumen ejecutivo" if profile["tone"] == "EXECUTIVE" else "Nota técnica") + ": " + draft["title"]
+    heading = ("Resumen ejecutivo" if profile["tone"] == "EXECUTIVE" else "Nota técnica") + ": " + design["title"]
     framing = f"Lectura preparada para el perfil editorial «{profile['label']}», función declarada: {profile['role']}. "
     framing += ("Priorice las preguntas de decisión y contraste la exposición de su organización con datos propios."
                 if profile["tone"] == "EXECUTIVE" else
                 "Contraste unidades, periodos, cobertura e indicadores de calidad antes de comparar series.")
     if total > len(selected):
         framing += f" Se muestran {len(selected)} de {total} observaciones relevantes; el dossier conserva todas."
+    claim_ids = {claim["id"] for claim in selected}
+    blocks = []
+    for block in design["content_blocks"]:
+        if block["kind"] == "OBSERVED_CHANGE" and not claim_ids.intersection(block["source_claim_ids"]):
+            continue
+        blocks.append(deepcopy(block))
+    question_block = next(block for block in blocks if block["kind"] == "REVIEW_QUESTIONS")
+    question_block["body"] = "\n".join(list(profile["questions"]) + question_block["body"].split("\n"))
+    if total > len(selected):
+        question_block["body"] += f"\nLa vista muestra {len(selected)} de {total} observaciones relevantes; el dossier conserva todas."
     result = {"version": 1, "profile_id": profile["id"], "profile_fingerprint": fingerprint(profile),
-              "draft_fingerprint": draft["fingerprint"], "heading": heading, "framing": framing,
-              "claims": selected, "questions": list(profile["questions"]) + list(draft["questions"]),
+              "artifact_fingerprint": design["fingerprint"], "heading": heading, "framing": framing,
+              "content_blocks": blocks,
               "channel": "LOCAL_REVIEW", "level": "DECLARED_GENERIC_AUDIENCE",
-              "status": "RESEARCH_NEEDED", "publication": "BLOCKED", "delivery": "NONE"}
+              "status": "DESIGN_REVIEW_REQUIRED", "publication": "BLOCKED", "delivery": "NONE"}
     result["fingerprint"] = fingerprint(result)
     return result
+
+
+def adapt_research_draft(draft, profile, *, now):
+    """Refuse the retired source-draft handoff in the active design route."""
+    raise AudiencePolicyError("LEGACY_RESEARCH_DRAFT_UNSUPPORTED")

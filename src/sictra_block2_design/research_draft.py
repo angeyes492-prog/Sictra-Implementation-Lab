@@ -1,4 +1,8 @@
-"""Source-preserving research copy for local review, separate from E01-E08 fixtures."""
+"""Legacy source-draft helper retained for historical record inspection.
+
+The active local Telecare route uses ``design_artifact.py``.  New consumers
+must not use this module as a substitute for Block 2 Design ownership.
+"""
 from copy import deepcopy
 from hashlib import sha256
 from html import escape

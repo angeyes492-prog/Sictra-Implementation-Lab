@@ -8,16 +8,17 @@
    un XLSX del conjunto marítimo Eurostat `tran_r_mago_nm`, nivel país/NUTS.
    La primera versión establece la base; registra una segunda versión distinta
    para producir diferencias y un dossier. No se descargan fuentes remotas.
-3. El servicio procesa la entrada y genera un borrador de investigación con
-   cifras, evidencia, preguntas e incertidumbres. Lee el resultado sin cambiar
-   de pestaña con «Leer borrador».
+3. El servicio procesa la entrada y genera un artefacto de diseño basado en el
+   dossier: jerarquía de información, componentes para cambios observados,
+   preguntas, incertidumbre y procedencia visible. Lee el resultado sin cambiar
+   de pestaña con «Abrir artefacto».
 4. Usa «Configurar el perfil editorial objetivo» para adaptar tono, profundidad
    y selección geográfica. Es una audiencia genérica declarada, no un registro
    de personas ni inferencia de intención. El perfil vence a los 90 días.
 5. Opcionalmente activa «Vigilar carpeta local» y deposita XLSX aprobados en la
    ruta que muestra la consola. Se exigen dos lecturas idénticas antes de registrar
    una versión; su hash se revalida al ejecutar. No se recorren otras carpetas.
-6. Si la entrada queda en revisión, los borradores siguen visibles. El operador
+6. Si la entrada queda en revisión, los artefactos siguen visibles. El operador
    puede registrar una abstención para permitir el siguiente archivo. El servicio
    nunca inventa una aprobación de ese dossier ni una recuperación tras fallo.
 
@@ -54,7 +55,7 @@ de una fuente real. No mezcles su carpeta con la operación real.
 ## Respaldo, incidentes y alcance
 
 El servicio crea diariamente un respaldo firmado de su journal de operaciones,
-configuración y borradores. `restore` sólo admite un destino inexistente y
+configuración y artefactos de diseño. `restore` sólo admite un destino inexistente y
 verifica firmas/hash. Ese respaldo **no incluye** claves, pipeline de fuentes
 ni cola de entrada; éstos conservan los mecanismos de backup/recovery de
 `sictra_block1.operator_pipeline` y `sictra_block4_orchestrator.local_worker`.
@@ -66,8 +67,9 @@ si no está ejecutándose o está en error. Revisa `service.stderr.log` y conser
 los archivos originales. No se repite una ingesta interrumpida automáticamente.
 Las salidas vencidas, revocadas o asociadas a un perfil reemplazado se bloquean.
 
-La generación actual es determinista: un borrador con hechos extraídos y
-adaptación de presentación. No es un proveedor LLM conectado ni investigación
+La generación actual es determinista: Bloque 2 crea un artefacto de diseño que
+preserva hechos extraídos y hace visible evidencia, incertidumbre y límites;
+Bloque 3 adapta esa presentación. No es un proveedor LLM conectado ni investigación
 abierta en Internet. El análisis causal, fuentes adicionales, perfiles reales,
 proveedor externo, identidad organizacional, ancla externa anti-rollback y
 promoción de producción conservan sus decisiones y validaciones pendientes.

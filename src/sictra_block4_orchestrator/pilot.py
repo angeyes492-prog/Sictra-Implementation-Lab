@@ -1,4 +1,4 @@
-"""Create a fresh labelled local pilot and retain the actual generated briefs."""
+"""Create a fresh labelled local pilot and retain the generated design artifacts."""
 from hashlib import sha256
 from io import BytesIO
 from pathlib import Path

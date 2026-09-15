@@ -33,16 +33,16 @@
         const article = document.createElement('article'); article.className='case';
         const content = document.createElement('div'), title = document.createElement('strong'), description = document.createElement('p');
         title.textContent = item.title;
-        description.textContent = item.profile + ' · ' + (item.availability === 'CURRENT' ? 'Borrador de investigación pendiente de revisión' : 'Fuente o perfil vencido: requiere actualización');
+        description.textContent = item.profile + ' · ' + (item.availability === 'CURRENT' ? 'Artefacto de diseño pendiente de revisión' : 'Fuente o perfil vencido: requiere actualización');
         content.append(title, description); article.append(content);
         if (item.availability === 'CURRENT') {
-          const button = document.createElement('button'); button.type='button'; button.textContent='Leer borrador';
+          const button = document.createElement('button'); button.type='button'; button.textContent='Abrir artefacto';
           button.addEventListener('click',()=>{ previewId=item.id; $('operations-preview').hidden=false; $('draft-frame').src='/api/operations/outputs/'+encodeURIComponent(item.id)+'/html'; $('draft-text').href='/api/operations/outputs/'+encodeURIComponent(item.id)+'/text'; });
           article.append(button);
         }
         $('operations-outputs').append(article);
       }
-      if (!data.outputs.length) $('operations-outputs').textContent='Todavía no hay borradores. Registra una versión base y después una versión distinta del archivo marítimo autorizado.';
+      if (!data.outputs.length) $('operations-outputs').textContent='Todavía no hay artefactos. Registra una versión base y después una versión distinta del archivo marítimo autorizado.';
       $('operations-wait').textContent = data.waiting.map(w=>w.reason).join(' · ');
       for (const button of document.querySelectorAll('[data-operation]')) button.disabled=false;
     } catch (error) {

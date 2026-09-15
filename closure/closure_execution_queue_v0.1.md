@@ -7,7 +7,7 @@ It prioritizes work but never converts a human, independent-review, or architect
 
 | Priority | Item | State | Evidence | Next action |
 | --- | --- | --- | --- | --- |
-| 60 | `OPS-ACTUAL-CONTENT` — Persistent approved-file → dossier → factual draft → declared audience → local reader | `IMPLEMENTED; VALIDATION_IN_PROGRESS` | New operations service, source-draft and generic-audience modules; 16 focused tests executed successfully on 2026-09-13. | Full regression, exact-SHA CI, installed service and source pilot. |
+| 60 | `OPS-ACTUAL-CONTENT` — Persistent approved-file → dossier → content-design candidate → declared audience → local reader | `IMPLEMENTED; VALIDATION_IN_PROGRESS` | New operations service, evidence-first Design artifact and generic-audience modules; 16 focused tests executed successfully on 2026-09-13. | Full regression, exact-SHA CI, installed service and source pilot. |
 | 58 | `EDITORIAL-QUALITY` — Actual synthesis and audience relevance beyond templates | `INSUFFICIENT EVIDENCE` | Reference E01–E08 adapter uses synthetic approved copy. New drafts report source numbers, not independent corroboration or accepted insight. | Define approved source/provider boundary and evaluate actual editorial output; do not equate reference engine execution with this capability. |
 | 56 | `OPS-PRODUCTION-RECOVERY` — Whole-system restore and production deployment | `INSUFFICIENT EVIDENCE` | Local signed backups cover operations artifacts only. Pipeline, intake, keys and external anti-rollback require separate recovery. | Validate complete restore and production controls after deployment authority decisions. |
 

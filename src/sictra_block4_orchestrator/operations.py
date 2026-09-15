@@ -1,4 +1,4 @@
-"""Local persistent operations: approved intake, source drafts, declared audiences."""
+"""Local persistent operations: source dossiers, design artifacts, audiences."""
 from datetime import datetime, timezone
 from hashlib import sha256
 import argparse
@@ -10,8 +10,10 @@ import threading
 import time
 
 from sictra_block1.operator_pipeline import initialize_operator_pipeline, load_operator_pipeline
-from sictra_block2_design.research_draft import compose_research_draft, fingerprint, render_research_brief
-from sictra_block3_precision.audience_draft import adapt_research_draft, validate_profile, AudiencePolicyError
+from sictra_block2_design.design_artifact import (
+    DesignArtifactError, compose_content_design, fingerprint, render_designed_review_artifact,
+)
+from sictra_block3_precision.audience_draft import adapt_content_design, validate_profile, AudiencePolicyError
 from .local_worker import LocalIntakeWorker
 from .producer_adapters import Block1DossierPackageAdapter
 from .runtime import FederatedContractError, FederatedOrchestratorStore
@@ -162,7 +164,7 @@ class OperationsService:
             outputs = self.store.latest("OUTPUT")
             work = [(d, p) for d in dossiers for p in profiles.values()]
             outcome = []
-            cursor = self.store.latest("CURSOR").get("drafts", {}).get("position", 0)
+            cursor = self.store.latest("CURSOR").get("designs", {}).get("position", 0)
             if work:
                 cursor %= len(work)
                 batch = (work[cursor:] + work[:cursor])[:max_cases]
@@ -178,29 +180,31 @@ class OperationsService:
                         validate_profile(profile, now=int(current.timestamp()))
                         package = self.exporter.export(dossier["dossier_id"], now=current)
                         self.cases.ingest(package, now=current)
-                        draft = compose_research_draft(dossier, package)
+                        design = compose_content_design(dossier, package)
                         if self.store.latest("ENV").get("data", {}).get("class") == "SYNTHETIC_PILOT":
-                            draft["title"] = "PRUEBA SINTÉTICA · " + draft["title"]
-                            draft["lead"] = "Datos de prueba generados localmente; no representan una publicación real de Eurostat. " + draft["lead"]
-                            draft["fingerprint"] = fingerprint({k: v for k, v in draft.items() if k != "fingerprint"})
-                        adaptation = adapt_research_draft(draft, profile, now=int(current.timestamp()))
-                        html, plain = render_research_brief(draft, adaptation)
+                            design["title"] = "PRUEBA SINTÉTICA · " + design["title"]
+                            design["content_blocks"][0]["body"] = (
+                                "Datos de prueba generados localmente; no representan una publicación real de Eurostat. "
+                                + design["content_blocks"][0]["body"])
+                            design["fingerprint"] = fingerprint({k: v for k, v in design.items() if k != "fingerprint"})
+                        adaptation = adapt_content_design(design, profile, now=int(current.timestamp()))
+                        html, plain = render_designed_review_artifact(design, adaptation)
                         # Recheck mutable source controls before committing a completed artifact.
                         if self.exporter.export(dossier["dossier_id"], now=datetime.fromtimestamp(self.clock(), timezone.utc)) != package:
                             raise OperationsError("SOURCE_CHANGED_DURING_EXECUTION")
                         value = {"id": identity, "created_at": int(self.clock()), "case_id": package["case_id"],
-                            "dossier_id": dossier["dossier_id"], "profile": profile, "draft": draft,
+                            "dossier_id": dossier["dossier_id"], "profile": profile, "design_artifact": design,
                             "adaptation": adaptation, "html": html, "plain_text": plain,
                             "html_sha256": sha256(html.encode()).hexdigest(),
-                            "state": "RESEARCH_NEEDED", "review": "HUMAN_REVIEW_REQUIRED",
-                            "stages": ["BLOCK1_DOSSIER_VERIFIED", "BLOCK2_SOURCE_DRAFT", "BLOCK3_AUDIENCE_ADAPTATION"],
+                            "state": "DESIGN_REVIEW_REQUIRED", "review": "HUMAN_REVIEW_REQUIRED",
+                            "stages": ["BLOCK1_DOSSIER_VERIFIED", "BLOCK2_CONTENT_DESIGN", "BLOCK3_AUDIENCE_ADAPTATION"],
                             "publication": "BLOCKED", "delivery": "NONE"}
                         self.store.put("OUTPUT", identity, value, immutable=True)
-                        outcome.append({"id": identity, "state": "DRAFT_READY_FOR_REVIEW"})
-                    except (FederatedContractError, AudiencePolicyError) as error:
+                        outcome.append({"id": identity, "state": "DESIGN_READY_FOR_REVIEW"})
+                    except (FederatedContractError, DesignArtifactError, AudiencePolicyError) as error:
                         self.store.put("WAIT", identity, {"dossier_id": dossier["dossier_id"], "reason": str(error)})
                         outcome.append({"id": identity, "state": "WAITING", "reason": str(error)})
-                self.store.put("CURSOR", "drafts", {"position": (cursor + len(batch)) % len(work)})
+                self.store.put("CURSOR", "designs", {"position": (cursor + len(batch)) % len(work)})
             self.last_cycle, self.last_error = int(self.clock()), None
             return {"state": "RUNNING", "intake": intake_result[-1]["state"], "outcomes": outcome}
 
@@ -208,12 +212,17 @@ class OperationsService:
         value = self.store.latest("OUTPUT").get(identity)
         if value is None:
             raise OperationsError("OUTPUT_NOT_FOUND")
+        # Older source-to-draft records do not satisfy the current Block 2
+        # contract.  Refuse them explicitly instead of rendering a partially
+        # compatible artifact under the new design boundary.
+        if "design_artifact" not in value:
+            raise OperationsError("LEGACY_OUTPUT_REQUIRES_MIGRATION")
         now = int(self.clock())
         validate_profile(value["profile"], now=now)
         if self.store.latest("PROFILE").get(value["profile"]["id"]) != value["profile"]:
             raise OperationsError("PROFILE_SUPERSEDED")
         package = self.exporter.export(value["dossier_id"], now=datetime.fromtimestamp(now, timezone.utc))
-        if package["source_hash"] != value["draft"]["source_hash"]:
+        if package["source_hash"] != value["design_artifact"]["source_hash"]:
             raise OperationsError("SOURCE_SUPERSEDED")
         return value
 
@@ -227,7 +236,7 @@ class OperationsService:
                 try:
                     self.output(identity)
                     availability = "CURRENT"
-                except (OperationsError, FederatedContractError, AudiencePolicyError):
+                except (OperationsError, FederatedContractError, DesignArtifactError, AudiencePolicyError):
                     availability = "STALE_OR_REVOKED"
                 summaries.append({"id": identity, "title": value["adaptation"]["heading"],
                     "profile": value["profile"]["label"], "case_id": value["case_id"],
@@ -242,7 +251,7 @@ class OperationsService:
                     "waiting": [v for k, v in self.store.latest("WAIT").items() if k not in done],
                     "scope": "LABORATORY_INTERNAL_SUPERVISED", "publication": "BLOCKED",
                     "data_class": self.store.latest("ENV").get("data", {}).get("class", "OPERATOR_SUPPLIED_FILES"),
-                    "generator": "LOCAL_SOURCE_TEMPLATE_V1"}
+                    "generator": "LOCAL_CONTENT_DESIGN_V1"}
 
     def serve_loop(self, interval=5):
         if type(interval) is not int or not 1 <= interval <= 60:

@@ -2,12 +2,16 @@
 
 ## Servicio operativo local
 
-Ejecuta `start_telecare.cmd` para abrir el servicio de investigación y borradores
-en Orchestrator. Permite registrar archivos aprobados, configurar perfiles
-editoriales, vigilar una carpeta local, leer los borradores y pausar el worker.
+Ejecuta `start_telecare.cmd` para abrir el servicio de investigación, diseño y
+adaptación editorial en Orchestrator. Permite registrar archivos aprobados,
+configurar perfiles editoriales, vigilar una carpeta local, leer los artefactos
+de diseño y pausar el worker.
 Consulta [la guía operativa](docs/telecare_operations_runbook.md) para arranque,
 prueba completa, recuperación y límites. El contenido de este recorrido se
-construye desde el dossier; las consolas de referencia conservan sus propias
+demostraciones y no acreditan automáticamente esa nueva salida.
+construye desde el dossier: Bloque 2 produce una jerarquía y componentes de
+diseño; Bloque 3 sólo adapta su presentación. Las consolas de referencia
+conservan sus propias demostraciones y no acreditan automáticamente esa salida.
 demostraciones y no acreditan automáticamente esa nueva salida.
 
 This repository hosts versioned implementation artifacts for Telecare OS. Its
