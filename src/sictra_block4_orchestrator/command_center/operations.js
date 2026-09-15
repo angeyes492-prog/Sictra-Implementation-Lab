@@ -3,9 +3,11 @@
   const $ = id => document.getElementById(id);
   let token = "", loading = false, previewId = null, posting = false, lastStatus = null;
   let requestedArtifact=new URLSearchParams(location.search).get('artifact');
-  function openPreview(id) {
+  function openPreview(id, factsheet=false) {
     previewId=id; $('operations-preview').hidden=false;
-    $('draft-frame').src='/api/operations/outputs/'+encodeURIComponent(id)+'/html';
+    $('draft-frame').src='/api/operations/outputs/'+encodeURIComponent(id)+(factsheet?'/factsheet':'/html');
+    $('preview-title').textContent=factsheet?'Ficha de trazabilidad':'Boletín de revisión diseñado';
+    $('draft-factsheet').href='/api/operations/outputs/'+encodeURIComponent(id)+'/factsheet.json';
     $('draft-text').href='/api/operations/outputs/'+encodeURIComponent(id)+'/text';
   }
   function controls() {
@@ -19,6 +21,7 @@
   function closePreview() {
     previewId=null; $('operations-preview').hidden=true; $('draft-frame').src='about:blank';
     $('draft-text').removeAttribute('href');
+    $('draft-factsheet').removeAttribute('href');
   }
   const labels = {RUNNING:"Servicio activo",PAUSED:"Servicio pausado",STOPPED:"Servicio detenido",ERROR:"Servicio detenido por un error"};
   function profileId(label) {
@@ -64,6 +67,8 @@
           const button = document.createElement('button'); button.type='button'; button.textContent='Abrir boletín';
           button.addEventListener('click',()=>openPreview(item.id));
           article.append(button);
+          const sheetButton=document.createElement('button');sheetButton.type='button';sheetButton.textContent='Ficha de trazabilidad';
+          sheetButton.addEventListener('click',()=>openPreview(item.id,true));article.append(sheetButton);
           const links=document.createElement('div');links.className='artifact-links';
           for(const [port,label] of [[8765,'Dossier'],[8766,'Diseño'],[8767,'Adaptación']]) {
             const link=document.createElement('a');link.textContent=label;

@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/suite.css">
 </head>
-<body class="overview-mode" data-telecare-block="1">
+<body data-telecare-block="1">
   <header class="telecare-global"><a class="global-brand" href="http://127.0.0.1:8768/">Telecare <span>OS</span></a><nav aria-label="Bloques federados"><a href="http://127.0.0.1:8768/">Orchestrator</a><a href="http://127.0.0.1:8765/" aria-current="page">Intelligence</a><a href="http://127.0.0.1:8766/">Design</a><a href="http://127.0.0.1:8767/">Precision</a></nav><span class="global-scope">Local supervisado</span></header>
   <a class="skip-link" href="#workspace">Saltar al contenido</a>
   <div class="app-shell">
@@ -19,11 +19,11 @@
       </div>
       <nav class="rail-nav">
         <p class="nav-group">Operación</p>
-        <button class="nav-item active" data-view="overview" data-view-label="Vista general" data-view-copy="Prioridades, evidencia y trazabilidad del laboratorio."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#home"></use></svg><b>Vista general</b><small>Control editorial</small></button>
+        <button class="nav-item" data-view="overview" data-view-label="Vista de pruebas" data-view-copy="Catálogo sintético separado de los dossiers operativos."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#home"></use></svg><b>Vista de pruebas</b><small>Catálogo sintético</small></button>
         <button class="nav-item" data-view="editorial" data-view-label="Revisión humana" data-view-copy="Revisa candidatos o registra abstención; nunca publica."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#review"></use></svg><b>Revisión humana</b><small>Seleccionar o abstenerse</small></button>
         <button class="nav-item" data-view="investigations" data-view-label="Inteligencia" data-view-copy="Formula preguntas locales y consulta sus límites."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#intelligence"></use></svg><b>Inteligencia</b><small>Investigaciones</small></button>
         <button class="nav-item" data-view="evidence" data-view-label="Evidencia" data-view-copy="Consulta la cadena retenida y el estado de cada fuente."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#review"></use></svg><b>Evidencia</b><small>Cadena verificable</small></button>
-        <button class="nav-item" data-view="dossiers" data-view-label="Dossiers" data-view-copy="Lee cambios verificables e interpretación pendiente."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#document"></use></svg><b>Dossiers</b><small>Expedientes</small></button>
+        <button class="nav-item active" aria-current="page" data-view="dossiers" data-view-label="Dossiers" data-view-copy="Lee cambios verificables e interpretación pendiente."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#document"></use></svg><b>Dossiers</b><small>Expedientes operativos</small></button>
         <button class="nav-item" data-view="watchlists" data-view-label="Watchlists" data-view-copy="Compara fuentes en horizontes controlados."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#watch"></use></svg><b>Watchlists</b><small>7 / 30 / 90 días</small></button>
         <p class="nav-group">Herramientas</p>
         <button class="nav-item" data-view="sources" data-view-label="Fuentes" data-view-copy="Evalúa candidatos sin importarlos como evidencia."><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#source"></use></svg><b>Fuentes</b><small>Evaluar candidatos</small></button>
@@ -61,7 +61,7 @@
       <div id="loading" class="loading-state"><span></span>Cargando el tejido de inteligencia…</div>
       <div id="error" class="error-state" role="alert" hidden></div>
 
-      <section class="view active command-center" data-view-panel="overview">
+      <section class="view command-center" data-view-panel="overview">
         <section class="command-hero" aria-labelledby="hero-title">
           <img src="/assets/telecare-hero-port.png" alt="Terminal logística observada desde un centro de operaciones">
           <div class="hero-shade"></div>
@@ -149,7 +149,7 @@
         <div id="evidence-spine"></div>
       </section>
 
-      <section class="view" data-view-panel="dossiers">
+      <section class="view active" data-view-panel="dossiers">
         <div class="view-intro"><div><span class="section-kicker">Paso 03 · Cadena firmada</span><h2>Aquí se almacenan los cambios verificables</h2><p>Un dossier aparece únicamente tras un delta válido. Conserva hechos y límites; interpretación y publicación siguen bloqueadas.</p></div><span id="dossier-reader-state" class="fixture-badge">Comprobando…</span></div>
         <section class="dossier-reader-grid">
           <aside class="panel"><div class="panel-head"><div><span class="section-kicker">Registro durable</span><h2>Expedientes disponibles</h2></div><span id="dossier-count" class="method-code">0</span></div><div id="durable-dossier-list" class="durable-dossier-list"></div></aside>

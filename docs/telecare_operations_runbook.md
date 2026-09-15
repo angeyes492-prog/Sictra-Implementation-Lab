@@ -36,6 +36,14 @@ El comando antiguo `operations backup` sigue siendo sólo del journal operativo.
 
 ## Iniciar y usar
 
+Intelligence abre directamente los dossiers retenidos de la operación. Su
+catálogo sintético queda en «Vista de pruebas». En cada boletín vigente de B4,
+«Ficha de trazabilidad» muestra la fuente normalizada, el perfil, las etapas y
+las revisiones diferidas del mismo dossier. «Descargar ficha JSON» conserva una
+copia con checksum. La vigencia se revalida en cada lectura; una copia antigua
+no certifica la vigencia actual. Las pruebas del software y la revisión
+independiente no son evidencia adjunta a un boletín.
+
 1. Ejecuta `start_telecare.cmd`. El proceso sigue activo al cerrar el navegador.
    Conserva estado y claves en `%LOCALAPPDATA%\TelecareOS\Operations`.
 2. Configura uno o más perfiles en «Configurar el perfil editorial de cliente o

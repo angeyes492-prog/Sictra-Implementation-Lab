@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 
 from .web import CommandCenterHandler, CommandCenterServer
 from .operations_store import OperationsError
+from .factsheet import build_factsheet, render_factsheet
 
 
 class OperationsHandler(CommandCenterHandler):
@@ -31,8 +32,20 @@ class OperationsHandler(CommandCenterHandler):
                            {"status": status["status"], "last_cycle": status["last_cycle"], "scope": status["scope"]})
                 return
             suffix = path.removeprefix("/api/operations/outputs/").split("/")
-            if len(suffix) != 2 or suffix[1] not in {"html", "text", "json"}:
+            if len(suffix) != 2 or suffix[1] not in {"html", "text", "json", "factsheet", "factsheet.json"}:
                 self._json(HTTPStatus.NOT_FOUND, {"error": "OUTPUT_ROUTE_INVALID"})
+                return
+            if suffix[1] in {"factsheet", "factsheet.json"}:
+                sheet = build_factsheet(service, suffix[0])
+                is_json = suffix[1] == 'factsheet.json'
+                body = (json.dumps(sheet, ensure_ascii=False, indent=2) if is_json else render_factsheet(sheet)).encode()
+                self.send_response(HTTPStatus.OK)
+                self.send_header('Content-Type', ('application/json' if is_json else 'text/html') + '; charset=utf-8')
+                self.send_header('Content-Length', str(len(body)))
+                if is_json:
+                    self.send_header('Content-Disposition', 'attachment; filename="telecare-' + suffix[0] + '.json"')
+                self.send_header('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'; sandbox")
+                self._headers(); self.end_headers(); self.wfile.write(body)
                 return
             output = service.output(suffix[0])
             if suffix[1] == "json":
