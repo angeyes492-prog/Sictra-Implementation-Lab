@@ -42,11 +42,19 @@ from .operator_pipeline import OperatorPipelineViolation, load_operator_pipeline
 
 UI_SCOPE = "BLOCK1_LOCAL_INTELLIGENCE_PRODUCT_UI"
 _WEB_ROOT = Path(__file__).with_name("web")
+from sictra.console_assets import CONSOLE_ASSETS
+
 _STATIC_FILES = {
+    **CONSOLE_ASSETS,
     "/": ("index.html", "text/html; charset=utf-8"),
     "/app.css": ("app.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/brand-mark.png": ("brand-mark.png", "image/png"),
+    "/assets/telecare-hero-port.png": ("assets/telecare-hero-port.png", "image/png"),
+    "/assets/evidence-documents.png": ("assets/evidence-documents.png", "image/png"),
+    "/assets/evidence-inspection.png": ("assets/evidence-inspection.png", "image/png"),
+    "/assets/evidence-traceability.png": ("assets/evidence-traceability.png", "image/png"),
+    "/assets/human-review.png": ("assets/human-review.png", "image/png"),
 }
 _MAX_REJECTED_PAYLOAD_BYTES = 65_536
 _MAX_EDITORIAL_PAYLOAD_BYTES = 4_096

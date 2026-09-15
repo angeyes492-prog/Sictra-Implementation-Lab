@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>Telecare OS · Orchestrator</title><link rel="stylesheet" href="/app.css"><link rel="stylesheet" href="/operations.css"><link rel="stylesheet" href="/suite.css"></head>
+<body data-telecare-block="4">
+<a class="skip" href="#main">Saltar al contenido</a>
+<aside class="rail telecare-rail">
+  <a class="brand suite-brand" href="/"><span><strong>Telecare <em>OS</em></strong><small>Orquestador · Command Center</small></span></a>
+  <p class="rail-label">Espacio de trabajo</p>
+  <nav aria-label="Bloques federados">
+    <a href="http://127.0.0.1:8765/"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#intelligence"></use></svg><span>Intelligence<small>Fuentes y dossiers</small></span></a>
+    <a href="http://127.0.0.1:8766/"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#design"></use></svg><span>Design<small>Dirección y artefactos</small></span></a>
+    <a href="http://127.0.0.1:8767/"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#precision"></use></svg><span>Precision<small>Cuentas y señales</small></span></a>
+    <a class="active" aria-current="page" href="/"><svg class="suite-icon" aria-hidden="true" focusable="false"><use href="/suite-icons.svg#orchestrator"></use></svg><span>Orchestrator<small>Supervisión de casos</small></span></a>
+  </nav>
+  <footer><span class="rail-label">Entorno de laboratorio</span><p>Paquetes locales controlados.<br>Revisión humana al final de la ruta.</p><span id="runtime-state" role="status">Conectando…</span></footer>
+</aside>
+<main id="main" tabindex="-1" aria-busy="true">
+  <header class="command-bar"><div><p class="eyebrow">Centro de supervisión</p><h1>Orchestrator</h1></div><div class="toolbar"><span class="scope">Local supervisado</span><button id="refresh" type="button">Actualizar casos</button></div></header>
+  <section class="mission" aria-labelledby="mission-title"><div><p class="eyebrow">De la evidencia a la revisión</p><h2 id="mission-title">Cada caso, su recorrido.<br><em>Cada decisión, su contexto.</em></h2><p>Consulta dónde se detuvo la ruta, recupera su historial y prepara la revisión con sus límites a la vista.</p></div><div class="mission-note"><span>Frontera de esta versión</span><strong>Coordinación local</strong><p>Los recibos de Bloques 2 y 3 no demuestran ejecución de sus consolas. La aprobación se registra fuera de esta interfaz.</p></div></section>
+  <div id="error" class="recovery" role="alert" hidden><strong>No se pudo verificar la lectura.</strong><p>Se descartaron los resultados anteriores. Comprueba el servicio local y vuelve a intentar.</p><button id="retry" type="button">Reintentar lectura</button></div>
+  <p id="refresh-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+  <section class="panel operations-panel" aria-labelledby="operations-title">
+    <div class="panel-head"><div><p class="eyebrow">Investigación → diseño → audiencia</p><h2 id="operations-title">Trabajo autónomo local</h2></div><div class="toolbar"><button type="button" data-operation="execute" disabled>Ejecutar ciclo completo</button><button type="button" data-operation="pause" disabled>Pausar</button><button type="button" data-operation="resume" disabled>Reanudar</button><button type="button" data-operation="stop" disabled>Detener</button></div></div>
+    <p id="operations-status" role="status">Conectando el servicio…</p><p id="operations-profiles"></p><p id="operations-watch"></p><p id="operations-orchestration"></p><div class="toolbar"><button type="button" data-operation="watch" disabled>Vigilar carpeta local</button><button type="button" data-operation="unwatch" disabled>Desactivar vigilancia</button></div><div id="operations-recovery"></div>
+    <p>«Ejecutar ciclo completo» activa la vigilancia de fuentes locales aprobadas y ejecuta Bloque 1, Bloque 2 y Bloque 3 desde este panel. Cada cambio genera un boletín de revisión adaptado a perfiles declarados; causas, impacto comercial y publicación quedan bloqueados para revisión humana.</p>
+    <details><summary>Registrar una versión de la fuente aprobada</summary>
+      <form id="operations-intake" class="filters"><label>Archivo marítimo Eurostat autorizado<input id="intake-file" type="file" accept=".xlsx" required></label><label>Nivel geográfico<select id="intake-geo"><option value="COUNTRY">País</option><option value="NUTS1">NUTS1</option><option value="NUTS2">NUTS2</option></select></label><button id="intake-submit" type="submit">Registrar archivo para procesar</button></form>
+      <p>La primera versión establece una base. Una versión distinta genera un dossier con los cambios; el archivo se conserva localmente y se comprueba antes de procesarlo.</p>
+    </details>
+    <details><summary>Configurar el perfil editorial de cliente o segmento</summary>
+      <form id="operations-profile" class="filters"><label>Cliente o segmento autorizado<input id="profile-label" maxlength="150" placeholder="Equipo de operaciones" required></label><label>Función editorial<input id="profile-role" maxlength="150" placeholder="Análisis de operaciones logísticas" required></label><label>Profundidad<select id="profile-depth"><option value="BRIEF">Resumen breve</option><option value="DETAILED">Detalle completo</option></select></label><label>Tono<select id="profile-tone"><option value="EXECUTIVE">Ejecutivo</option><option value="TECHNICAL">Técnico</option></select></label><label>Países (códigos separados por coma; vacío = todos)<input id="profile-geo" maxlength="150" placeholder="BE, ES"></label><button type="submit">Guardar perfil por 90 días</button></form>
+      <p>Describe un cliente o segmento autorizado sin datos personales. No lee CRM, no infiere intención y no acredita hechos de una empresa.</p>
+    </details>
+    <p id="operations-feedback" role="status" aria-live="polite"></p><p id="operations-wait"></p>
+    <div id="operations-outputs" class="case-list"></div>
+    <div id="operations-preview" hidden><div class="toolbar"><h3>Boletín de revisión diseñado</h3><a id="draft-text" href="#">Leer versión de texto</a><button id="close-preview" type="button">Cerrar lectura</button></div><iframe id="draft-frame" title="Boletín diseñado adaptado con procedencia" sandbox=""></iframe></div>
+  </section>
+  <section class="summary" aria-label="Estado de los casos"><article><span>Registro local</span><b id="case-count">—</b><small>casos disponibles</small></article><article><span>Atención humana</span><b id="review-count">—</b><small>pendientes de revisión</small></article><article><span>Ruta detenida</span><b id="blocked-count">—</b><small>retornos, rechazos o abstenciones</small></article><article><span>Última lectura</span><b id="last-read">—</b><small>hora local de actualización</small></article></section>
+  <section class="panel worker-panel" aria-labelledby="worker-title"><p class="eyebrow">Automatización supervisada</p><h2 id="worker-title">Cola de entrada autorizada</h2><p id="worker-status" role="status">Comprobando configuración…</p><p>Procesa archivos locales registrados por hash. Se detiene ante revisión, pausa o recuperación pendiente; nunca publica.</p><ul id="worker-jobs"></ul></section>
+  <section class="grid">
+    <section class="panel queue" aria-labelledby="queue-title"><div class="panel-head"><div><p class="eyebrow">Cola de orquestación</p><h2 id="queue-title">Casos y checkpoints</h2></div><span id="result-count" role="status">Cargando…</span></div><div class="filters"><label>Buscar caso o ejecución<input id="search" type="search" placeholder="Identificador del caso…" autocomplete="off"></label><label>Estado<select id="state-filter"><option value="all">Todos los estados</option><option value="review">Revisión humana</option><option value="blocked">Ruta detenida</option><option value="active">En recorrido</option></select></label></div><div id="case-list" class="case-list"></div></section>
+    <section class="panel inspector" aria-labelledby="inspector-title"><p class="eyebrow">Inspector de caso</p><h2 id="inspector-title">Contexto para revisar</h2><div id="case-detail"><p>Selecciona un caso para consultar su estado y procedencia.</p></div></section>
+  </section>
+  <section class="panel audit" aria-labelledby="audit-title"><div class="panel-head"><div><p class="eyebrow">Trazabilidad</p><h2 id="audit-title">Historial del caso</h2></div><span id="audit-status" role="status">Sin selección</span></div><ol id="audit-events" class="timeline"></ol></section>
+  <section class="scope-note"><strong>Alcance de uso</strong><p>La consola consulta evidencia local. No publica, entrega, escribe en CRM ni concede aceptación de producción.</p></section>
+</main><script src="/app.js" defer></script><script src="/operations.js" defer></script>
+</body></html>

@@ -1,8 +1,8 @@
 :root {
-  --navy: #172557;
-  --teal: #20b89a;
-  --mint: #edf8f5;
-  --quiet: #f6f8f8;
+  --navy: #153b48;
+  --teal: #12796f;
+  --mint: #eaf4f1;
+  --quiet: #f2f6f5;
   --ink: #17202a;
   --muted: #66727a;
   --line: #dde7e4;
@@ -21,10 +21,10 @@ button, a { font: inherit; }
 .skip { position: fixed; left: 12px; top: -60px; z-index: 50; padding: 10px; background: #fff; }
 .skip:focus { top: 12px; }
 
-.shell { min-height: 100vh; display: grid; grid-template-columns: 272px minmax(0, 1fr); }
+.shell { min-height: 100vh; display: grid; grid-template-columns: 232px minmax(0, 1fr); }
 .rail { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 22px 16px; background: var(--mint); border-right: 1px solid var(--line); }
 .brand { display: flex; gap: 12px; align-items: center; padding: 0 8px 24px; }
-.brand>b { display: grid; place-items: center; width: 44px; height: 44px; color: #fff; background: var(--navy); border-radius: 12px; font: 700 25px var(--display); }
+.brand>b { display: grid; place-items: center; width: 44px; height: 44px; color: #fff; background: var(--navy); border-radius: 50% 50% 6px 50%; font: 700 25px var(--display); }
 .brand strong, .brand small, .runtime strong, .runtime small { display: block; }
 .brand small, .runtime small { color: var(--muted); }
 
@@ -41,7 +41,7 @@ nav button.active { border-color: var(--line); border-left: 4px solid var(--teal
 .runtime i { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
 .runtime i.online { background: var(--teal); box-shadow: 0 0 0 4px rgba(32, 184, 154, .12); }
 
-main { min-width: 0; padding: 0 40px 60px; }
+main { min-width: 0; padding: 0 34px 48px; background: #f7faf9; }
 .command-bar { min-height: 116px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); }
 h1 { margin: 4px 0 0; color: var(--navy); font: 650 clamp(27px, 4vw, 42px)/1.05 var(--display); }
 h2 { margin: 4px 0 8px; color: var(--navy); font: 650 27px/1.15 var(--display); }
@@ -59,7 +59,7 @@ h2 { margin: 4px 0 8px; color: var(--navy); font: 650 27px/1.15 var(--display); 
 .account-context strong { margin-top: 4px; overflow-wrap: anywhere; color: var(--navy); font: 650 13px var(--mono); }
 
 .view-guidance { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(220px, .8fr); gap: 18px; margin-bottom: 12px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(120deg, #fff 0%, var(--quiet) 100%); }
-.view-guidance h2 { font-size: 23px; }
+.view-guidance h2 { font-size: clamp(25px, 2.8vw, 38px); letter-spacing: -.025em; }
 .view-guidance p { max-width: 720px; margin: 0; color: var(--muted); }
 .view-guidance aside { padding: 15px 16px; border-left: 4px solid var(--teal); border-radius: 10px; background: var(--mint); }
 .view-guidance aside span, .view-guidance aside strong { display: block; }
@@ -84,13 +84,13 @@ h2 { margin: 4px 0 8px; color: var(--navy); font: 650 27px/1.15 var(--display); 
 .intro { max-width: 780px; margin-bottom: 20px; }
 .intro p { margin: 0; color: var(--muted); }
 .grid, .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.card { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(23, 37, 87, .04); }
+.card { min-width: 0; padding: 24px; border: 1px solid var(--line); border-radius: 10px; background: #fff; box-shadow: 0 8px 24px rgba(23, 37, 87, .04); }
 .card span, .card strong, .card small { display: block; }
 .card span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
 .card strong { margin-top: 7px; overflow-wrap: anywhere; color: var(--navy); font: 650 20px var(--display); }
 .card small { margin-top: 5px; color: var(--muted); }
 .card.wide { grid-column: 1/-1; }
-.card ul { padding-left: 20px; }
+.card ul { padding-left: 20px; overflow-wrap: anywhere; }
 .card code { display: block; overflow-wrap: anywhere; color: var(--muted); font: 12px var(--mono); }
 
 .admission { display: grid; grid-template-columns: 220px 1fr; gap: 22px; padding: 24px; border: 1px solid var(--line); border-left: 7px solid var(--amber); border-radius: 14px; }
@@ -116,6 +116,18 @@ dd { margin: 0; overflow-wrap: anywhere; font-family: var(--mono); }
 .card.prohibited { border-left: 5px solid var(--red); }
 .card.integrity { border-left: 5px solid var(--teal); }
 
+.view-guidance { padding: 28px; border-top: 3px solid var(--teal); background: #fff; }
+.account-context { border-radius: 8px; }
+.account-context div { padding: 16px 18px; }
+.account-context div:first-child { background: #edf5f2; }
+.card.wide { display: grid; grid-template-columns: 150px minmax(0, 1fr); column-gap: 22px; }
+.card.wide ul { margin: 0; }
+.card.wide code { grid-column: 2; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.card strong { font-size: 23px; letter-spacing: -.02em; }
+.suite a { min-height: 36px; display: flex; align-items: center; font-size: 13px; }
+.semantic-group { padding: 22px; }
+.semantic-group>header { padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+
 :focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
 
 @media(max-width:1000px) {
@@ -125,11 +137,13 @@ dd { margin: 0; overflow-wrap: anywhere; font-family: var(--mono); }
 
 @media(max-width:760px) {
   .shell { display: block; }
-  .rail { position: sticky; z-index: 5; width: 100%; height: auto; display: block; padding: 10px; overflow-x: auto; }
+  .rail { position: relative; z-index: 5; width: 100%; height: auto; display: block; padding: 10px; overflow-x: auto; }
   .brand { display: none; }
   nav { display: flex; }
   nav button { min-width: 130px; }
-  .suite { display: none; }
+  .suite { display: flex; gap: 16px; overflow-x: auto; padding: 8px; margin-top: 10px; }
+  .suite span { display: none; }
+  .suite a { flex-shrink: 0; min-height: 44px; }
   .runtime { padding: 8px 12px 2px; }
   main { padding: 0 16px 40px; }
   .command-bar { min-height: 92px; }
@@ -140,6 +154,9 @@ dd { margin: 0; overflow-wrap: anywhere; font-family: var(--mono); }
   .route-step { scroll-snap-align: start; }
   .grid, .cards { grid-template-columns: 1fr; }
   .card.wide { grid-column: auto; }
+  .card.wide { display: block; }
+  .card.wide ul { margin-top: 12px; }
+  .command-bar { flex-wrap: wrap; padding-block: 16px; gap: 12px; }
   .admission { grid-template-columns: 1fr; }
   dl { grid-template-columns: 100px 1fr; }
 }

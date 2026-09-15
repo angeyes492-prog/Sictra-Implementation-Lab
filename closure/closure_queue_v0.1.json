@@ -1,0 +1,77 @@
+[
+  {
+    "identifier": "B1-PR6-INDEPENDENT-REVIEW",
+    "title": "Final independent review of integrated Block 1 changes",
+    "state": "HUMAN_REVIEW_REQUIRED",
+    "risk": 5,
+    "dependency_impact": 5,
+    "evidence_gap": 4,
+    "irreversibility": 4,
+    "next_action": "At final handoff, review the integrated final SHA; PR #14 review covers only its original changes.",
+    "evidence": "PR #14 merged 21c9d36 into the historical chain; that head is now incorporated into the unified integration branch. No final review inferred.",
+    "dependencies": []
+  },
+  {
+    "identifier": "B1-PR5-INDEPENDENT-REVIEW",
+    "title": "Reconcile the historical Block 1 PR chain with current main",
+    "state": "DONE",
+    "risk": 5,
+    "dependency_impact": 5,
+    "evidence_gap": 4,
+    "irreversibility": 4,
+    "next_action": "Retain historical PRs and approvals. Use the unified branch based on main for remaining technical integration.",
+    "evidence": "main 4536d1c already contains the earlier Block 1 baseline through PR #12. Four newer commits through 21c9d36 merged locally without conflict.",
+    "dependencies": []
+  },
+  {
+    "identifier": "B4-INTEGRATION-REBASE",
+    "title": "Rebase the federated Orchestrator against the current integration base",
+    "state": "DONE",
+    "risk": 5,
+    "dependency_impact": 5,
+    "evidence_gap": 3,
+    "irreversibility": 3,
+    "next_action": "Validate subsequent changes on their own final SHA.",
+    "evidence": "ac2498e rebased onto main 4536d1c; hosted CI 34735404033 completed success.",
+    "dependencies": []
+  },
+  {
+    "identifier": "SUITE-UI-INTEGRITY",
+    "title": "Detailed consoles, evidence-state integrity and unified interface integration",
+    "state": "DONE",
+    "risk": 5, "dependency_impact": 5, "evidence_gap": 3, "irreversibility": 3,
+    "next_action": "Retain draft PR #15 for final review; validate later changes on their own SHA. DONE denotes this technical increment, not system acceptance.",
+    "evidence": "b8cfb0cb4b585571e63070c5926f0baf3f5e9c23: hosted CI 34780784612 success. Local 719 Python tests, four JS tests, browser checks for Blocks 1-4 and a same-tab 4→1→2→3→4 navigation probe passed.",
+    "dependencies": []
+  },
+  {
+    "identifier": "B4-SIGNED-ADAPTERS",
+    "title": "Real producer adapters with separate evidence and execution receipts",
+    "state": "DONE",
+    "risk": 5, "dependency_impact": 5, "evidence_gap": 5, "irreversibility": 3,
+    "next_action": "Retain activation, dossier-to-precision semantics, post-delivery M08 and shared contract acceptance for final MAR. DONE denotes the bounded technical adapter increment, not production acceptance.",
+    "evidence": "9a3222e78055e0f40bfffd15a34cbfa1119713c9: hosted CI 34782288197 success. The candidate exports a real current Block 1 durable dossier without interpretation, executes Block 2 E01-E08 and Block 3 M01-M07 with a receipt-bound asset, emits only a no-effect SEND_CANDIDATE, and rejects stale/tampered dossier state or unbound assets. Nine focused tests and the full 732-test regression passed. M08 correctly remains downstream of real delivery and observed outcome.",
+    "dependencies": []
+  },
+  {
+    "identifier": "OPS-RECOVERY-IDENTITY",
+    "title": "Recovery, identity, secrets and bounded scheduling for sustained operation",
+    "state": "DONE",
+    "risk": 5, "dependency_impact": 4, "evidence_gap": 5, "irreversibility": 3,
+    "next_action": "Retain external monotonic rollback anchoring, organizational deployment identity and production secret custody for the final architecture decision. DONE denotes bounded local recovery only.",
+    "evidence": "4d724337c7aafde9883ad3edacb42225084fd649: hosted CI 34781859586 success. The candidate worker runs explicit hash-bound files through the real Block 1 pipeline and supports separate-key, short-lived, snapshot-bound recovery receipts plus signed backup verification and non-overwriting restore. Twelve focused tests and the full 730-test regression passed.",
+    "dependencies": []
+  },
+  {
+    "identifier": "B4-MAR-DECISIONS",
+    "title": "Master Architecture Review for cross-block production decisions",
+    "state": "ARCHITECTURE_DECISION_REQUIRED",
+    "risk": 5,
+    "dependency_impact": 5,
+    "evidence_gap": 5,
+    "irreversibility": 5,
+    "next_action": "Architecture authority decides contract ownership, adapters, identity, retention, kill-switch and human receipt rules.",
+    "evidence": "MAR request v0.1 is open; laboratory evidence cannot answer these governance decisions.",
+    "dependencies": ["B4-INTEGRATION-REBASE"]
+  }
+]

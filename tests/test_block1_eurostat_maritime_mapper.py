@@ -1,7 +1,7 @@
 from io import BytesIO
 from xml.sax.saxutils import escape
 import unittest
-from zipfile import ZIP_DEFLATED, ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from sictra_block1 import (
     EurostatMaritimeMappingViolation,
@@ -38,11 +38,21 @@ def workbook(*, unit="Thousand tonnes [THS_T]", last_updated="05/09/2026 06:14",
     ).encode()
     stream = BytesIO()
     with ZipFile(stream, "w", ZIP_DEFLATED) as archive:
-        archive.writestr("xl/worksheets/sheet1.xml", sheet)
+        # Replay fixtures describe identical retained bytes, including ZIP metadata.
+        entry = ZipInfo("xl/worksheets/sheet1.xml", date_time=(2026, 9, 5, 6, 14, 0))
+        entry.compress_type = ZIP_DEFLATED
+        archive.writestr(entry, sheet)
     return stream.getvalue()
 
 
 class EurostatMaritimeMapperTests(unittest.TestCase):
+    def test_fixture_bytes_are_stable_but_changed_observations_are_distinct(self):
+        from unittest.mock import patch
+        with patch("zipfile.time.localtime", side_effect=AssertionError("fixture consulted wall clock")):
+            original = workbook()
+            self.assertEqual(original, workbook())
+            self.assertNotEqual(original, workbook(rows=(("BE", "Belgium", "14", None, "15"),)))
+
     def test_maps_declared_grain_but_never_declares_evidence(self):
         result = map_eurostat_maritime_workbook("eurostat.xlsx", workbook())
         self.assertEqual(result["dataset_code"], "tran_r_mago_nm")

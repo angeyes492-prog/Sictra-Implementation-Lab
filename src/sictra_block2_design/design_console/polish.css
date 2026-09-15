@@ -1,4 +1,44 @@
 /* Balanced operational polish. Domain colors and authority remain in app.css. */
+:root {
+  --navy: #252446; --navy-2: #393859; --cobalt: #5845a2;
+  --teal: #6551aa; --mint: #f0edf8; --quiet: #f5f6fa;
+  --paper: #f4f5f9; --line: #d9dbe7; --muted: #586078;
+  --display: Bahnschrift, "Segoe UI", sans-serif;
+  --mono: Consolas, monospace;
+  --shadow: 0 8px 26px rgba(32, 33, 65, .045);
+}
+.shell { grid-template-columns: 232px minmax(0, 1fr); }
+.product-rail { background: #eef0f7; border-right-color: var(--line); padding-top: 28px; }
+.brand-mark { background: var(--navy); border-radius: 3px 12px 3px 12px; }
+.brand strong { font-family: var(--display); }
+.product-rail nav button.active { color: var(--navy); box-shadow: inset 3px 0 var(--cobalt); }
+.product-rail nav button { cursor: pointer; }
+.suite-links a { min-height: 36px; display: flex; align-items: center; color: var(--navy); }
+.suite-links a:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 3px; }
+main { padding-inline: 30px; }
+.command-bar { min-height: 104px; }
+.command-bar h1 { font-size: clamp(26px, 2.4vw, 35px); line-height: 1.14; }
+.command-meta button { border-radius: 8px; }
+.boundary { border-radius: 8px; }
+.workspace { grid-template-columns: minmax(150px, .65fr) minmax(310px, 1.7fr) minmax(240px, 1fr); gap: 16px; }
+.project-panel, .canvas-panel, .inspector, .lineage-section { border-radius: 12px; overflow: hidden; }
+.stage-list button { min-height: 64px; }
+.stage-code { border-radius: 8px; background: #edeaf7; color: var(--cobalt); font-size: 11px; }
+.canvas { background-size: 28px 28px; background-color: #eceef5; background-image: radial-gradient(#adb7cc 1px, transparent 1px); padding: 28px; }
+.design-page { padding: 28px; border-radius: 2px; box-shadow: 0 16px 34px #25244617; }
+.design-page>header h3 { font-size: 29px; letter-spacing: -.025em; }
+.design-element { border-radius: 4px; }
+.inspector { border-top: 3px solid var(--cobalt); }
+.fact-row span, .edit-form label { font-size: 11px; }
+.fact-row strong { font-size: 13px; }
+.inspector-content { padding: 20px; }
+.panel-title span, .canvas-head span { font-size: 11px; }
+.state-chip { max-width: 100%; overflow-wrap: anywhere; }
+.canvas-head { gap: 14px; flex-wrap: wrap; }
+.lineage-ribbon li { padding: 14px 12px 14px 22px; }
+.lineage-ribbon strong { font-size: 11px; }
+.lineage-ribbon span { font-size: 11px; }
+.history-section { border-radius: 12px; }
 .command-bar {
   border-bottom: 1px solid var(--line);
 }
@@ -21,7 +61,8 @@
 .mode-guidance h2 {
   margin: 4px 0 6px;
   color: var(--navy);
-  font: 650 23px/1.15 var(--display);
+  font: 650 clamp(25px, 2.6vw, 37px)/1.12 var(--display);
+  letter-spacing: -.025em;
 }
 
 .mode-guidance p {
@@ -156,13 +197,36 @@
   border-color: var(--teal);
 }
 
-@media(max-width:1000px) {
+@media(max-width:1120px) {
+  .shell { grid-template-columns: 190px minmax(0, 1fr); }
+  .brand div, .runtime div { display: block; }
+  .product-rail nav button:not(.active) { display: grid; }
+  .product-rail nav button { grid-template-columns: 28px 1fr; text-align: left; }
+  .product-rail nav button>span { grid-row: 1/3; }
+  .workspace { grid-template-columns: 1fr; }
+  .inspector { grid-column: auto; }
+  .inspector-content { display: block; }
+  .project-panel, .inspector { min-height: 0; }
+  .stage-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .suite-links { display: grid; }
   .mode-guidance {
     grid-template-columns: 1fr;
   }
 }
 
 @media(max-width:760px) {
+  .shell { display: block; }
+  main { padding-inline: 16px; }
+  .product-rail { position: relative; display: block; padding: 12px; }
+  .brand { display: none; }
+  .product-rail nav { display: flex; }
+  .product-rail nav button { min-width: 118px; }
+  .suite-links { display: flex; overflow-x: auto; gap: 16px; margin: 10px 0 0; padding: 8px; }
+  .suite-links span { display: none; }
+  .suite-links a { flex-shrink: 0; min-height: 44px; }
+  .command-bar { flex-wrap: wrap; padding-block: 16px; gap: 12px; }
+  .canvas { padding: 14px; }
+  .design-page { padding: 20px; }
   .mode-guidance {
     margin-top: 12px;
     padding: 16px;

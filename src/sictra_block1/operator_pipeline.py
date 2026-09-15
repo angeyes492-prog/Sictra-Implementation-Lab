@@ -62,6 +62,7 @@ _SOURCE_URL = "https://ec.europa.eu/eurostat/databrowser/view/tran_r_mago_nm/def
 _SOURCE_SCOPE = "BLOCK1_EUROPE_MARITIME_INTELLIGENCE"
 _CLAIM = "maritime_freight_weight_thousand_tonnes"
 _EVIDENCE_MAX_AGE = 86_400
+EVIDENCE_MAX_AGE_SECONDS = _EVIDENCE_MAX_AGE
 _BINDING_TTL = 15_552_000
 # The owner approved this narrow data path and its manual-use boundary during
 # the Block 1 source-governance review on 2026-09-06.  The reference is kept in

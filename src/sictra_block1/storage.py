@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import sqlite3
 from threading import RLock
+from time import monotonic, sleep
 from typing import Any, Callable, Mapping
 
 from .common import (
@@ -91,7 +92,7 @@ class OperationalStore:
             self._db.execute("PRAGMA foreign_keys = ON")
             self._initialize_or_verify()
             if self.path != ":memory:":
-                self._db.execute("PRAGMA journal_mode = WAL")
+                self._enable_wal()
                 self._db.execute("PRAGMA synchronous = FULL")
         except Exception:
             self._db.close()
@@ -148,6 +149,23 @@ class OperationalStore:
         self._assert_exact_schema_sql()
         self._assert_metadata()
         self._assert_allowed_schema_objects()
+
+    def _enable_wal(self) -> None:
+        """Retry lock contention while peers change journal mode at cold start.
+
+        SQLite can return BUSY here without invoking its busy handler. The
+        schema has already been validated; non-lock errors still fail closed.
+        """
+        deadline = monotonic() + 30.0
+        while True:
+            try:
+                self._db.execute("PRAGMA journal_mode = WAL")
+                return
+            except sqlite3.OperationalError as error:
+                code = getattr(error, "sqlite_errorcode", 0) & 0xff
+                if code not in {sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED} or monotonic() >= deadline:
+                    raise
+                sleep(0.05)
 
     def _initialize_or_verify(self) -> None:
         """Create an empty store atomically; never mutate a foreign SQLite file."""
