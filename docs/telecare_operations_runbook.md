@@ -4,21 +4,23 @@
 
 1. Ejecuta `start_telecare.cmd`. El proceso sigue activo al cerrar el navegador.
    Conserva estado y claves en `%LOCALAPPDATA%\TelecareOS\Operations`.
-2. En Orchestrator abre «Registrar una versión de la fuente aprobada» y elige
+2. Configura uno o más perfiles en «Configurar el perfil editorial de cliente o
+   segmento». Son perfiles declarados sin datos personales ni conexión CRM.
+3. Pulsa «Ejecutar ciclo completo». La orden deja un recibo local, activa la
+   vigilancia del buzón autorizado y hace que Bloques 1–3 procesen cada fuente
+   estable admitida. Respeta una pausa/STOP existente y no publica ni entrega.
+4. En Orchestrator abre «Registrar una versión de la fuente aprobada» y elige
    un XLSX del conjunto marítimo Eurostat `tran_r_mago_nm`, nivel país/NUTS.
    La primera versión establece la base; registra una segunda versión distinta
    para producir diferencias y un dossier. No se descargan fuentes remotas.
-3. El servicio procesa la entrada y genera un artefacto de diseño basado en el
+5. El servicio procesa la entrada y genera un boletín de revisión basado en el
    dossier: jerarquía de información, componentes para cambios observados,
    preguntas, incertidumbre y procedencia visible. Lee el resultado sin cambiar
-   de pestaña con «Abrir artefacto».
-4. Usa «Configurar el perfil editorial objetivo» para adaptar tono, profundidad
-   y selección geográfica. Es una audiencia genérica declarada, no un registro
-   de personas ni inferencia de intención. El perfil vence a los 90 días.
-5. Opcionalmente activa «Vigilar carpeta local» y deposita XLSX aprobados en la
+   de pestaña con «Abrir boletín».
+6. Opcionalmente deposita XLSX aprobados en la
    ruta que muestra la consola. Se exigen dos lecturas idénticas antes de registrar
    una versión; su hash se revalida al ejecutar. No se recorren otras carpetas.
-6. Si la entrada queda en revisión, los artefactos siguen visibles. El operador
+7. Si la entrada queda en revisión, los boletines siguen visibles. El operador
    puede registrar una abstención para permitir el siguiente archivo. El servicio
    nunca inventa una aprobación de ese dossier ni una recuperación tras fallo.
 

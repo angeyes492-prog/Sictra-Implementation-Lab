@@ -25,6 +25,12 @@ Each arrow is a versioned published language with a downstream anti-corruption
 check. Shared IDs correlate a case but do not make one block's model or authority
 available to another.
 
+The Orchestrator additionally owns a single local `execute` command. It records
+the request, activates the bounded approved-local-source monitor and advances
+the route without bypassing a human pause, STOP, source admission, uncertainty,
+review queue or publication boundary. This is local workflow coordination, not
+permission for external collection, CRM access or delivery.
+
 ## Invariants, failure and recovery
 
 Facts, uncertainty and provenance are immutable across the route. Design can

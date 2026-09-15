@@ -7,6 +7,10 @@
     $('draft-text').removeAttribute('href');
   }
   const labels = {RUNNING:"Servicio activo",PAUSED:"Servicio pausado",STOPPED:"Servicio detenido",ERROR:"Servicio detenido por un error"};
+  function profileId(label) {
+    const normalized=label.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48);
+    return 'audience-'+(normalized || 'segment');
+  }
   async function refresh() {
     if (loading) return;
     loading = true;
@@ -20,6 +24,8 @@
       $('operations-status').textContent = (labels[data.status] || 'Estado desconocido') + (data.data_class === 'SYNTHETIC_PILOT' ? ' · PRUEBA CON DATOS SINTÉTICOS' : '') + (data.last_cycle ? ' · Último ciclo: ' + new Date(data.last_cycle*1000).toLocaleTimeString('es') : '');
       $('operations-profiles').textContent = 'Perfiles: ' + data.profiles.map(p=>p.label).join(' · ');
       $('operations-watch').textContent = (data.watch_enabled ? 'Vigilancia activa: ' : 'Carpeta disponible para vigilancia: ') + data.watch_directory;
+      const run=data.orchestration && data.orchestration.last_run;
+      $('operations-orchestration').textContent = run ? 'Última orden integral: ' + new Date(run.requested_at*1000).toLocaleTimeString('es') + ' · ' + run.cycle.state + ' · publicación bloqueada.' : 'Sin orden integral registrada. Configura una fuente local aprobada y ejecuta el ciclo.';
       $('operations-recovery').replaceChildren();
       for (const job of data.intake_waiting) {
         const row=document.createElement('p'), button=document.createElement('button');
@@ -33,16 +39,16 @@
         const article = document.createElement('article'); article.className='case';
         const content = document.createElement('div'), title = document.createElement('strong'), description = document.createElement('p');
         title.textContent = item.title;
-        description.textContent = item.profile + ' · ' + (item.availability === 'CURRENT' ? 'Artefacto de diseño pendiente de revisión' : 'Fuente o perfil vencido: requiere actualización');
+        description.textContent = item.profile + ' · ' + (item.availability === 'CURRENT' ? 'Boletín diseñado pendiente de revisión' : 'Fuente o perfil vencido: requiere actualización');
         content.append(title, description); article.append(content);
         if (item.availability === 'CURRENT') {
-          const button = document.createElement('button'); button.type='button'; button.textContent='Abrir artefacto';
+          const button = document.createElement('button'); button.type='button'; button.textContent='Abrir boletín';
           button.addEventListener('click',()=>{ previewId=item.id; $('operations-preview').hidden=false; $('draft-frame').src='/api/operations/outputs/'+encodeURIComponent(item.id)+'/html'; $('draft-text').href='/api/operations/outputs/'+encodeURIComponent(item.id)+'/text'; });
           article.append(button);
         }
         $('operations-outputs').append(article);
       }
-      if (!data.outputs.length) $('operations-outputs').textContent='Todavía no hay artefactos. Registra una versión base y después una versión distinta del archivo marítimo autorizado.';
+      if (!data.outputs.length) $('operations-outputs').textContent='Todavía no hay boletines. Registra una versión base y después una versión distinta de la fuente marítima autorizada.';
       $('operations-wait').textContent = data.waiting.map(w=>w.reason).join(' · ');
       for (const button of document.querySelectorAll('[data-operation]')) button.disabled=false;
     } catch (error) {
@@ -57,7 +63,7 @@
     try {
       const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Telecare-Control':token},body:JSON.stringify(value),signal:controller.signal});
       const data=await response.json(); if(!response.ok)throw new Error(data.error || 'Solicitud rechazada.');
-      $('operations-feedback').textContent=data.status==='QUEUED'?'Archivo registrado. El servicio lo procesará en el próximo ciclo.':'Cambio registrado.';
+      $('operations-feedback').textContent=data.status==='QUEUED'?'Archivo registrado. El servicio lo procesará en el próximo ciclo.':data.status==='ORCHESTRATION_EXECUTED'?'Ciclo integral ejecutado. La vigilancia de fuente aprobada quedó activa; las salidas siguen en revisión humana.':'Cambio registrado.';
       await refresh();
     } finally {clearTimeout(timer);}
   }
@@ -76,7 +82,8 @@
   $('operations-profile').addEventListener('submit',async event=>{
     event.preventDefault();
     try {
-      await post('/api/operations/profile',{id:'operator-audience',label:$('profile-label').value,role:$('profile-role').value,depth:$('profile-depth').value,tone:$('profile-tone').value,geo_codes:$('profile-geo').value.split(',').map(x=>x.trim().toUpperCase()).filter(Boolean),questions:[],expires_at:Math.floor(Date.now()/1000)+90*86400});
+      const label=$('profile-label').value.trim();
+      await post('/api/operations/profile',{id:profileId(label),label,role:$('profile-role').value,depth:$('profile-depth').value,tone:$('profile-tone').value,geo_codes:$('profile-geo').value.split(',').map(x=>x.trim().toUpperCase()).filter(Boolean),questions:[],expires_at:Math.floor(Date.now()/1000)+90*86400});
     }catch(error){$('operations-feedback').textContent=error.message;}
   });
   $('close-preview').addEventListener('click',closePreview);

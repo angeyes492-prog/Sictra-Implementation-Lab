@@ -73,18 +73,22 @@ class OperationsHandler(CommandCenterHandler):
             value = json.loads(raw)
             service = self.server.operations
             if path.endswith("/control"):
-                if not isinstance(value, dict) or set(value) != {"action"} or value["action"] not in {"pause", "resume", "stop", "watch", "unwatch"}:
+                if not isinstance(value, dict) or set(value) != {"action"} or value["action"] not in {"execute", "pause", "resume", "stop", "watch", "unwatch"}:
                     raise OperationsError("CONTROL_INVALID")
-                if value["action"] in {"watch", "unwatch"}:
+                if value["action"] == "execute":
+                    result = service.execute_orchestrated_run()
+                elif value["action"] in {"watch", "unwatch"}:
                     service.enable_watch(value["action"] == "watch")
+                    result = {"status": "RECORDED"}
                 elif value["action"] == "stop":
                     (service.root / "STOP").touch()
                     service.stop_event.set()
+                    result = {"status": "RECORDED"}
                 else:
                     if value["action"] == "resume" and service.stop_event.is_set():
                         raise OperationsError("RESTART_SERVICE_REQUIRED")
                     service.set_paused(value["action"] == "pause")
-                result = {"status": "RECORDED"}
+                    result = {"status": "RECORDED"}
             elif path.endswith("/abstain"):
                 if not isinstance(value, dict) or set(value) != {"job_id", "reason"}:
                     raise OperationsError("RECOVERY_REQUEST_INVALID")

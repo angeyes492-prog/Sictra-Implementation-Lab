@@ -62,6 +62,7 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual("NONE", output["delivery"])
         self.assertIn(output["design_artifact"]["evidence_id"], output["plain_text"])
         self.assertEqual("CONTENT_DESIGN_CANDIDATE", output["design_artifact"]["artifact_type"])
+        self.assertEqual("REVIEW_NEWSLETTER", output["design_artifact"]["format"])
         self.assertEqual("EVIDENCE_FIRST", output["design_artifact"]["design_system"]["hierarchy"])
         self.assertIn("UNCERTAINTY", [block["kind"] for block in output["adaptation"]["content_blocks"]])
         self.assertEqual(output, self.service.output(output["id"]))
@@ -221,6 +222,26 @@ class OperationsTests(unittest.TestCase):
         self.service.tick()
         self.assertEqual(1, len(self.service.intake.snapshot()['jobs']))
 
+    def test_single_orchestrator_order_enables_local_collection_and_records_the_route(self):
+        result = self.service.execute_orchestrated_run()
+        self.assertEqual("ORCHESTRATION_EXECUTED", result["status"])
+        self.assertEqual("APPROVED_LOCAL_DROPBOX", result["source_boundary"])
+        self.assertEqual("BLOCKED", result["publication"])
+        self.assertEqual("NONE", result["delivery"])
+        self.assertTrue(self.service.snapshot()["watch_enabled"])
+        self.assertEqual(result["run_id"], self.service.snapshot()["orchestration"]["last_run"]["run_id"])
+        kinds = [record["kind"] for record in self.service.store.records()]
+        self.assertIn("ORCHESTRATION_REQUEST", kinds)
+        self.assertIn("ORCHESTRATION_RESULT", kinds)
+
+    def test_orchestrator_order_preserves_human_pause_and_stop(self):
+        self.service.set_paused(True)
+        self.assertEqual("PAUSED", self.service.execute_orchestrated_run()["status"])
+        self.assertFalse(self.service.snapshot()["watch_enabled"])
+        self.service.set_paused(False)
+        (self.root / "STOP").touch()
+        self.assertEqual("STOPPED", self.service.execute_orchestrated_run()["status"])
+
     def test_watch_over_capacity_fails_explicitly_and_stop_cannot_be_restarted(self):
         for number in range(129):
             (self.root / 'dropbox' / str(number)).touch()
@@ -266,6 +287,10 @@ class OperationsTests(unittest.TestCase):
             self.assertIn(b"12.5", body)
             self.assertEqual(403, request("POST", "/api/operations/control", {"action": "pause"})[0])
             trusted = {"Content-Type": "application/json", "Origin": f"http://127.0.0.1:{server.server_port}", "X-Telecare-Control": token}
+            status, _, body = request("POST", "/api/operations/control", {"action": "execute"}, trusted)
+            self.assertEqual(200, status)
+            self.assertEqual("ORCHESTRATION_EXECUTED", json.loads(body)["status"])
+            self.assertEqual(400, request("POST", "/api/operations/control", {"action": "execute", "extra": True}, trusted)[0])
             self.assertEqual(200, request("POST", "/api/operations/control", {"action": "pause"}, trusted)[0])
             self.assertTrue(self.service.is_paused())
             self.assertEqual(403, request("GET", "/api/operations", headers={"Host": "evil.example"})[0])

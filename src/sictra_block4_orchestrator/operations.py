@@ -115,6 +115,34 @@ class OperationsService:
             raise OperationsError("WATCH_VALUE_INVALID")
         self.store.put("CONTROL", "watch", {"enabled": enabled})
 
+    def execute_orchestrated_run(self):
+        """Start one bounded, fully local source-to-review cycle.
+
+        This is the only orchestrator action that enables the approved local
+        source monitor and advances all four blocks. It does not clear a human
+        pause/stop, fetch a network source, infer a customer, or publish an
+        artifact. Future stable files are picked up by the running worker.
+        """
+        with self.lock:
+            now = int(self.clock())
+            if self.stop_event.is_set() or (self.root / "STOP").exists():
+                self.stop_event.set()
+                return {"status": "STOPPED", "reason": "EXPLICIT_STOP_REQUIRES_RESTART"}
+            if self.is_paused():
+                return {"status": "PAUSED", "reason": "HUMAN_PAUSE_PRESERVED"}
+            run_id = sha256((str(now) + os.urandom(16).hex()).encode()).hexdigest()
+            request = {"run_id": run_id, "requested_at": now,
+                       "source_boundary": "APPROVED_LOCAL_DROPBOX",
+                       "route": ["BLOCK1_INTELLIGENCE", "BLOCK2_DESIGN", "BLOCK3_PRECISION", "BLOCK4_ORCHESTRATOR"],
+                       "publication": "BLOCKED", "delivery": "NONE"}
+            self.store.put("ORCHESTRATION_REQUEST", run_id, request, immutable=True)
+            self.enable_watch(True)
+            cycle = self.tick(max_cases=32)
+            result = {**request, "completed_at": int(self.clock()), "cycle": cycle,
+                      "status": "ORCHESTRATION_EXECUTED"}
+            self.store.put("ORCHESTRATION_RESULT", run_id, result, immutable=True)
+            return result
+
     def scan_inbox(self):
         """Only the configured local dropbox, never arbitrary or remote paths.
 
@@ -248,6 +276,8 @@ class OperationsService:
                     "profile": value["profile"]["label"], "case_id": value["case_id"],
                     "created_at": value["created_at"], "availability": availability, "state": value["state"]})
             done = self.store.latest("OUTPUT")
+            runs = self.store.latest("ORCHESTRATION_RESULT")
+            latest_run = max(runs.values(), key=lambda item: item["requested_at"], default=None)
             return {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
                     "watch_enabled": self.store.latest("CONTROL").get("watch", {}).get("enabled", False),
                     "watch_directory": str(self.root / "dropbox"),
@@ -257,7 +287,9 @@ class OperationsService:
                     "waiting": [v for k, v in self.store.latest("WAIT").items() if k not in done],
                     "scope": "LABORATORY_INTERNAL_SUPERVISED", "publication": "BLOCKED",
                     "data_class": self.store.latest("ENV").get("data", {}).get("class", "OPERATOR_SUPPLIED_FILES"),
-                    "generator": "LOCAL_CONTENT_DESIGN_V1"}
+                    "generator": "LOCAL_CONTENT_DESIGN_V1",
+                    "orchestration": {"source_monitor": "ACTIVE" if self.store.latest("CONTROL").get("watch", {}).get("enabled", False) else "INACTIVE",
+                                      "last_run": latest_run}}
 
     def serve_loop(self, interval=5):
         if type(interval) is not int or not 1 <= interval <= 60:

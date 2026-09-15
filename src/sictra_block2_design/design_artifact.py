@@ -68,6 +68,7 @@ def compose_content_design(dossier: dict, package: dict) -> dict:
     design = {
         "version": 1,
         "artifact_type": "CONTENT_DESIGN_CANDIDATE",
+        "format": "REVIEW_NEWSLETTER",
         "case_id": package["case_id"], "dossier_id": dossier["dossier_id"],
         "title": f"Cambios en carga marítima: {geography}",
         "source_hash": package["source_hash"], "evidence_id": package["evidence_id"],
@@ -117,7 +118,7 @@ def render_designed_review_artifact(design: dict, adaptation: dict) -> tuple[str
             'section{border-top:1px solid #d8e1ea;padding-top:16px;margin-top:18px}'
             'p{white-space:pre-line;overflow-wrap:anywhere}small{color:#526078}'
             '@media(max-width:600px){main{margin:0;padding:20px}}</style></head><body><main>'
-            '<p class="eyebrow">TELECARE OS · ARTEFACTO DE DISEÑO · REVISIÓN PENDIENTE</p>'
+            '<p class="eyebrow">TELECARE OS · BOLETÍN DE REVISIÓN · PENDIENTE HUMANA</p>'
             f'<h1>{escape(heading)}</h1><p>{escape(adaptation["framing"])}</p>'
             + ''.join(f'<section data-block-kind="{escape(block["kind"])}"><h2>{escape(block["title"])}</h2>'
                       f'<p>{escape(block["body"])}</p></section>' for block in blocks)

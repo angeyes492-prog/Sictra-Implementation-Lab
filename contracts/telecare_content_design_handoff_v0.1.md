@@ -17,7 +17,7 @@ semantics.
 
 ## Required fields and invariants
 
-The candidate contains: version, artifact type, case/dossier/source/evidence
+The candidate contains: version, artifact type, `REVIEW_NEWSLETTER` format, case/dossier/source/evidence
 identity, expiry, exact literal source claims, evidence-first design system,
 ordered blocks, status, review/publication/delivery restrictions and a canonical
 fingerprint. An `OBSERVED_CHANGE` block names every source claim it presents.
