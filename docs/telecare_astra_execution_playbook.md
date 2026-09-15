@@ -113,3 +113,81 @@ Ahora comienza: inspecciona, determina el P0 real con evidencia, implementa el s
 ## Regla de continuidad
 
 Al finalizar una sesión, actualiza el ledger o el artefacto de cierre con el SHA, la CI, la prueba ejecutada, la frontera de promoción y el próximo ítem único. La siguiente sesión empieza verificando esa evidencia, no repitiendo un diagnóstico ni suponiendo que una afirmación anterior sigue vigente.
+
+## Handoff verificado para el inicio de Astra — 2026-09-15
+
+Este bloque es una fotografía de arranque, no una promoción de gate. Astra debe
+revalidarlo antes de basar una decisión o un commit en él.
+
+### Identidad y evidencia ejecutada
+
+- Rama y `HEAD` al verificar: `codex/block-interfaces-suite-design` en
+  `42d086811e1cb542afc2685176d7395e463c07a5`
+  (`docs(telecare): specify federated command center`).
+- La CI alojada **SICTrA bounded runtime validation** terminó `success` para
+  ese SHA: [run 34935317401](https://github.com/angeyes492-prog/Sictra-Implementation-Lab/actions/runs/34935317401),
+  creada el `2026-09-15T06:04:09Z` y actualizada el `2026-09-15T06:04:51Z`.
+- Regresión local independiente del mismo checkout: `510` pruebas de
+  `python -m unittest discover -s tests` pasaron en `24.874s`. También
+  pasaron `compileall`, la validación sintáctica de la consola Design y los
+  tres comandos de runtime usados por CI: el manifiesto de contexto B1, el
+  runtime de referencia de ocho motores y el runtime B2 E01–E08.
+- Es evidencia de un checkout local y de fixtures/ejecuciones acotadas. No
+  demuestra datos externos verdaderos, aceptación global, producción ni una
+  revisión independiente.
+
+### Lectura operacional que Astra no debe asumir como cierre
+
+- El manifiesto B1 de contexto terminó `LOCAL_ONLY`, con `0` evidencias
+  independientes admisibles y una contradicción abierta
+  `ASSEMBLY-Open-Contradiction`; por tanto no permite promoción.
+- El runtime operacional B1 recorrió `E01→E02→E03→E05→E06→E07→E08→RUNTIME`
+  y su único efecto observado fue `store_candidate`. La repetición no produjo
+  un efecto nuevo. Esto no autoriza publicación ni aceptación global.
+- El runtime de ocho motores produjo un artefacto local y declaró
+  `NOT_PUBLISHED` y `NOT_ACCEPTED`. Su salida nombra un
+  `MANIFEST-LOCAL-STUB-0.1.0` con un `model_gateway` ejecutado. Antes de
+  afirmar que cumple la prohibición de proveedor de IA, clasifica y prueba que
+  dicho stub es determinista, local y no supone una integración de proveedor
+  en runtime; si no puede demostrarlo, conserva la contradicción y bloquea esa
+  afirmación.
+- El runtime B2 E01–E08 autorizado solamente almacenó un candidato. Sus
+  `non_claims` incluyen gestión de claves de producción, alta disponibilidad,
+  aceptación normativa global y verdad del contenido fuente.
+
+### Integración, cola y conflictos que hay que preservar
+
+- Ningún PR abierto es evidencia de integración. En particular, el
+  Orchestrator federado está en el PR borrador
+  [#15](https://github.com/angeyes492-prog/Sictra-Implementation-Lab/pull/15),
+  rama `codex/block4-main-integration`, SHA
+  `4afdfaf6c4ffa39ebb37509ec536f25a9bf71ac8`, contra `main`; no forma parte
+  del `HEAD` de este handoff.
+- La cadena de B1 también permanece abierta y en borrador: PR
+  [#5](https://github.com/angeyes492-prog/Sictra-Implementation-Lab/pull/5)
+  y su hijo [#6](https://github.com/angeyes492-prog/Sictra-Implementation-Lab/pull/6).
+  La cola registra revisión independiente humana para #6 en
+  `3b693d2fd405d1ce4cd29f5a53e9a8483e106c68`; ningún estado de revisión debe
+  suponerse sin volver a consultar GitHub.
+- `closure/closure_execution_queue_v0.1.md` propone
+  `B4-INTEGRATION-REBASE` como trabajo técnico disponible. La regla vigente
+  de `AGENTS.md` exige primero la secuencia verificable B1 (retención de fuente
+  → watchlist → dossier → E01–E08 → revisión editorial → interfaz → operación
+  reproducible → manifest). Es una tensión de priorización, no una razón para
+  borrar historia: las reglas protegidas prevalecen sobre el ledger. Registra
+  la reconciliación antes de cambiar prioridades o promociones compartidas.
+- Al arrancar existían cambios ajenos sin confirmar: `AGENTS.md` modificado y
+  `.work-block1/` sin seguimiento. Presérvalos, no los incorpores al commit de
+  Astra y no los borres sin una decisión explícita de su propietario.
+
+### Primer ciclo de Astra
+
+1. Confirma la rama, SHA, worktree, CI y la vigencia de este bloque; registra
+   cualquier divergencia en la cola de cierre en vez de sobreescribirla.
+2. Ataca el primer requisito B1 cuya evidencia ejecutable aún no pruebe una
+   fuente aprobada retenida y recuperable con selección controlada, linaje de
+   aprobación, expiración y hash. Añade una prueba positiva y al menos una de
+   recuperación, manipulación, expiración o replay con un oráculo independiente.
+3. Sólo después actualiza la cola con un delta de cierre concreto. No rebase,
+   fusiones ni promociones de B4 cambian por sí mismas el estado de B1 ni
+   convierten un borrador editorial en publicación.
