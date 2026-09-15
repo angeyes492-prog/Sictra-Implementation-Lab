@@ -1,6 +1,6 @@
 # Telecare OS — Command Center federado del Orchestrator
 
-Status: `APPROVED DESIGN / LOCAL CONTROL PLANE IMPLEMENTATION AUTHORIZED`
+Status: `APPROVED DESIGN / IMPLEMENTATION PENDING`
 Date: 2026-09-15
 Owner decision: Block 4 is the Telecare OS home and operational control panel, not a separate product tab.
 
@@ -68,81 +68,11 @@ A card uses this read-only descriptor:
 - Unknown target, stale evidence or malformed identity creates a non-sensitive error with no implicit retry.
 - Visual controls never substitute same-origin or authority checks.
 
-## Local operational control plane
-
-The owner authorized functional controls only inside the existing loopback
-Block 4 runtime. This is a bounded orchestration capability, not authority to
-operate any producer, adapter, destination or external system.
-
-### State model
-
-`RUNNING → PAUSED → RUNNING` and `RUNNING|PAUSED → STOPPED → RUNNING`.
-
-- **RUNNING** permits local bounded processing of an already retained package.
-- **PAUSED** retains the journal and allows its inspection, but rejects a new
-  processing transition or retry.
-- **STOPPED** fails closed for processing and retries until an explicit local
-  operator selects **Start**.
-- Ingestion and journal verification remain available in all three states so
-  evidence is never silently discarded and recovery can be diagnosed.
-
-The state is stored in the same HMAC-attested append-only journal as the case
-events. A restart rehydrates it only after chain verification. A pause, resume,
-stop or start request includes an allowlisted action, bounded reason and unique
-request ID; repeating the identical request is idempotent, while reusing its
-ID for a different request is rejected. The design intentionally does not add
-an approval, publish, delivery, CRM or cross-block command.
-
-### Control interface
-
-`POST /api/controls` accepts only local same-origin JSON actions:
-
-| Action | Preconditions | Effect | Non-claim |
-| --- | --- | --- | --- |
-| `PAUSE` | `RUNNING` | Stops local case progression; records `CONTROL_PAUSED`. | Does not stop any producer or external service. |
-| `RESUME` | `PAUSED` | Restores local progression; records `CONTROL_RESUMED`. | Does not approve queued cases. |
-| `STOP` | `RUNNING` or `PAUSED` | Fails closed for local progression; records `CONTROL_STOPPED`. | Does not delete the journal or cancel external work. |
-| `START` | `STOPPED` | Explicitly re-enables local progression; records `CONTROL_STARTED`. | Does not replay work automatically. |
-| `RETRY_CASE` | Current runtime is `RUNNING`; case is returnable and below retry cap | Reuses the exact stored input fingerprint and records the existing bounded retry. | Does not create a new source claim. |
-| `VERIFY_JOURNAL` | None | Revalidates the HMAC chain without mutation. | Is not recovery, acceptance or external validation. |
-
-An unknown action, malformed payload, hostile origin, request-ID collision,
-unsafe state transition, unavailable journal or prohibited retry must report a
-non-sensitive error and create no downstream effect.
-
 ## Visual direction
 
 Take the reference's qualities, not its literal assets: calm high-information field, compact white cards, deep navy/quiet-slate canvas, turquoise for current activity, amber for review, red for fail-closed state, restrained contextual logistics imagery, 12-column desktop grid and responsive one-column layout.
 
 No remote fonts, remote images, analytics, embedded frames or unbounded dependencies.
-
-### Revised composition
-
-The page becomes an **Evidence Atlas** rather than a logistics simulation. A
-quiet ice-blue field carries a CSS/SVG-like route lattice for the selected
-case: evidence enters at Block 1, passes through bounded receipts for Blocks 2
-and 3, and terminates visibly at the human gate. The lattice is the signature
-element: it reflects actual lineage and stops rather than animating an invented
-flow.
-
-- A slim top bar mirrors the reference's confident control surface: Telecare
-  identity, in-page federation navigation, laboratory boundary and live local
-  control state.
-- The stage pairs the selected case's real route with a compact control deck.
-  The deck exposes only actions admitted in the current state, has an explicit
-  reason, confirmation and a polite live result; dangerous-looking red is
-  reserved for the fail-closed `STOPPED` condition.
-- Four small readouts are computed from the returned journal: registered
-  cases, human-review cases, selected-case route progress and external effects
-  (always explicitly `0 / PROHIBITED` for this scope). They are not goals,
-  performance scores or market metrics.
-- The lower deck joins the case queue, evidence inspector and event timeline.
-  The selected case controls all three; every event names its origin and time.
-- Icy surfaces (`#F2F7FB`), deep navigation blue (`#102A43`), graphite
-  (`#263238`), verified teal (`#087F72`), review amber (`#B7791F`) and
-  fail-closed red (`#B42318`) form the palette. System UI fonts remain local.
-  Motion is limited to a single route-progress transition and respects reduced
-  motion.
 
 ## Failure and recovery
 
@@ -157,6 +87,6 @@ flow.
 
 ## Validation and completion
 
-Test descriptor validation, allowed same-window route, unknown/malformed case rejection, correlation preservation, pause/stop/start/retry state, request replay/collision, restart recovery, hostile origin, keyboard/focus/reduced-motion/forced-colors/CSP, responsive layout and no browser errors. Inspect current, empty, paused, stopped, review-required and fail-closed fixtures.
+Test descriptor validation, allowed same-window route, unknown/malformed case rejection, correlation preservation, pause/stop/recovery state, keyboard/focus/reduced-motion/forced-colors/CSP, responsive layout and no browser errors. Inspect current, empty, stale, review-required and fail-closed fixtures.
 
 The interface is complete when all cards are actionable, block ownership remains explicit, errors/empty states are implemented, tests and visual inspection pass, full regression passes and CI succeeds on the exact SHA. This does not promote Telecare OS to production or prove external autonomy.
