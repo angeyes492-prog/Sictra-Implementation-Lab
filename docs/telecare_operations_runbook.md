@@ -1,5 +1,34 @@
 # Operación local de Telecare OS
 
+## Cierre Astra · 15 septiembre 2026
+
+El lanzador inicia y verifica los cuatro bloques de esta misma instalación.
+Intelligence conecta el pipeline retenido; Design y Precision leen el mismo
+boletín operativo. Sus herramientas de motores sintéticos permanecen separadas.
+Un puerto con otra versión produce un error explícito, no abre la UI antigua.
+Opciones PowerShell: `-StatePath`, `-IntakeStore`, `-DesignTrace`, `-NoBrowser`.
+Las rutas personalizadas mantienen datos anteriores; no se borran ni migran.
+
+En «Revisiones diferidas», activa el modo autorizado por el propietario para
+cerrar entradas válidas por abstención y permitir ciclos sucesivos. Los datos
+pendientes quedan para después; nunca se marcan verificados. Puedes volver a
+esperar revisión por entrada. Integridad, errores, expiración, pausa y STOP
+siguen bloqueando. Sin archivo aprobado hay una espera útil, no datos inventados.
+
+Para recuperación integral local, detén todos los escritores y conserva
+separadamente `keys` y `pipeline/keys`. El archivo de datos no contiene claves:
+
+```powershell
+python -m sictra_block4_orchestrator.laboratory_recovery backup --state RUTA_ESTADO --archive CARPETA_NUEVA_EXTERNA
+python -m sictra_block4_orchestrator.laboratory_recovery restore --state RUTA_ORIGINAL_INEXISTENTE --archive CARPETA_RESPALDO --key-source COPIA_ESTADO_CON_CLAVES
+```
+
+Restaura sólo a la ruta original, nunca sobre datos existentes. Conserva primero
+la carpeta averiada en otra ubicación; no la borres. La recuperación inicia
+pausada y no publica. Una recuperación incompleta conserva STOP. Datos externos
+a RUTA_ESTADO, custodia cifrada y ancla anti-rollback requieren su propio respaldo.
+El comando antiguo `operations backup` sigue siendo sólo del journal operativo.
+
 ## Iniciar y usar
 
 1. Ejecuta `start_telecare.cmd`. El proceso sigue activo al cerrar el navegador.

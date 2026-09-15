@@ -36,11 +36,19 @@ class ConsoleSuiteNavigationTests(unittest.TestCase):
                 parser = NavigationParser()
                 parser.feed((root / folder / "index.html").read_text(encoding="utf-8"))
                 links = [a for a in parser.links if a.get("href", "").startswith("http://127.0.0.1:876")]
-                self.assertEqual(3, len(links))
+                expected = {f"http://127.0.0.1:{port}/" for port in range(8765, 8769)}
+                if folder.endswith('command_center'):
+                    expected.remove('http://127.0.0.1:8768/')  # same-origin / is active
+                self.assertEqual(expected, {a['href'] for a in links})
+                active = [a for a in parser.links if a.get('aria-current') == 'page']
+                self.assertEqual(1, len(active))
+                self.assertEqual('/' if folder.endswith('command_center') else
+                    f"http://127.0.0.1:{8765+files.index(folder)}/", active[0]['href'])
                 for link in links:
                     self.assertIn(link.get("target", "_self"), ("_self", ""))
                     self.assertNotIn("onclick", link)
-                self.assertEqual("/suite.css", parser.styles[-1])
+                self.assertEqual('/command.css' if folder.endswith('command_center') else '/suite.css', parser.styles[-1])
+                self.assertIn('/suite.css', parser.styles)
                 self.assertGreaterEqual(len(parser.icons), 3)
                 self.assertTrue(all(value.startswith("/suite-icons.svg#") for value in parser.icons))
 

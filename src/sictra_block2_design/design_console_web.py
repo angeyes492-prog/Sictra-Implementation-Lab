@@ -126,6 +126,13 @@ class DesignConsoleHandler(BaseHTTPRequestHandler):
         if not self._guard_local_request():
             return
         path = urlsplit(self.path).path
+        if path == "/api/review-artifacts":
+            from sictra_block4_orchestrator.review_projection import review_projection
+            try:
+                self._send_json(HTTPStatus.OK, review_projection(getattr(self.server, 'operations_state', None), 2))
+            except Exception:
+                self._send_json(HTTPStatus.CONFLICT, {"error": "Los artefactos no superaron la verificación local."})
+            return
         if path == "/health":
             self._send_json(HTTPStatus.OK, {
                 "status": "ok", "scope": UI_SCOPE, "project_id": self.server.project_id,
@@ -348,11 +355,13 @@ def main() -> int:
     parser.add_argument("--project-id", default="PROJECT-DEMO")
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--bootstrap-demo", action="store_true")
+    parser.add_argument("--operations-state", type=Path)
     parser.add_argument("--open", action="store_true")
     args = parser.parse_args()
     if args.bootstrap_demo:
         bootstrap_demo(args.trace_db, project_id=args.project_id)
     server = create_server(args.trace_db, args.project_id, port=args.port)
+    server.operations_state = args.operations_state
     address = f"http://127.0.0.1:{server.server_port}/"
     print(f"Design Console disponible en {address}")
     if args.open:

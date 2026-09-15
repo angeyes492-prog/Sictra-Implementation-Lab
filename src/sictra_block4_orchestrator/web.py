@@ -26,6 +26,9 @@ STATIC = {
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/operations.js": ("operations.js", "text/javascript; charset=utf-8"),
     "/operations.css": ("operations.css", "text/css; charset=utf-8"),
+    "/command.css": ("command.css", "text/css; charset=utf-8"),
+    "/command.js": ("command.js", "text/javascript; charset=utf-8"),
+    "/command-scene.png": ("command-scene.png", "image/png"),
 }
 
 
@@ -106,6 +109,8 @@ class CommandCenterHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, {"case_id": case_id, "events": self.server.store.audit_events(case_id)}); return
             if self._static(path): return
             self._json(HTTPStatus.NOT_FOUND, {"error": "Ruta no disponible."})
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return
         except FederatedContractError as error:
             self._json(HTTPStatus.CONFLICT, {"error": str(error)})
         except Exception:

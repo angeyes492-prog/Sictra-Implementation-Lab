@@ -1,7 +1,21 @@
 "use strict";
 (() => {
   const $ = id => document.getElementById(id);
-  let token = "", loading = false, previewId = null;
+  let token = "", loading = false, previewId = null, posting = false, lastStatus = null;
+  let requestedArtifact=new URLSearchParams(location.search).get('artifact');
+  function openPreview(id) {
+    previewId=id; $('operations-preview').hidden=false;
+    $('draft-frame').src='/api/operations/outputs/'+encodeURIComponent(id)+'/html';
+    $('draft-text').href='/api/operations/outputs/'+encodeURIComponent(id)+'/text';
+  }
+  function controls() {
+    for (const button of document.querySelectorAll('[data-operation]')) {
+      const action=button.dataset.operation;
+      button.disabled=!token || posting || (['execute','resume'].includes(action) && ['STOPPED','ERROR'].includes(lastStatus))
+        || (action==='execute' && lastStatus!=='RUNNING')
+        || (action==='pause' && lastStatus!=='RUNNING') || (action==='resume' && lastStatus!=='PAUSED');
+    }
+  }
   function closePreview() {
     previewId=null; $('operations-preview').hidden=true; $('draft-frame').src='about:blank';
     $('draft-text').removeAttribute('href');
@@ -18,8 +32,13 @@
     try {
       const response = await fetch('/api/operations', {signal:controller.signal});
       if (!response.ok) throw new Error('Servicio operativo no disponible. Inicia start_telecare.cmd.');
-      const data = await response.json();
+      const data = validateOperations(await response.json());
       token = data.control_token;
+      lastStatus=data.status;
+      $('review-policy-status').textContent=data.evidence_review_deferred ? 'Revisión de evidencia diferida · la construcción y los ciclos locales continúan.' : 'Cada cambio espera revisión de evidencia.';
+      $('deferred-reviews').replaceChildren();
+      for(const item of data.deferred_reviews || []) {const row=document.createElement('li');row.textContent=item.dossier_id+' · Cerrado por abstención · evidencia pendiente · no aceptado';$('deferred-reviews').append(row);}
+      document.dispatchEvent(new CustomEvent('telecare:operations',{detail:data}));
       if (previewId && !data.outputs.some(item=>item.id===previewId && item.availability==='CURRENT')) closePreview();
       $('operations-status').textContent = (labels[data.status] || 'Estado desconocido') + (data.data_class === 'SYNTHETIC_PILOT' ? ' · PRUEBA CON DATOS SINTÉTICOS' : '') + (data.last_cycle ? ' · Último ciclo: ' + new Date(data.last_cycle*1000).toLocaleTimeString('es') : '');
       $('operations-profiles').textContent = 'Perfiles: ' + data.profiles.map(p=>p.label).join(' · ');
@@ -43,29 +62,42 @@
         content.append(title, description); article.append(content);
         if (item.availability === 'CURRENT') {
           const button = document.createElement('button'); button.type='button'; button.textContent='Abrir boletín';
-          button.addEventListener('click',()=>{ previewId=item.id; $('operations-preview').hidden=false; $('draft-frame').src='/api/operations/outputs/'+encodeURIComponent(item.id)+'/html'; $('draft-text').href='/api/operations/outputs/'+encodeURIComponent(item.id)+'/text'; });
+          button.addEventListener('click',()=>openPreview(item.id));
           article.append(button);
+          const links=document.createElement('div');links.className='artifact-links';
+          for(const [port,label] of [[8765,'Dossier'],[8766,'Diseño'],[8767,'Adaptación']]) {
+            const link=document.createElement('a');link.textContent=label;
+            link.href='http://127.0.0.1:'+port+'/?artifact='+encodeURIComponent(item.id)+'&dossier='+encodeURIComponent(item.dossier_id || '');links.append(link);
+          }
+          article.append(links);
         }
         $('operations-outputs').append(article);
       }
       if (!data.outputs.length) $('operations-outputs').textContent='Todavía no hay boletines. Registra una versión base y después una versión distinta de la fuente marítima autorizada.';
+      if(requestedArtifact){const match=data.outputs.find(item=>item.id===requestedArtifact&&item.availability==='CURRENT');if(match)openPreview(match.id);else $('operations-feedback').textContent='El boletín solicitado no está vigente o no pertenece a esta cadena. No se sustituyó por otro.';requestedArtifact=null;}
       $('operations-wait').textContent = data.waiting.map(w=>w.reason).join(' · ');
-      for (const button of document.querySelectorAll('[data-operation]')) button.disabled=false;
+      controls();
     } catch (error) {
       token=''; $('operations-status').textContent=error.message; $('operations-outputs').replaceChildren();
       closePreview();
+      document.dispatchEvent(new CustomEvent('telecare:operations',{detail:null}));
+      for(const id of ['operations-profiles','operations-watch','operations-orchestration','operations-wait','review-policy-status']) $(id).textContent='';
+      $('deferred-reviews').replaceChildren();
+      $('operations-recovery').replaceChildren();
       for (const button of document.querySelectorAll('[data-operation]')) button.disabled=true;
     } finally {clearTimeout(timer); loading=false;}
   }
   async function post(path, value) {
     if (!token) throw new Error('Servicio no disponible.');
+    if (posting) return;
+    posting=true;controls();
     const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),15000);
     try {
       const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Telecare-Control':token},body:JSON.stringify(value),signal:controller.signal});
       const data=await response.json(); if(!response.ok)throw new Error(data.error || 'Solicitud rechazada.');
-      $('operations-feedback').textContent=data.status==='QUEUED'?'Archivo registrado. El servicio lo procesará en el próximo ciclo.':data.status==='ORCHESTRATION_EXECUTED'?'Ciclo integral ejecutado. La vigilancia de fuente aprobada quedó activa; las salidas siguen en revisión humana.':'Cambio registrado.';
+      $('operations-feedback').textContent=data.status==='QUEUED'?'Archivo registrado. El servicio lo procesará en el próximo ciclo.':data.status==='ORCHESTRATION_EXECUTED'?'Ciclo integral ejecutado. La vigilancia de fuente aprobada quedó activa; las salidas siguen en revisión humana.':data.status==='PAUSED'?'El servicio está pausado. Reanúdalo antes de ejecutar.':data.status==='STOPPED'?'Servicio detenido. Se requiere reinicio explícito; no se ejecutó un ciclo.':'Cambio registrado.';
       await refresh();
-    } finally {clearTimeout(timer);}
+    } finally {clearTimeout(timer);posting=false;controls();}
   }
   document.querySelectorAll('[data-operation]').forEach(button=>button.addEventListener('click',()=>post('/api/operations/control',{action:button.dataset.operation}).catch(error=>$('operations-feedback').textContent=error.message)));
   $('operations-intake').addEventListener('submit',async event=>{

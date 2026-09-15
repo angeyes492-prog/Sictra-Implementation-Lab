@@ -46,6 +46,8 @@ class OperationsHandler(CommandCenterHandler):
             self._headers()
             self.end_headers()
             self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return  # Browser cancelled the read; never send a second response.
         except Exception:
             self._json(HTTPStatus.CONFLICT, {"error": "No se pudo verificar la vigencia o integridad del resultado."})
 
@@ -73,10 +75,13 @@ class OperationsHandler(CommandCenterHandler):
             value = json.loads(raw)
             service = self.server.operations
             if path.endswith("/control"):
-                if not isinstance(value, dict) or set(value) != {"action"} or value["action"] not in {"execute", "pause", "resume", "stop", "watch", "unwatch"}:
+                if not isinstance(value, dict) or set(value) != {"action"} or value["action"] not in {"execute", "pause", "resume", "stop", "watch", "unwatch", "defer-reviews", "require-reviews"}:
                     raise OperationsError("CONTROL_INVALID")
                 if value["action"] == "execute":
                     result = service.execute_orchestrated_run()
+                elif value['action'] in {'defer-reviews', 'require-reviews'}:
+                    service.defer_evidence_reviews(value['action'] == 'defer-reviews')
+                    result = {'status': 'REVIEW_POLICY_RECORDED'}
                 elif value["action"] in {"watch", "unwatch"}:
                     service.enable_watch(value["action"] == "watch")
                     result = {"status": "RECORDED"}

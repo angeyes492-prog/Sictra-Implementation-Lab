@@ -5,6 +5,32 @@ It prioritizes work but never converts a human, independent-review, or architect
 
 ## Technical execution
 
+### Astra execution cycle — 2026-09-15 (highest-priority active backlog)
+
+This ordered backlog supersedes the historical pending next-actions below,
+without changing their evidence or promoting gates. Owner explicitly deferred
+evidence requests/review as construction blockers in this session.
+
+1. `ASTRA-CONNECTED-OPERATION`: implemented on integrated base 4afdfaf, not the
+   older reverted dashboard branch. B1 retained pipeline, B2/B3 current artifact
+   readers, same-artifact navigation and B4 controls. Final regression/CI pending.
+2. `ASTRA-DEFERRED-REVIEW`: implemented and focused tests passed. Current valid
+   delta waits can close by abstention under persisted owner-enabled policy;
+   uncertainties remain and no acceptance is minted. Errors/tamper/pause block.
+3. `ASTRA-OFFLINE-RECOVERY`: implemented and focused full-restore/tamper/keys/lock
+   tests passed. Original path only; keys external; restore paused. Empty-state
+   restoration included in final regression.
+4. `ASTRA-INSTALLED-SUITE`: commit, exact-SHA CI, update the actual installation,
+   preserve old data paths, run the four-block browser probe, activate the
+   authorized defer policy and verify reusable startup.
+5. `ASTRA-MANIFEST`: record final SHA/CI, tests, installed operation and deferred
+   boundaries. Do not convert historical review or missing real-source content
+   into acceptance. No request for evidence is needed to finish items 1–4.
+
+Design delta: reference-led isometric scene, compact glass cards, responsive
+layout, no fabricated metrics; B1 unsupported numeric uncertainty/age removed.
+See architecture/telecare_astra_local_closure_20260915.md and the runbook.
+
 | Priority | Item | State | Evidence | Next action |
 | --- | --- | --- | --- | --- |
 | 60 | `OPS-ACTUAL-CONTENT` — Persistent approved-file → dossier → content-design candidate → declared audience → local reader | `IMPLEMENTED; VALIDATION_IN_PROGRESS` | New operations service, evidence-first Design artifact and generic-audience modules; 16 focused tests executed successfully on 2026-09-13. | Full regression, exact-SHA CI, installed service and source pilot. |

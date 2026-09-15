@@ -94,6 +94,13 @@ class PrecisionConsoleHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         if not self._allowed(): return
         path = self.path.split("?", 1)[0]
+        if path == "/api/review-artifacts":
+            from sictra_block4_orchestrator.review_projection import review_projection
+            try:
+                self._json(HTTPStatus.OK, review_projection(getattr(self.server, 'operations_state', None), 3))
+            except Exception:
+                self._json(HTTPStatus.CONFLICT, {"error": "Las adaptaciones no superaron la verificación local."})
+            return
         if path == "/health":
             self._json(HTTPStatus.OK, {"status": "ok", "scope": UI_SCOPE}); return
         if path == "/api/workspace":
@@ -125,7 +132,8 @@ def create_server(*, host: str = "127.0.0.1", port: int = 8767, workspace_loader
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--port", type=int, default=8767); parser.add_argument("--open", action="store_true")
-    args = parser.parse_args(); server = create_server(port=args.port); address = f"http://127.0.0.1:{server.server_port}/"
+    parser.add_argument("--operations-state", type=Path)
+    args = parser.parse_args(); server = create_server(port=args.port); server.operations_state = args.operations_state; address = f"http://127.0.0.1:{server.server_port}/"
     print(f"Precision Console disponible en {address}")
     if args.open: webbrowser.open(address)
     try: server.serve_forever()

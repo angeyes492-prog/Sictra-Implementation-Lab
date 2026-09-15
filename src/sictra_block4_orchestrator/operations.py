@@ -179,6 +179,42 @@ class OperationsService:
                 reason=reason, recovery_key=self.recovery_key)
             return self.intake.recover(receipt, recovery_key=self.recovery_key)
 
+    def defer_evidence_reviews(self, enabled):
+        if type(enabled) is not bool:
+            raise OperationsError('REVIEW_POLICY_INVALID')
+        with self.lock:
+            self.store.put('CONTROL', 'deferred-evidence-review',
+                {'enabled': enabled, 'publication': 'BLOCKED', 'acceptance': 'NOT_ACCEPTED'})
+
+    def _close_review_waits_by_abstention(self):
+        if not self.store.latest('CONTROL').get('deferred-evidence-review', {}).get('enabled', False):
+            return
+        for job in self.intake.snapshot()['jobs']:
+            result = job.get('result') or {}
+            # Only a successfully retained delta awaiting interpretation is
+            # deferrable. Crashes, tamper, expiry and ingestion errors never are.
+            if (job['state'] != 'REVIEW_REQUIRED' or 'error_type' in result
+                    or result.get('status') != 'DELTA_DETECTED_NOT_EVIDENCE'
+                    or result.get('publication_authority') != 'NONE'
+                    or result.get('dossier', {}).get('publication_state') != 'BLOCKED'):
+                continue
+            dossier_id = result['dossier']['dossier_id']
+            try:
+                package = self.exporter.export(dossier_id, now=datetime.fromtimestamp(self.clock(), timezone.utc))
+            except FederatedContractError:
+                continue
+            if job['job_id'] not in self.store.latest('DEFERRED_REVIEW'):
+                self.store.put('DEFERRED_REVIEW', job['job_id'], {
+                    'job_id': job['job_id'], 'dossier_id': dossier_id,
+                    'at': int(self.clock()), 'state': 'CLOSED_BY_ABSTENTION_EVIDENCE_DEFERRED',
+                    'certainty': package['certainty'], 'uncertainty': package.get('uncertainty', []),
+                    'publication': 'BLOCKED', 'acceptance': 'NOT_ACCEPTED',
+                    'reason': 'Owner-enabled construction mode: retain missing evidence for later review; do not approve content.'}, immutable=True)
+            receipt = self.intake.recovery_receipt(job['job_id'], decision='ABSTAIN',
+                actor_id='local-deferred-review-policy', reason='Evidence review deferred; content not accepted; next approved source may proceed.',
+                recovery_key=self.recovery_key)
+            self.intake.recover(receipt, recovery_key=self.recovery_key)
+
     def tick(self, *, max_cases=16):
         if type(max_cases) is not int or not 1 <= max_cases <= 32:
             raise OperationsError("CASE_BUDGET_INVALID")
@@ -239,6 +275,7 @@ class OperationsService:
                         self.store.put("WAIT", identity, {"dossier_id": dossier["dossier_id"], "reason": str(error)})
                         outcome.append({"id": identity, "state": "WAITING", "reason": str(error)})
                 self.store.put("CURSOR", "designs", {"position": (cursor + len(batch)) % len(work)})
+            self._close_review_waits_by_abstention()
             self.last_cycle, self.last_error = int(self.clock()), None
             return {"state": "RUNNING", "intake": intake_result[-1]["state"], "outcomes": outcome}
 
@@ -273,12 +310,14 @@ class OperationsService:
                 except (OperationsError, FederatedContractError, DesignArtifactError, AudiencePolicyError):
                     availability = "STALE_OR_REVOKED"
                 summaries.append({"id": identity, "title": value["adaptation"]["heading"],
-                    "profile": value["profile"]["label"], "case_id": value["case_id"],
+                    "profile": value["profile"]["label"], "case_id": value["case_id"], "dossier_id": value["dossier_id"],
                     "created_at": value["created_at"], "availability": availability, "state": value["state"]})
             done = self.store.latest("OUTPUT")
             runs = self.store.latest("ORCHESTRATION_RESULT")
             latest_run = max(runs.values(), key=lambda item: item["requested_at"], default=None)
             return {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
+                    "evidence_review_deferred": self.store.latest('CONTROL').get('deferred-evidence-review', {}).get('enabled', False),
+                    "deferred_reviews": list(self.store.latest('DEFERRED_REVIEW').values()),
                     "watch_enabled": self.store.latest("CONTROL").get("watch", {}).get("enabled", False),
                     "watch_directory": str(self.root / "dropbox"),
                     "intake_waiting": [{"job_id": j["job_id"], "state": j["state"]} for j in self.intake.snapshot()["jobs"]
