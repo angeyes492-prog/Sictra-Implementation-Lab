@@ -3,6 +3,8 @@
 from .runtime import (
     FederatedOrchestratorStore,
     FederatedContractError,
+    ControlState,
+    ControlReceipt,
     build_controlled_block1_package,
 )
 from .platform_adapters import (
@@ -15,7 +17,7 @@ from .platform_adapters import (
 )
 
 __all__ = [
-    "FederatedOrchestratorStore", "FederatedContractError", "build_controlled_block1_package",
+    "FederatedOrchestratorStore", "FederatedContractError", "ControlState", "ControlReceipt", "build_controlled_block1_package",
     "AdapterConfiguration", "AdapterContractError", "AdapterOperation", "PlannedAdapterOperation",
     "admit_adapter_operation", "plan_adapter_operation",
 ]

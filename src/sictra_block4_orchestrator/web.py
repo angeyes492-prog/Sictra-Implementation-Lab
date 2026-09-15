@@ -38,6 +38,23 @@ def _case_payload(item: Any) -> dict[str, Any]:
     }
 
 
+def _control_payload(store: FederatedOrchestratorStore) -> dict[str, Any]:
+    control = store.control_state()
+    actions = {
+        "RUNNING": ("PAUSE", "STOP", "VERIFY_JOURNAL"),
+        "PAUSED": ("RESUME", "STOP", "VERIFY_JOURNAL"),
+        "STOPPED": ("START", "VERIFY_JOURNAL"),
+    }[control.state]
+    return {
+        "state": control.state, "changed_at": control.changed_at,
+        "available_actions": list(actions),
+        "reasons": ["OPERATOR_REQUEST", "REVIEW_REQUIRED", "RECOVERY_CHECK", "SAFETY_STOP"],
+        "events": list(store.control_events()),
+        "scope": "BLOCK4_LOCAL_ONLY",
+        "non_claims": ["NO_PUBLICATION", "NO_DELIVERY", "NO_APPROVAL", "NO_CROSS_BLOCK_COMMAND"],
+    }
+
+
 class CommandCenterHandler(BaseHTTPRequestHandler):
     server_version = "SICTrAOrchestrator/0.1"
 
@@ -73,6 +90,34 @@ class CommandCenterHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
         self._headers(); self.end_headers(); self.wfile.write(body); return True
 
+    def _read_json(self) -> dict[str, Any] | None:
+        content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+        if content_type != "application/json":
+            self._json(HTTPStatus.UNSUPPORTED_MEDIA_TYPE, {"error": "Se requiere JSON local."}); return None
+        try:
+            length = int(self.headers.get("Content-Length", ""))
+        except ValueError:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": "Longitud de solicitud inválida."}); return None
+        if not 2 <= length <= 2048:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": "Solicitud fuera de límite."}); return None
+        try:
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            self._json(HTTPStatus.BAD_REQUEST, {"error": "JSON no válido."}); return None
+        if not isinstance(payload, dict):
+            self._json(HTTPStatus.BAD_REQUEST, {"error": "Solicitud no permitida."}); return None
+        return payload
+
+    def _control_response(self, receipt: Any | None = None) -> None:
+        payload: dict[str, Any] = {"control": _control_payload(self.server.store)}
+        if receipt is not None:
+            payload["receipt"] = {
+                "action": receipt.action, "request_id": receipt.request_id,
+                "state": receipt.state, "event_type": receipt.event_type,
+                "replayed": receipt.replayed, "case_id": receipt.case_id,
+            }
+        self._json(HTTPStatus.OK, payload)
+
     def do_GET(self) -> None:
         if not self._allowed(): return
         path = urlsplit(self.path).path
@@ -81,7 +126,9 @@ class CommandCenterHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, {"status": "ok", "scope": UI_SCOPE, "authority": "HUMAN_REVIEW_REQUIRED", "publication": "PROHIBITED"}); return
             if path == "/api/cases":
                 cases = [_case_payload(item) for item in self.server.store.list_cases()]
-                self._json(HTTPStatus.OK, {"scope": UI_SCOPE, "fixture": "CONTROLLED_LOCAL_PACKAGES_ONLY", "cases": cases, "authority": {"publication": "PROHIBITED", "delivery": "PROHIBITED", "acceptance": "NOT_ACCEPTED"}}); return
+                self._json(HTTPStatus.OK, {"scope": UI_SCOPE, "fixture": "CONTROLLED_LOCAL_PACKAGES_ONLY", "cases": cases, "control": _control_payload(self.server.store), "authority": {"publication": "PROHIBITED", "delivery": "PROHIBITED", "acceptance": "NOT_ACCEPTED"}}); return
+            if path == "/api/controls":
+                self._control_response(); return
             if path.startswith("/api/cases/") and path.endswith("/events"):
                 case_id = path.removeprefix("/api/cases/").removesuffix("/events").rstrip("/")
                 self._json(HTTPStatus.OK, {"case_id": case_id, "events": self.server.store.audit_events(case_id)}); return
@@ -92,10 +139,31 @@ class CommandCenterHandler(BaseHTTPRequestHandler):
         except Exception:
             self._json(HTTPStatus.CONFLICT, {"error": "El journal local no pudo verificarse."})
 
+    def do_POST(self) -> None:
+        if not self._allowed(): return
+        if urlsplit(self.path).path != "/api/controls":
+            self._reject_mutation(); return
+        payload = self._read_json()
+        if payload is None: return
+        action = payload.get("action")
+        try:
+            if action == "VERIFY_JOURNAL":
+                if set(payload) != {"action"}:
+                    raise FederatedContractError("CONTROL_SCHEMA_NOT_ALLOWLISTED")
+                self._control_response(); return
+            required = {"action", "request_id", "reason"}
+            if action == "RETRY_CASE": required.add("case_id")
+            if set(payload) != required:
+                raise FederatedContractError("CONTROL_SCHEMA_NOT_ALLOWLISTED")
+            receipt = self.server.store.control(action, request_id=payload["request_id"], reason=payload["reason"], case_id=payload.get("case_id"))
+            self._control_response(receipt)
+        except FederatedContractError as error:
+            self._json(HTTPStatus.CONFLICT, {"error": str(error)})
+
     def _reject_mutation(self) -> None:
         if self._allowed(): self._json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "El Command Center es sólo lectura; la aprobación humana ocurre fuera de esta interfaz."})
 
-    do_POST = do_PUT = do_PATCH = do_DELETE = do_OPTIONS = _reject_mutation
+    do_PUT = do_PATCH = do_DELETE = do_OPTIONS = _reject_mutation
 
 
 def create_server(store: FederatedOrchestratorStore, *, host: str = "127.0.0.1", port: int = 8768) -> CommandCenterServer:

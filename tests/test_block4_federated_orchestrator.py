@@ -89,6 +89,45 @@ class FederatedOrchestratorTests(unittest.TestCase):
         with self.assertRaisesRegex(FederatedContractError, "RETRY_LIMIT_EXHAUSTED"):
             self.store.retry("CASE-RETRY", now=NOW + timedelta(seconds=2))
 
+    def test_local_control_plane_is_idempotent_recovers_and_fails_closed(self):
+        active = self.store.ingest(self.package(case_id="CASE-CONTROL"))
+        paused = self.store.control("PAUSE", request_id="control-pause-01", reason="REVIEW_REQUIRED", now=NOW)
+        self.assertEqual("PAUSED", paused.state)
+        replay = self.store.control("PAUSE", request_id="control-pause-01", reason="REVIEW_REQUIRED", now=NOW)
+        self.assertTrue(replay.replayed)
+        self.assertEqual(1, len(self.store.control_events()))
+        with self.assertRaisesRegex(FederatedContractError, "PROCESSING_PAUSED"):
+            self.store.process_to_human_gate(active.case_id, now=NOW)
+        reopened = FederatedOrchestratorStore(self.path, integrity_key=KEY)
+        self.assertEqual("PAUSED", reopened.control_state().state)
+        resumed = reopened.control("RESUME", request_id="control-resume-01", reason="OPERATOR_REQUEST", now=NOW)
+        self.assertEqual("RUNNING", resumed.state)
+        self.assertEqual("HUMAN_REVIEW_REQUIRED", reopened.process_to_human_gate(active.case_id, now=NOW).state)
+        returned = reopened.ingest(self.package(case_id="CASE-CONTROL-RETRY", expires_at=NOW + timedelta(seconds=1)), now=NOW + timedelta(seconds=2))
+        self.assertEqual("RETURN_UPSTREAM", returned.state)
+        reopened.control("STOP", request_id="control-stop-0001", reason="SAFETY_STOP", now=NOW)
+        with self.assertRaisesRegex(FederatedContractError, "PROCESSING_STOPPED"):
+            reopened.control("RETRY_CASE", request_id="control-retry-01", reason="RECOVERY_CHECK", case_id=returned.case_id, now=NOW + timedelta(seconds=2))
+        reopened.control("START", request_id="control-start-001", reason="OPERATOR_REQUEST", now=NOW)
+        retried = reopened.control("RETRY_CASE", request_id="control-retry-01", reason="RECOVERY_CHECK", case_id=returned.case_id, now=NOW + timedelta(seconds=2))
+        self.assertEqual("RETURN_UPSTREAM", retried.state)
+        self.assertEqual("RETRY", retried.event_type)
+        self.assertTrue(reopened.control("RETRY_CASE", request_id="control-retry-01", reason="RECOVERY_CHECK", case_id=returned.case_id, now=NOW + timedelta(seconds=2)).replayed)
+
+    def test_control_request_collision_and_tamper_are_rejected(self):
+        self.store.control("PAUSE", request_id="control-collision-01", reason="OPERATOR_REQUEST", now=NOW)
+        with self.assertRaisesRegex(FederatedContractError, "CONTROL_REQUEST_ID_COLLISION"):
+            self.store.control("STOP", request_id="control-collision-01", reason="SAFETY_STOP", now=NOW)
+        with self.assertRaisesRegex(FederatedContractError, "CONTROL_REASON_NOT_ALLOWLISTED"):
+            self.store.control("RESUME", request_id="control-reason-0001", reason="free text", now=NOW)
+        db = sqlite3.connect(self.path)
+        try:
+            db.execute("UPDATE events SET payload_json='{}' WHERE case_id=?", ("__BLOCK4_CONTROL__",)); db.commit()
+        finally:
+            db.close()
+        with self.assertRaisesRegex(FederatedContractError, "JOURNAL_INTEGRITY_ERROR"):
+            FederatedOrchestratorStore(self.path, integrity_key=KEY)
+
 
 class FederatedCommandCenterTests(unittest.TestCase):
     def setUp(self):
@@ -100,9 +139,9 @@ class FederatedCommandCenterTests(unittest.TestCase):
     def tearDown(self):
         self.server.shutdown(); self.server.server_close(); self.thread.join(timeout=2); self.temp.cleanup()
 
-    def request(self, method, path, headers=None):
+    def request(self, method, path, headers=None, body=None):
         connection = http.client.HTTPConnection("127.0.0.1", self.server.server_port, timeout=2)
-        connection.request(method, path, headers=headers or {}); response = connection.getresponse(); result = response.status, dict(response.getheaders()), response.read(); connection.close(); return result
+        connection.request(method, path, body=body, headers=headers or {}); response = connection.getresponse(); result = response.status, dict(response.getheaders()), response.read(); connection.close(); return result
 
     def test_console_exposes_cases_but_not_acceptance_or_mutation(self):
         status, headers, body = self.request("GET", "/api/cases"); payload = json.loads(body)
@@ -123,6 +162,39 @@ class FederatedCommandCenterTests(unittest.TestCase):
         self.assertIn("frame-ancestors 'none'", self.request("GET", "/")[1]["Content-Security-Policy"])
         for marker in (":focus-visible", "prefers-reduced-motion:reduce", "forced-colors:active"):
             self.assertIn(marker, css)
+
+    def test_console_control_endpoint_is_bounded_and_hostile_input_fails_closed(self):
+        status, _, body = self.request("GET", "/api/controls")
+        self.assertEqual(200, status)
+        self.assertEqual("RUNNING", json.loads(body)["control"]["state"])
+        status, _, body = self.request("POST", "/api/controls", {"Content-Type": "application/json"}, json.dumps({"action": "VERIFY_JOURNAL"}))
+        self.assertEqual(200, status)
+        self.assertNotIn("receipt", json.loads(body))
+        pause = json.dumps({"action": "PAUSE", "request_id": "web-pause-0001", "reason": "REVIEW_REQUIRED"})
+        status, _, body = self.request("POST", "/api/controls", {"Content-Type": "application/json"}, pause)
+        result = json.loads(body)
+        self.assertEqual(200, status)
+        self.assertEqual("PAUSED", result["control"]["state"])
+        self.assertFalse(result["receipt"]["replayed"])
+        status, _, body = self.request("POST", "/api/controls", {"Content-Type": "application/json"}, json.dumps({"action": "PUBLISH"}))
+        self.assertEqual(409, status)
+        self.assertIn("CONTROL_SCHEMA_NOT_ALLOWLISTED", json.loads(body)["error"])
+        status, _, _ = self.request("POST", "/api/controls", {"Origin": "https://attacker.invalid", "Content-Type": "application/json"}, pause)
+        self.assertEqual(403, status)
+        status, _, body = self.request("GET", "/api/cases")
+        self.assertEqual("PAUSED", json.loads(body)["control"]["state"])
+        self.assertIn("NO_PUBLICATION", json.loads(body)["control"]["non_claims"])
+
+    def test_command_center_assets_expose_an_operable_local_control_deck(self):
+        root = Path(__file__).parents[1] / "src" / "sictra_block4_orchestrator" / "command_center"
+        html = (root / "index.html").read_text(encoding="utf-8")
+        script = (root / "app.js").read_text(encoding="utf-8")
+        self.assertIn('id="control-actions"', html)
+        self.assertIn('id="route-lattice"', html)
+        self.assertIn('id="event-list"', html)
+        for marker in ("VERIFY_JOURNAL", "RETRY_CASE", "control-confirmation", "same-origin"):
+            self.assertIn(marker, script)
+        self.assertNotIn("operations.js", html)
 
 
 if __name__ == "__main__": unittest.main()
