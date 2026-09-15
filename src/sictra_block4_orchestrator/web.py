@@ -24,6 +24,8 @@ STATIC = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/app.css": ("app.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+    "/operations.js": ("operations.js", "text/javascript; charset=utf-8"),
+    "/operations.css": ("operations.css", "text/css; charset=utf-8"),
 }
 
 
@@ -76,7 +78,7 @@ class CommandCenterHandler(BaseHTTPRequestHandler):
         if target is None: return False
         name, content_type = target; body = (WEB_ROOT / name).read_bytes()
         self.send_response(HTTPStatus.OK); self.send_header("Content-Type", content_type); self.send_header("Content-Length", str(len(body)))
-        self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; font-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
+        self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; font-src 'self'; frame-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
         self._headers(); self.end_headers(); self.wfile.write(body); return True
 
     def do_GET(self) -> None:

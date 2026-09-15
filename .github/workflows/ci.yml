@@ -32,6 +32,7 @@ jobs:
           node --check src/sictra_block2_design/design_console/app.js
           node --check src/sictra_block3_precision/precision_console/app.js
           node --check src/sictra_block4_orchestrator/command_center/app.js
+          node --check src/sictra_block4_orchestrator/command_center/operations.js
           node --test tests/console_state.test.cjs
       - name: Produce local-scope execution manifest
         run: python -m sictra_block1 tests/fixtures/notion_exp05_context_matrix.json --agent Precision

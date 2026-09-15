@@ -2,6 +2,23 @@
 
 ## Active
 
+Scope correction, 2026-09-13: the historical Done entries below close bounded
+increments, not the complete autonomous product. Executing reference engines
+with synthetic approved copy is not source-grounded editorial generation.
+
+- [ ] **Continuous local source-to-draft operations** — implementation and focused
+  tests executed; full regression, final-SHA CI and persistent installation pending.
+  Actual source-derived numeric drafts and declared generic audience variants;
+  does not assert accepted E01–E08 output or M01–M07 person personalization.
+- [ ] **Research and editorial quality beyond maritime templates** — implement
+  approved-source connectors, synthesis/corroboration and measured editorial
+  quality after selecting admissible sources/provider. No Internet acquisition
+  or paid provider activated by this local increment.
+- [ ] **Production operations** — complete whole-system disaster recovery,
+  external key custody/rollback anchor, deployment identity, load/security and
+  production pilot evidence. A signed operations-database backup is not a
+  complete restore of pipeline, intake, keys and deployment.
+
 ## Waiting On
 
 - [ ] **Revisión final del PR #15** - para reviewer designado, desde 2026-09-13.

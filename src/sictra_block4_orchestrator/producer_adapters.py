@@ -208,6 +208,8 @@ class SupervisedFederatedRunner:
         snapshot = self.store.ingest(package, now=current)
         if snapshot.state in {"RETURN_UPSTREAM", "REJECTED", "ABSTAINED", "HUMAN_REVIEW_REQUIRED"}:
             return snapshot
+        if snapshot.state == "BLOCK3_GOVERNED":
+            return self.store.stop_for_human_review(snapshot.case_id, now=current)
         receipts = self.store.execution_receipts(snapshot.case_id)
         block2_receipt = next((receipt for receipt in reversed(receipts) if receipt.producer == "BLOCK2"), None)
         if snapshot.state == "BLOCK1_ATTESTED":

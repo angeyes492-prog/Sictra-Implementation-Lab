@@ -52,7 +52,7 @@ class SupervisedAutonomyWorker:
 
     The resolver is deliberately injected.  Mapping a dossier to an account or
     person is business semantics owned outside this worker; an absent or broken
-    mapping records ``RETURN_UPSTREAM`` and never invokes Block 2 or Block 3.
+    mapping records ``WAITING_FOR_PLAN`` and never invokes Block 2 or Block 3.
     """
 
     def __init__(self, *, pipeline, dossier_adapter: Block1DossierPackageAdapter,
@@ -65,6 +65,7 @@ class SupervisedAutonomyWorker:
         self.runner = runner
         self.resolve_plan = resolve_plan
         self.clock = clock
+        self._cursor = 0
 
     def _now(self) -> datetime:
         value = self.clock()
@@ -89,7 +90,13 @@ class SupervisedAutonomyWorker:
         if type(max_cases) is not int or not 1 <= max_cases <= 32:
             raise AutonomyViolation("AUTONOMY_CASE_BUDGET_INVALID")
         outcomes: list[AutonomyOutcome] = []
-        for dossier_id in self._eligible_dossiers()[:max_cases]:
+        eligible = self._eligible_dossiers()
+        if not eligible:
+            return ()
+        start = self._cursor % len(eligible)
+        batch = (eligible[start:] + eligible[:start])[:max_cases]
+        self._cursor = (start + len(batch)) % len(eligible)
+        for dossier_id in batch:
             current = self._now()
             try:
                 package = self.dossier_adapter.export(dossier_id, now=current)
@@ -105,8 +112,7 @@ class SupervisedAutonomyWorker:
             except Exception:
                 plan = None
             if not isinstance(plan, AutonomousCasePlan):
-                snapshot = self.runner.store.invalidate(snapshot.case_id, "PRECISION_PLAN_NOT_CONFIGURED", now=current)
-                outcomes.append(AutonomyOutcome(dossier_id, snapshot.case_id, snapshot.state,
+                outcomes.append(AutonomyOutcome(dossier_id, snapshot.case_id, "WAITING_FOR_PLAN",
                                                 "PRECISION_PLAN_NOT_CONFIGURED"))
                 continue
             try:

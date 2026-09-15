@@ -108,10 +108,14 @@ class AutonomyWorkerTests(unittest.TestCase):
         worker = SupervisedAutonomyWorker(pipeline=self.pipeline, dossier_adapter=self.adapter,
             runner=self.runner, resolve_plan=lambda _package, _now: None, clock=lambda: NOW_DT)
         outcome = worker.run_once()[0]
-        self.assertEqual("RETURN_UPSTREAM", outcome.state)
+        self.assertEqual("WAITING_FOR_PLAN", outcome.state)
         self.assertEqual("PRECISION_PLAN_NOT_CONFIGURED", outcome.reason)
-        self.assertEqual(["INGESTED", "INVALIDATED"],
+        self.assertEqual(["INGESTED"],
                          [event["event_type"] for event in self.store.audit_events(outcome.case_id)])
+        worker.resolve_plan = self._configured_plan
+        resumed = worker.run_once()[0]
+        self.assertEqual("HUMAN_REVIEW_REQUIRED", resumed.state)
+        self.assertEqual(4, len(self.store.audit_events(outcome.case_id)))
 
 
 if __name__ == "__main__":

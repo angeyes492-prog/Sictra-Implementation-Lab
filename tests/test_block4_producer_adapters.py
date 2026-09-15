@@ -103,7 +103,9 @@ class ProducerAdapterTests(unittest.TestCase):
         self.assertIn(b3.disposition, {"ACCEPTED", "PARTIAL"})
         self.assertIn("M02", b3.executed_components)
         self.assertEqual("BLOCK3_GOVERNED", self.store.record_execution(b3, now=NOW_DT).state)
-        final = self.store.process_to_human_gate(self.package["case_id"], now=NOW_DT)
+        final = self.runner.execute(self.package,
+            precision_request=precision_request(self.package["case_id"]),
+            adaptive_planning=adaptive_bundle(b2.fingerprint), now=NOW_DT)
         self.assertEqual("HUMAN_REVIEW_REQUIRED", final.state)
         events = [event["event_type"] for event in self.store.audit_events(final.case_id)]
         self.assertEqual(["INGESTED", "BLOCK2_RUNTIME_EXECUTED", "BLOCK3_RUNTIME_EXECUTED", "HUMAN_GATE_REACHED"], events)
