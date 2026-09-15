@@ -2,7 +2,7 @@
 
 **Propósito:** copiar el bloque de abajo como primer mensaje de una sesión nueva de Codex configurada con **GPT-6 Astra** y el mayor nivel de razonamiento que exponga el selector (preferentemente `ultra`; si no está disponible, `max`).
 
-El modelo se usa para **construir y verificar Telecare OS**. No es, por sí solo, un proveedor de IA embebido en el producto: cualquier integración de modelos dentro del runtime requiere su propio contrato, credenciales, evaluación y límites.
+El modelo se usa para **construir y verificar Telecare OS**. En esta fase no se integrará ningún proveedor de IA en el runtime: la generación y adaptación deben resolverse con evidencia, plantillas, reglas deterministas y revisiones humanas trazables.
 
 ## Prompt de inicio
 
@@ -17,6 +17,12 @@ Construye un sistema de inteligencia editorial supervisada que, con una orden de
 4. Bloque 3 — Precision: adaptar la presentación y el mensaje al perfil declarado de una audiencia, sin alterar hechos, procedencia ni límites.
 5. Bloque 4 — Orchestrator: administrar trabajos, estados, reintentos, checkpoints, recuperación, observabilidad, pausa/stop y la trazabilidad completa B1 → B2 → B3 → B4.
 6. Mantener la publicación, entrega externa, cambio de alcance y decisión comercial bloqueados hasta una acción humana explícita.
+
+MODO DE CIERRE EN UNA SOLA SESIÓN
+- Completa en esta sesión todos los ítems técnicamente realizables: no dejes un diseño, un contrato, una prueba, una interfaz, una migración, un runbook o una reparación para una sesión posterior si puedes construirlo y verificarlo ahora.
+- Trabaja en ciclos continuos sin pedir permiso para continuar. Después de cada delta de cierre, selecciona el siguiente riesgo técnico y sigue hasta agotar el trabajo local seguro.
+- El cierre absoluto significa: cadena local reproducible, contratos coherentes, UI operable, regresión, pruebas adversariales, manifest de cierre y CI exacta cuando esté disponible. No significa inventar una credencial, una fuente externa, una revisión independiente o una promoción a producción.
+- Si queda una dependencia humana o externa real, deja únicamente una tarjeta final con el dato exacto faltante, su propietario, la evidencia previa y el límite que impide cruzar. Todo lo demás debe quedar construido, probado y documentado antes de parar.
 
 FRONTERA DE OPERACIÓN
 - El objetivo actual es LABORATORY_INTERNAL_SUPERVISED; jamás declarar producción, autonomía total, revisión independiente o validación global sin evidencia específica.
@@ -41,7 +47,7 @@ MODO DE TRABAJO
 INNOVACIÓN CON DISCIPLINA
 - Piensa más allá de la implementación mínima: propone y, cuando sea seguro, construye mejoras que reduzcan trabajo manual, aumenten calidad editorial, hagan visibles las incertidumbres o vuelvan recuperable cada decisión.
 - No confundas innovación con añadir integraciones o modelos sin objetivo. Cada idea debe declarar: problema, usuario, hipótesis de valor, contrato de datos, frontera de autoridad, coste/presupuesto, modo de fallo, prueba de éxito, rollback y una versión mínima reversible.
-- Puedes crear adaptadores desacoplados, simuladores deterministas, evaluaciones, interfaces de proveedor, contratos versionados y pruebas de compatibilidad sin activar un tercero. No guardes secretos ni ejecutes tráfico externo como parte de esa construcción.
+- Puedes crear adaptadores desacoplados, simuladores deterministas, plantillas editoriales, evaluaciones, contratos versionados y pruebas de compatibilidad sin activar un tercero. No guardes secretos ni ejecutes tráfico externo como parte de esa construcción.
 - Prefiere un patrón de puertos y adaptadores: el dominio de B1–B4 no depende de Figma, Framer, HubSpot ni de un modelo concreto. Cada plataforma se conecta mediante un adaptador con allowlist, scopes mínimos, rate limit, auditoría, kill-switch y estado explícito DISABLED / CONFIGURED / ACTIVE / FAILED.
 
 INTEGRACIONES FUTURAS, NO ACTIVADAS
@@ -65,7 +71,7 @@ P0 — Integridad de la cadena:
 
 P1 — De demostración a operación controlada:
   a. Formalizar el adaptador de fuente externa antes de conectarlo: URL/proveedor autorizado, derecho de uso, esquema, frecuencia, límites, autenticación, retención, hash, rollback y kill-switch.
-  b. Formalizar el proveedor de IA si se requiere generación no determinista: contrato de entrada/salida estructurada, presupuesto, modelo/versionado, guardrails, evaluación, fallback determinista, trazas sin secretos y pruebas de abstención. No usar una clave ni realizar llamadas hasta que estén configuradas y autorizadas.
+  b. No integrar proveedor de IA. Resolver redacción, composición y adaptación mediante plantillas versionadas, reglas declarativas, datos de evidencia y revisión humana; probar que el resultado es reproducible y que una entrada insuficiente provoca abstención.
   c. Formalizar perfiles de audiencia/cliente con minimización de datos, consentimiento, retención y control de acceso antes de CRM o PII.
   d. Mantener la salida como borrador revisable. Un conector de entrega solo puede existir con aprobación humana, lista de destinos aprobada, auditoría y kill-switch.
 
@@ -96,7 +102,7 @@ ESTADO QUE DEBES VERIFICAR, NO ASUMIR
 - Existen cuatro bloques con dirección funcional B1 Intelligence, B2 Design, B3 Precision y B4 Orchestrator.
 - Hay una cadena local supervisada de fuente aprobada a dossier, diseño de boletín y adaptación por perfil; la publicación externa debe continuar bloqueada.
 - La interfaz debe permitir navegar internamente entre bloques y mostrar el mismo caso de punta a punta.
-- Las fuentes externas reales, un proveedor de IA en runtime, CRM/PII, entrega externa y promoción a producción requieren contratos/configuración/autoridad separados. No los simules como cerrados.
+- Las fuentes externas reales, CRM/PII, entrega externa y promoción a producción requieren contratos/configuración/autoridad separados. No los simules como cerrados. Un proveedor de IA está explícitamente fuera de alcance hasta que el propietario reabra esa decisión.
 
 Ahora comienza: inspecciona, determina el P0 real con evidencia, implementa el siguiente delta de cierre y continúa hasta que exista un límite que realmente requiera autoridad humana. No respondas solo con un plan cuando haya trabajo técnico seguro y verificable que puedas realizar.
 ```
