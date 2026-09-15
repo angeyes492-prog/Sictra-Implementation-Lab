@@ -13,7 +13,6 @@ from contextlib import closing
 import hmac
 import json
 from pathlib import Path
-import re
 import sqlite3
 from typing import Any
 
@@ -23,11 +22,6 @@ PRODUCERS = frozenset(("BLOCK1", "BLOCK2", "BLOCK3"))
 CERTAINTIES = frozenset(("VERIFIED", "PROBABLE", "PLAUSIBLE", "UNCONFIRMED", "CONTRADICTED", "INSUFFICIENT EVIDENCE"))
 STAGES = ("BLOCK1_ATTESTED", "BLOCK2_CANDIDATE", "BLOCK3_GOVERNED", "HUMAN_REVIEW_REQUIRED")
 TERMINAL = frozenset(("HUMAN_REVIEW_REQUIRED", "ABSTAINED", "RETURN_UPSTREAM", "REJECTED"))
-CONTROL_STATES = frozenset(("RUNNING", "PAUSED", "STOPPED"))
-CONTROL_ACTIONS = frozenset(("PAUSE", "RESUME", "STOP", "START", "RETRY_CASE"))
-CONTROL_REASONS = frozenset(("OPERATOR_REQUEST", "REVIEW_REQUIRED", "RECOVERY_CHECK", "SAFETY_STOP"))
-CONTROL_CASE_ID = "__BLOCK4_CONTROL__"
-REQUEST_ID = re.compile(r"^[A-Za-z0-9_-]{8,96}$")
 REQUIRED = frozenset((
     "case_id", "run_id", "message_id", "evidence_id", "dossier_id", "producer",
     "contract_version", "source_hash", "provenance_root", "observed_at", "expires_at",
@@ -125,22 +119,6 @@ class FederatedCase:
     restrictions: tuple[str, ...]
 
 
-@dataclass(frozen=True)
-class ControlState:
-    state: str
-    changed_at: str | None
-
-
-@dataclass(frozen=True)
-class ControlReceipt:
-    action: str
-    request_id: str
-    state: str
-    event_type: str
-    replayed: bool
-    case_id: str | None = None
-
-
 class FederatedOrchestratorStore:
     """A local HMAC-attested journal with bounded autonomous progression."""
 
@@ -189,107 +167,6 @@ class FederatedOrchestratorStore:
         event_hash = hmac.new(self.key, _canonical(material), "sha256").hexdigest()
         db.execute("INSERT INTO events(event_id,case_id,event_type,state,payload_json,prior_hash,event_hash,created_at) VALUES(?,?,?,?,?,?,?,?)", (event_id, case_id, event_type, state, json.dumps(payload,sort_keys=True,separators=(",",":")), prior, event_hash, now.isoformat()))
 
-    def _control_state_from_db(self, db: sqlite3.Connection) -> ControlState:
-        transitions = {
-            "CONTROL_PAUSED": ("RUNNING", "PAUSED"),
-            "CONTROL_RESUMED": ("PAUSED", "RUNNING"),
-            "CONTROL_STOPPED": (("RUNNING", "PAUSED"), "STOPPED"),
-            "CONTROL_STARTED": ("STOPPED", "RUNNING"),
-        }
-        state, changed_at = "RUNNING", None
-        rows = db.execute("SELECT event_type,state,created_at FROM events WHERE case_id=? ORDER BY sequence", (CONTROL_CASE_ID,))
-        for row in rows:
-            expected = transitions.get(row["event_type"])
-            if expected is None:
-                raise FederatedContractError("CONTROL_EVENT_INVALID")
-            prior, next_state = expected
-            valid_prior = prior if isinstance(prior, tuple) else (prior,)
-            if state not in valid_prior or row["state"] != next_state:
-                raise FederatedContractError("CONTROL_STATE_INTEGRITY_ERROR")
-            state, changed_at = next_state, row["created_at"]
-        return ControlState(state, changed_at)
-
-    def _request_fingerprint(self, *, action: str, request_id: str, reason: str, case_id: str | None) -> str:
-        return _fingerprint({"action": action, "request_id": request_id, "reason": reason, "case_id": case_id})
-
-    def _validate_control_request(self, *, action: str, request_id: str, reason: str, case_id: str | None) -> str:
-        if action not in CONTROL_ACTIONS:
-            raise FederatedContractError("CONTROL_ACTION_NOT_ALLOWLISTED")
-        if not isinstance(request_id, str) or REQUEST_ID.fullmatch(request_id) is None:
-            raise FederatedContractError("CONTROL_REQUEST_ID_INVALID")
-        if reason not in CONTROL_REASONS:
-            raise FederatedContractError("CONTROL_REASON_NOT_ALLOWLISTED")
-        if action == "RETRY_CASE":
-            if not isinstance(case_id, str) or not case_id.strip() or case_id == CONTROL_CASE_ID:
-                raise FederatedContractError("CONTROL_CASE_ID_INVALID")
-        elif case_id is not None:
-            raise FederatedContractError("CONTROL_CASE_ID_UNEXPECTED")
-        return self._request_fingerprint(action=action, request_id=request_id, reason=reason, case_id=case_id)
-
-    def _find_control_request(self, db: sqlite3.Connection, request_id: str) -> dict[str, Any] | None:
-        rows = db.execute("SELECT case_id,event_type,state,payload_json FROM events ORDER BY sequence")
-        for row in rows:
-            payload = json.loads(row["payload_json"])
-            if payload.get("control_request_id") == request_id:
-                return {
-                    "case_id": row["case_id"], "event_type": row["event_type"],
-                    "state": row["state"], "fingerprint": payload.get("control_request_fingerprint"),
-                }
-        return None
-
-    def _processing_state_from_db(self, db: sqlite3.Connection) -> ControlState:
-        control = self._control_state_from_db(db)
-        if control.state == "PAUSED":
-            raise FederatedContractError("PROCESSING_PAUSED")
-        if control.state == "STOPPED":
-            raise FederatedContractError("PROCESSING_STOPPED")
-        return control
-
-    def control_state(self) -> ControlState:
-        self._verify_chain()
-        with closing(self._connect()) as db:
-            return self._control_state_from_db(db)
-
-    def control_events(self) -> tuple[dict[str, Any], ...]:
-        self._verify_chain()
-        with closing(self._connect()) as db:
-            rows = db.execute("SELECT event_type,state,created_at,payload_json FROM events WHERE case_id=? ORDER BY sequence DESC", (CONTROL_CASE_ID,)).fetchall()
-        return tuple({"event_type": row["event_type"], "state": row["state"], "created_at": row["created_at"], "payload": json.loads(row["payload_json"])} for row in rows)
-
-    def _control_payload(self, *, action: str, request_id: str, reason: str, fingerprint: str) -> dict[str, str]:
-        return {
-            "control_action": action, "control_request_id": request_id,
-            "control_request_fingerprint": fingerprint, "reason": reason,
-        }
-
-    def control(self, action: str, *, request_id: str, reason: str, case_id: str | None = None, now: datetime | None = None) -> ControlReceipt:
-        fingerprint = self._validate_control_request(action=action, request_id=request_id, reason=reason, case_id=case_id)
-        if action == "RETRY_CASE":
-            return self._retry_from_control(case_id, request_id=request_id, reason=reason, fingerprint=fingerprint, now=now)
-        current = _now(now)
-        transitions = {
-            "PAUSE": ("RUNNING", "PAUSED", "CONTROL_PAUSED"),
-            "RESUME": ("PAUSED", "RUNNING", "CONTROL_RESUMED"),
-            "STOP": (("RUNNING", "PAUSED"), "STOPPED", "CONTROL_STOPPED"),
-            "START": ("STOPPED", "RUNNING", "CONTROL_STARTED"),
-        }
-        prior, next_state, event_type = transitions[action]
-        valid_prior = prior if isinstance(prior, tuple) else (prior,)
-        self._verify_chain()
-        with closing(self._connect()) as db:
-            db.execute("BEGIN IMMEDIATE")
-            existing = self._find_control_request(db, request_id)
-            if existing is not None:
-                if existing["fingerprint"] != fingerprint:
-                    db.rollback(); raise FederatedContractError("CONTROL_REQUEST_ID_COLLISION")
-                db.rollback(); return ControlReceipt(action, request_id, existing["state"], existing["event_type"], True, None)
-            control = self._control_state_from_db(db)
-            if control.state not in valid_prior:
-                db.rollback(); raise FederatedContractError("CONTROL_TRANSITION_INVALID")
-            self._append(db, case_id=CONTROL_CASE_ID, event_type=event_type, state=next_state, payload=self._control_payload(action=action, request_id=request_id, reason=reason, fingerprint=fingerprint), now=current)
-            db.commit()
-        return ControlReceipt(action, request_id, next_state, event_type, False, None)
-
     def _snapshot_row(self, row: sqlite3.Row) -> FederatedCase:
         package = json.loads(row["package_json"])
         route = ["BLOCK1"]
@@ -330,7 +207,6 @@ class FederatedOrchestratorStore:
     def _advance(self, case_id: str, *, now: datetime) -> FederatedCase:
         with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
-            self._processing_state_from_db(db)
             row = db.execute("SELECT * FROM cases WHERE case_id=?", (case_id,)).fetchone()
             if row is None: raise FederatedContractError("CASE_NOT_FOUND")
             package = json.loads(row["package_json"])
@@ -374,10 +250,8 @@ class FederatedOrchestratorStore:
 
     def retry(self, case_id: str, *, now: datetime | None = None) -> FederatedCase:
         current = _now(now)
-        self._verify_chain()
         with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
-            self._processing_state_from_db(db)
             row = db.execute("SELECT * FROM cases WHERE case_id=?", (case_id,)).fetchone()
             if row is None: raise FederatedContractError("CASE_NOT_FOUND")
             if row["retry_count"] >= 3: raise FederatedContractError("RETRY_LIMIT_EXHAUSTED")
@@ -387,34 +261,6 @@ class FederatedOrchestratorStore:
             self._append(db, case_id=case_id, event_type="RETRY", state="BLOCK1_ATTESTED", payload={"retry_count": next_count}, now=current)
             db.commit()
         return self.process_to_human_gate(case_id, now=current)
-
-    def _retry_from_control(self, case_id: str | None, *, request_id: str, reason: str, fingerprint: str, now: datetime | None) -> ControlReceipt:
-        if case_id is None:
-            raise FederatedContractError("CONTROL_CASE_ID_INVALID")
-        current = _now(now)
-        self._verify_chain()
-        with closing(self._connect()) as db:
-            db.execute("BEGIN IMMEDIATE")
-            existing = self._find_control_request(db, request_id)
-            if existing is not None:
-                if existing["fingerprint"] != fingerprint:
-                    db.rollback(); raise FederatedContractError("CONTROL_REQUEST_ID_COLLISION")
-                db.rollback(); return ControlReceipt("RETRY_CASE", request_id, existing["state"], existing["event_type"], True, case_id)
-            self._processing_state_from_db(db)
-            row = db.execute("SELECT * FROM cases WHERE case_id=?", (case_id,)).fetchone()
-            if row is None:
-                db.rollback(); raise FederatedContractError("CASE_NOT_FOUND")
-            if row["retry_count"] >= 3:
-                db.rollback(); raise FederatedContractError("RETRY_LIMIT_EXHAUSTED")
-            if row["state"] not in {"RETURN_UPSTREAM", "REJECTED"}:
-                db.rollback(); raise FederatedContractError("RETRY_STATE_INVALID")
-            next_count = row["retry_count"] + 1
-            db.execute("UPDATE cases SET retry_count=?,state='BLOCK1_ATTESTED',updated_at=? WHERE case_id=?", (next_count, current.isoformat(), case_id))
-            payload = {"retry_count": next_count, **self._control_payload(action="RETRY_CASE", request_id=request_id, reason=reason, fingerprint=fingerprint)}
-            self._append(db, case_id=case_id, event_type="RETRY", state="BLOCK1_ATTESTED", payload=payload, now=current)
-            db.commit()
-        final = self.process_to_human_gate(case_id, now=current)
-        return ControlReceipt("RETRY_CASE", request_id, final.state, "RETRY", False, case_id)
 
     def audit_events(self, case_id: str) -> tuple[dict[str, Any], ...]:
         self._verify_chain()

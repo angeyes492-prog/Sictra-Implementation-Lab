@@ -39,18 +39,6 @@ never skips a failed state, is bounded to three attempts, and reuses the exact
 input fingerprint. Invalidating evidence turns the case `RETURN_UPSTREAM`; it
 does not alter historical events.
 
-### Local control-plane extension
-
-The bounded loopback runtime may own its own processing availability only:
-`RUNNING → PAUSED → RUNNING` and `RUNNING|PAUSED → STOPPED → RUNNING`.
-Paused or stopped means no local progression or retry, not a command to another
-block, adapter or destination. Control requests use a bounded reason, unique
-idempotency ID and the existing HMAC journal; restart verifies and rehydrates
-that state. The extension is governed by
-`contracts/block4_local_control_plane_contract_v0.1.md`, remains
-`CANDIDATE / LOCAL BOUNDED SUT`, and does not resolve the MAR's shared
-authority decisions.
-
 ## Dependencies and failure boundary
 
 The first slice consumes only an operator-supplied, signed local package. It
