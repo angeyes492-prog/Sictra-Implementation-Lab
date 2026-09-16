@@ -11,25 +11,34 @@ This ordered backlog supersedes the historical pending next-actions below,
 without changing their evidence or promoting gates. Owner explicitly deferred
 evidence requests/review as construction blockers in this session.
 
-1. `ASTRA-CONNECTED-OPERATION`: implemented on integrated base 4afdfaf, not the
-   older reverted dashboard branch. B1 retained pipeline, B2/B3 current artifact
-   readers, same-artifact navigation and B4 controls. Final regression/CI pending.
-2. `ASTRA-DEFERRED-REVIEW`: implemented and focused tests passed. Current valid
-   delta waits can close by abstention under persisted owner-enabled policy;
-   uncertainties remain and no acceptance is minted. Errors/tamper/pause block.
-3. `ASTRA-OFFLINE-RECOVERY`: implemented and focused full-restore/tamper/keys/lock
-   tests passed. Original path only; keys external; restore paused. Empty-state
-   restoration included in final regression.
-4. `ASTRA-INSTALLED-SUITE`: commit, exact-SHA CI, update the actual installation,
-   preserve old data paths, run the four-block browser probe, activate the
-   authorized defer policy and verify reusable startup.
-5. `ASTRA-MANIFEST`: record final SHA/CI, tests, installed operation and deferred
-   boundaries. Do not convert historical review or missing real-source content
-   into acceptance. No request for evidence is needed to finish items 1–4.
+1. `ASTRA-CONNECTED-OPERATION`: CLOSED_LOCAL. Integrated B1 retained pipeline,
+   B2/B3 current-artifact readers, identity-preserving navigation and B4 controls.
+   Installed four-block navigation and actual empty-state cycle verified.
+2. `ASTRA-DEFERRED-REVIEW`: CLOSED_LOCAL. Persisted owner-enabled policy closes
+   valid delta waits by abstention, not acceptance. Pilot: two deferred reviews,
+   zero waiting inputs. Errors, tamper, expiry, pause and STOP still block.
+3. `ASTRA-OFFLINE-RECOVERY`: CLOSED_LOCAL. Full/empty restore, tamper, keys and lock
+   tests passed; original path only, external keys and paused restoration.
+   Final stopped-writer archive retained with six files and no keys.
+4. `ASTRA-INSTALLED-SUITE`: CLOSED_LOCAL. Product SHA eda3f0873896c6e18c664d92f9b254822a23b93c,
+   CI 35018654437 success. Legacy paths preserved, Windows startup tested,
+   RUNNING with local watch and review deferral, publication BLOCKED.
+5. `ASTRA-FACTSHEET`: CLOSED_LOCAL. One bounded cross-cutting innovation:
+   TELECARE_FACTSHEET_V1, current source/design/profile validation, scoped review
+   history, readable HTML and JSON export. Positive and adversarial tests passed.
+6. `ASTRA-MANIFEST`: RECORDED. See telecare_astra_local_closure_manifest_20260915.md
+   for test evidence, exact product SHA/CI, installation, risks and deferred
+   authority. No unfinished planned local-construction item remains in this list.
 
 Design delta: reference-led isometric scene, compact glass cards, responsive
 layout, no fabricated metrics; B1 unsupported numeric uncertainty/age removed.
 See architecture/telecare_astra_local_closure_20260915.md and the runbook.
+
+The following tables are historical broader-product/governance records, not
+the current local-construction backlog. OPS-ACTUAL-CONTENT's bounded local
+implementation/validation is superseded by the manifest above. Editorial quality,
+production recovery and independent acceptance remain outside local closure.
+No global gate, historical review or protected acceptance criterion is promoted.
 
 | Priority | Item | State | Evidence | Next action |
 | --- | --- | --- | --- | --- |
