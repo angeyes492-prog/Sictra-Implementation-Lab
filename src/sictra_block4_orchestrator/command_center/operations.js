@@ -112,9 +112,15 @@
       const bytes=new Uint8Array(await file.arrayBuffer());
       const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
       let binary=''; for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
-      await post('/api/operations/intake',{content:btoa(binary),sha256:digest,geo_level:$('intake-geo').value});
+      const sourceType=$('intake-source').value;
+      await post('/api/operations/intake',{content:btoa(binary),sha256:digest,source_type:sourceType,geo_level:sourceType==='HN_CUSTOMS_Q1_V1'?'CUSTOMS_POINT':$('intake-geo').value});
       $('operations-intake').reset();
+      $('intake-geo-label').hidden=false;
     } catch(error){$('operations-feedback').textContent=error.message;} finally{button.disabled=false;}
+  });
+  $('intake-source').addEventListener('change',()=>{
+    const hn=$('intake-source').value==='HN_CUSTOMS_Q1_V1';
+    $('intake-geo-label').hidden=hn;
   });
   $('operations-profile').addEventListener('submit',async event=>{
     event.preventDefault();

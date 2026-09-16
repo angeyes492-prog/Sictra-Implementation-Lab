@@ -50,27 +50,44 @@ def compose_content_design(dossier: dict, package: dict) -> dict:
     claims, change_blocks = [], []
     for fact in dossier["facts"]:
         change = fact["observed_change"]
-        before = _number(change["before_value_thousand_tonnes"])
-        after = _number(change["after_value_thousand_tonnes"])
-        delta = _number(change["absolute_delta_thousand_tonnes"])
+        if "before_value_thousand_tonnes" in change:
+            before = _number(change["before_value_thousand_tonnes"])
+            after = _number(change["after_value_thousand_tonnes"])
+            delta = _number(change["absolute_delta_thousand_tonnes"])
+            subject = f"{change['geo_label']} ({change['geo_code']})"
+            period = change["time_period"]
+            unit = "miles de toneladas"
+            claim_key, claim_value = "geo_code", change["geo_code"]
+        elif "before_value_usd_million" in change:
+            before = _number(change["before_value_usd_million"])
+            after = _number(change["after_value_usd_million"])
+            delta = _number(change["absolute_delta_usd_million"])
+            subject = change["customs_point"]
+            period = f"{change['before_period']} → {change['after_period']}"
+            unit = "millones de US$ CIF"
+            claim_key, claim_value = "customs_point", change["customs_point"]
+        else:
+            raise DesignArtifactError("OBSERVATION_UNIT_UNSUPPORTED")
         claim = {
-            "id": fact["fact_id"], "geo_code": change["geo_code"],
+            "id": fact["fact_id"], claim_key: claim_value,
             "observation": deepcopy(change), "evidence": deepcopy(fact["evidence_refs"]),
-            "text": (f"{change['geo_label']} ({change['geo_code']}), {change['time_period']}: "
-                     f"{before} → {after} miles de toneladas; diferencia registrada: "
-                     f"{delta} miles de toneladas. Tipo: {change['change_type']}.")}
+            "text": (f"{subject}, {period}: {before} → {after} {unit}; "
+                     f"diferencia registrada: {delta} {unit}. Tipo: {change['change_type']}.")}
         claims.append(claim)
         change_blocks.append(_block(
-            "change-" + fact["fact_id"], "OBSERVED_CHANGE", f"{change['geo_label']} · {change['time_period']}",
+            "change-" + fact["fact_id"], "OBSERVED_CHANGE", f"{subject} · {period}",
             claim["text"], (fact["fact_id"],)))
 
-    geography = ", ".join(dossier["affected_scope"]["geo_labels"])
+    is_customs = "customs_points" in dossier["affected_scope"]
+    geography = ("Honduras" if is_customs else
+                 ", ".join(dossier["affected_scope"]["geo_labels"]))
     design = {
         "version": 1,
         "artifact_type": "CONTENT_DESIGN_CANDIDATE",
         "format": "REVIEW_NEWSLETTER",
         "case_id": package["case_id"], "dossier_id": dossier["dossier_id"],
-        "title": f"Cambios en carga marítima: {geography}",
+        "title": (f"Cambios en importaciones CIF por aduana: {geography}" if is_customs
+                  else f"Cambios en carga marítima: {geography}"),
         "source_hash": package["source_hash"], "evidence_id": package["evidence_id"],
         "source_id": dossier["source"]["source_id"], "expires_at": package["expires_at"],
         "claims": claims,

@@ -30,11 +30,17 @@ class DossierEditorialBridge:
         dossier = matches[0]
         source = dossier["source"]
         fact_text = " ".join(fact["statement"] for fact in dossier["facts"])
-        geography = ", ".join(dossier["affected_scope"]["geo_codes"])
+        geo_codes = dossier["affected_scope"].get("geo_codes", ())
+        customs_points = dossier["affected_scope"].get("customs_points", ())
+        if not geo_codes and not customs_points:
+            raise DossierEditorialBridgeViolation("dossier affected scope is unsupported")
+        geography = ", ".join(geo_codes) if geo_codes else "Honduras"
+        is_customs = bool(customs_points)
         candidate = {
             "candidate_id": "ED-DOSSIER-" + sha256(dossier["dossier_id"].encode()).hexdigest()[:16],
             "event_id": dossier["dossier_id"],
-            "title": "Eurostat maritime change pending interpretation",
+            "title": ("Honduras customs change pending interpretation" if is_customs
+                      else "Eurostat maritime change pending interpretation"),
             "state": "RESEARCH_NEEDED",
             "profile": {
                 "impact": 0, "relevance": 0, "novelty": 0, "uncertainty": 100,
@@ -43,7 +49,7 @@ class DossierEditorialBridge:
             },
             "evidence": {
                 "source_ids": [source["source_id"]],
-                "root_ids": ["gateway-source:" + source["source_id"]],
+                "root_ids": [source.get("root_source_identity", "gateway-source:" + source["source_id"])],
                 "required_roots": 2,
                 "provenance_integrity": True,
                 "source_approved": True,
@@ -57,7 +63,7 @@ class DossierEditorialBridge:
             "stability": "UNKNOWN",
             "dimensions": {
                 "geography": geography or "UNSPECIFIED",
-                "mode": "MARITIME", "topic": "OBSERVED_DATA_CHANGE",
+                "mode": "CUSTOMS" if is_customs else "MARITIME", "topic": "OBSERVED_DATA_CHANGE",
                 "audience": "LOGISTICS_DECISION_MAKER", "horizon": "30D",
             },
             "editorial": {
@@ -72,7 +78,7 @@ class DossierEditorialBridge:
             },
             "derivations": {
                 "global_frame_id": dossier["dossier_id"],
-                "segment_frame_ids": ["SEGMENT:" + code for code in dossier["affected_scope"]["geo_codes"]],
+                "segment_frame_ids": ["SEGMENT:" + code for code in (geo_codes or customs_points)],
                 "account_frame_ids": [],
             },
             "watchlist": [

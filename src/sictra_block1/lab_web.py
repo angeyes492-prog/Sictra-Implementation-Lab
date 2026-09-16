@@ -39,6 +39,9 @@ from .source_portfolio import source_readiness
 from .research_intake import ResearchIntakeStore, ResearchIntakeViolation
 from .operator_workspace import OperatorWorkspaceViolation, load_operator_dossier_store
 from .operator_pipeline import OperatorPipelineViolation, load_operator_pipeline, pipeline_snapshot
+from .hn_customs_pipeline import (
+    HNCustomsPipelineViolation, load_hn_customs_pipeline,
+)
 
 UI_SCOPE = "BLOCK1_LOCAL_INTELLIGENCE_PRODUCT_UI"
 _WEB_ROOT = Path(__file__).with_name("web")
@@ -59,6 +62,22 @@ _STATIC_FILES = {
 _MAX_REJECTED_PAYLOAD_BYTES = 65_536
 _MAX_EDITORIAL_PAYLOAD_BYTES = 4_096
 _MAX_RESEARCH_INTAKE_BYTES = 4_096
+
+
+class CompositeDossierStore(IntelligenceDossierStore):
+    """Read-only union of independently verified dossier stores."""
+
+    def __init__(self, stores) -> None:
+        self._composite_stores = tuple(stores)
+
+    def list_dossiers(self) -> list[dict[str, Any]]:
+        dossiers = []
+        for store in self._composite_stores:
+            dossiers.extend(store.list_dossiers())
+        identities = [item["dossier_id"] for item in dossiers]
+        if len(identities) != len(set(identities)):
+            raise IntelligenceDossierViolation("composite dossier identity collision")
+        return dossiers
 
 
 def _summary(report: dict[str, Any]) -> dict[str, str]:
@@ -279,7 +298,15 @@ class LabWebHandler(BaseHTTPRequestHandler):
                 "network_acquisition": "DISABLED",
                 "publication_authority": "NONE",
             }
-        return pipeline_snapshot(root)
+        snapshot = pipeline_snapshot(root)
+        hn_root = self.server.hn_pipeline_root
+        if hn_root is not None:
+            snapshot["additional_sources"] = {
+                "hn_customs": load_hn_customs_pipeline(
+                    hn_root, key=self.server.hn_pipeline_key,
+                ).snapshot()
+            }
+        return snapshot
 
     def do_GET(self) -> None:
         if not self._guard_local_request():
@@ -291,7 +318,7 @@ class LabWebHandler(BaseHTTPRequestHandler):
                 try:
                     self.server.dossier_store.list_dossiers()
                     dossier_reader = "AVAILABLE"
-                except IntelligenceDossierViolation:
+                except (IntelligenceDossierViolation, HNCustomsPipelineViolation):
                     dossier_reader = "INTEGRITY_ERROR"
             pipeline_reader = "NOT_CONFIGURED"
             if self.server.pipeline_root is not None:
@@ -537,6 +564,8 @@ def create_server(
     intake_store_path: str | Path | None = None,
     dossier_store: IntelligenceDossierStore | None = None,
     pipeline_root: str | Path | None = None,
+    hn_pipeline_root: str | Path | None = None,
+    hn_pipeline_key: bytes | None = None,
 ) -> ThreadingHTTPServer:
     if host != "127.0.0.1":
         raise ValueError("the product workspace may only bind to 127.0.0.1")
@@ -549,6 +578,8 @@ def create_server(
         raise ValueError("dossier_store must be an IntelligenceDossierStore")
     server.dossier_store = dossier_store
     server.pipeline_root = Path(pipeline_root) if pipeline_root is not None else None
+    server.hn_pipeline_root = Path(hn_pipeline_root) if hn_pipeline_root is not None else None
+    server.hn_pipeline_key = hn_pipeline_key
     return server
 
 
@@ -580,12 +611,26 @@ def main() -> int:
         )
         if pipeline is not None:
             dossier_store = pipeline.dossiers
-    except (OperatorWorkspaceViolation, OperatorPipelineViolation) as error:
+        hn_root = None
+        hn_key = None
+        if args.pipeline_state is not None:
+            candidate_root = args.pipeline_state.parent / "hn-customs"
+            candidate_key = args.pipeline_state.parent / "keys" / "hn-customs.key"
+            if candidate_root.is_dir() and candidate_key.is_file() and not candidate_key.is_symlink():
+                hn_key = candidate_key.read_bytes()
+                hn_pipeline = load_hn_customs_pipeline(candidate_root, key=hn_key)
+                hn_root = candidate_root
+                dossier_store = CompositeDossierStore(
+                    tuple(store for store in (dossier_store, hn_pipeline) if store is not None)
+                )
+    except (OperatorWorkspaceViolation, OperatorPipelineViolation, HNCustomsPipelineViolation) as error:
         parser.error(str(error))
     server = create_server(
         port=args.port, intake_store_path=args.intake_store,
         dossier_store=dossier_store,
         pipeline_root=args.pipeline_state,
+        hn_pipeline_root=hn_root,
+        hn_pipeline_key=hn_key,
     )
     address = f"http://127.0.0.1:{server.server_port}/"
     print(f"Intelligence Workspace disponible en {address}")

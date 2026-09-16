@@ -16,12 +16,15 @@ from contextlib import closing
 from .operations import OperationsService
 from .operations_store import OperationsError, encoded, process_lock
 from sictra_block1.operator_pipeline import pipeline_snapshot
+from sictra_block1.hn_customs_pipeline import load_hn_customs_pipeline
 
 FIXED = {'operations.sqlite', 'intake.sqlite', 'cases.sqlite',
-         'pipeline/pipeline-state.json', 'pipeline/source-control.json'}
+         'pipeline/pipeline-state.json', 'pipeline/source-control.json',
+         'hn-customs/manifest.json'}
 OPTIONAL = {'STOP', 'research-intake.json', 'design-console.sqlite', 'launch-paths.json',
             'pipeline/evidence.json', 'pipeline/watchlist.json',
-            'pipeline/dossiers.json', 'pipeline/runtime.sqlite3'}
+            'pipeline/dossiers.json', 'pipeline/runtime.sqlite3',
+            'hn-customs/journal.json'}
 
 
 def safe(path):
@@ -32,7 +35,9 @@ def safe(path):
 
 
 def permitted(name):
-    return name in FIXED | OPTIONAL or bool(re.fullmatch(r'(inbox|dropbox)/[A-Za-z0-9_. -]{1,160}\.xlsx', name))
+    return name in FIXED | OPTIONAL or bool(re.fullmatch(
+        r'(?:inbox|dropbox)/[A-Za-z0-9_. -]{1,160}\.xlsx|(?:catalog|hn-customs/sources)/[0-9a-f]{64}\.xlsx', name,
+    ))
 
 
 def content(path):
@@ -72,14 +77,20 @@ def backup(root, destination):
     with process_lock(root / 'service.lock'):
         service = OperationsService(root)
         service.snapshot(); pipeline_snapshot(service.pipeline)
+        load_hn_customs_pipeline(service.hn_pipeline, key=service.hn_key).snapshot()
         material = keys(root)
         names = set(FIXED) | {name for name in OPTIONAL if (root / name).is_file()}
-        for folder in ('inbox', 'dropbox'):
+        for folder in ('inbox', 'dropbox', 'catalog'):
             for path in safe(root / folder).iterdir():
                 name = path.relative_to(root).as_posix()
                 if not permitted(name) or not path.is_file():
                     raise OperationsError('RECOVERY_UNEXPECTED_INPUT')
                 names.add(name)
+        for path in safe(root / 'hn-customs' / 'sources').iterdir():
+            name = path.relative_to(root).as_posix()
+            if not permitted(name) or not path.is_file():
+                raise OperationsError('RECOVERY_UNEXPECTED_INPUT')
+            names.add(name)
         if len(names) > 1024:
             raise OperationsError('RECOVERY_FILE_COUNT_LIMIT')
         original = {name: content(root / name) for name in sorted(names)}
@@ -134,10 +145,12 @@ def restore(archive, destination, key_source):
         target = destination / name
         target.parent.mkdir(parents=True, exist_ok=True)
         with target.open('xb') as stream: stream.write(value)
-    for name in ('inbox', 'dropbox', 'backups'):
+    for name in ('inbox', 'dropbox', 'backups', 'catalog'):
         (destination / name).mkdir(exist_ok=True)
+    (destination / 'hn-customs' / 'sources').mkdir(parents=True, exist_ok=True)
     service = OperationsService(destination)
     service.snapshot(); pipeline_snapshot(service.pipeline)
+    load_hn_customs_pipeline(service.hn_pipeline, key=service.hn_key).snapshot()
     service.set_paused(True)  # Recovery never implicitly resumes processing.
     service.store.put('RECOVERY', sha256(encoded(manifest)).hexdigest(),
                       {'scope': manifest['scope'], 'state': 'RESTORED_PAUSED', 'publication': 'BLOCKED'}, immutable=True)

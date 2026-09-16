@@ -1,4 +1,4 @@
-"""Candidate single-pipeline worker for explicitly queued local Eurostat files.
+"""Candidate multi-source worker for explicitly queued approved local files.
 
 No network, arbitrary callable dispatch, source approval, publication or implicit
 B2/B3 execution. A crash after claiming work requires recovery, never blind replay.
@@ -18,6 +18,9 @@ import time
 from typing import Callable
 
 from sictra_block1.operator_pipeline import ingest_eurostat_workbook, load_operator_pipeline, pipeline_snapshot
+from sictra_block1.hn_customs_pipeline import (
+    ingest_hn_customs_workbook, load_hn_customs_pipeline,
+)
 
 
 class WorkerViolation(ValueError):
@@ -74,12 +77,21 @@ class LocalIntakeWorker:
     """HMAC-bound bounded queue. Keep the queue key outside the inbox."""
 
     def __init__(self, path: Path, *, inbox: Path, pipeline: Path, key: bytes,
+                 hn_pipeline: Path | None = None, hn_key: bytes | None = None,
                  clock: Callable[[], int] = lambda: int(time.time())):
         if not isinstance(key, bytes) or len(key) < 32:
             raise WorkerViolation("WORKER_KEY_INVALID")
         if inbox.is_symlink() or not inbox.is_dir() or pipeline.is_symlink() or not pipeline.is_dir():
             raise WorkerViolation("WORKSPACE_INVALID")
         self.path, self.inbox, self.pipeline = Path(path), inbox.resolve(), pipeline.resolve()
+        self.hn_pipeline = None if hn_pipeline is None else Path(hn_pipeline).resolve()
+        self.hn_key = hn_key
+        if ((self.hn_pipeline is None) != (self.hn_key is None)
+                or self.hn_pipeline is not None
+                and (not isinstance(self.hn_key, bytes) or len(self.hn_key) != 32
+                     or self.hn_pipeline.is_relative_to(self.inbox)
+                     or self.inbox.is_relative_to(self.hn_pipeline))):
+            raise WorkerViolation("HN_CUSTOMS_CONFIGURATION_INVALID")
         if self.pipeline.is_relative_to(self.inbox) or self.inbox.is_relative_to(self.pipeline):
             raise WorkerViolation("INBOX_AND_STATE_MUST_BE_SEPARATE")
         if self.path.is_symlink() or self.path.resolve().is_relative_to(self.inbox):
@@ -153,16 +165,23 @@ class LocalIntakeWorker:
             raise WorkerViolation("INPUT_SIZE_EXCEEDED")
         return content
 
-    def enqueue(self, filename: str, *, expected_sha256: str, geo_level="COUNTRY"):
-        if geo_level not in {"COUNTRY", "NUTS1", "NUTS2"}:
+    def enqueue(self, filename: str, *, expected_sha256: str, geo_level="COUNTRY", source_type="EUROSTAT_TRAN_R_MAGO_NM"):
+        allowed = {"EUROSTAT_TRAN_R_MAGO_NM": {"COUNTRY", "NUTS1", "NUTS2"},
+                   "HN_CUSTOMS_Q1_V1": {"CUSTOMS_POINT"}}
+        if source_type not in allowed or geo_level not in allowed[source_type]:
             raise WorkerViolation("GEO_LEVEL_INVALID")
         content = self._source(filename)
         digest = sha256(content).hexdigest()
         if digest != expected_sha256:
             raise WorkerViolation("INPUT_HASH_MISMATCH")
         # Authority is checked by the existing pipeline; enqueue grants none.
-        load_operator_pipeline(self.pipeline, clock=self.clock)
-        job_id = sha256(canonical([digest, geo_level])).hexdigest()
+        if source_type == "HN_CUSTOMS_Q1_V1":
+            if self.hn_pipeline is None or not isinstance(self.hn_key, bytes):
+                raise WorkerViolation("HN_CUSTOMS_PIPELINE_NOT_CONFIGURED")
+            load_hn_customs_pipeline(self.hn_pipeline, key=self.hn_key, clock=self.clock)
+        else:
+            load_operator_pipeline(self.pipeline, clock=self.clock)
+        job_id = sha256(canonical([digest, source_type, geo_level])).hexdigest()
         with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
             state = self._read(db)
@@ -171,7 +190,8 @@ class LocalIntakeWorker:
             if len(state["jobs"]) >= 128:
                 raise WorkerViolation("JOB_BUDGET_EXHAUSTED")
             state["jobs"].append({"job_id": job_id, "filename": filename, "sha256": digest,
-                                  "geo_level": geo_level, "state": "QUEUED", "result": None})
+                                  "source_type": source_type, "geo_level": geo_level,
+                                  "state": "QUEUED", "result": None})
             self._event(state, "ENQUEUED", job_id)
             self._save(db, state)
             db.commit()
@@ -204,9 +224,15 @@ class LocalIntakeWorker:
             with tempfile.TemporaryDirectory(prefix="sictra-approved-intake-") as directory:
                 staged = Path(directory) / job["filename"]
                 staged.write_bytes(content)
-                result = ingest_eurostat_workbook(self.pipeline, staged,
-                    geo_level=job["geo_level"], clock=self.clock)
-            status = "REVIEW_REQUIRED" if result["watchlist"]["next_state"] == "REQUIRES_REVIEW" else "COMPLETED"
+                if job.get("source_type", "EUROSTAT_TRAN_R_MAGO_NM") == "HN_CUSTOMS_Q1_V1":
+                    result = ingest_hn_customs_workbook(
+                        self.hn_pipeline, staged, key=self.hn_key, clock=self.clock,
+                    )
+                    status = "REVIEW_REQUIRED" if result["status"] == "DELTA_DETECTED_NOT_EVIDENCE" else "COMPLETED"
+                else:
+                    result = ingest_eurostat_workbook(self.pipeline, staged,
+                        geo_level=job["geo_level"], clock=self.clock)
+                    status = "REVIEW_REQUIRED" if result["watchlist"]["next_state"] == "REQUIRES_REVIEW" else "COMPLETED"
         except Exception as error:
             # Pipeline stages may already have committed. Never auto-retry or
             # label partial effects as a clean rejection.
@@ -264,7 +290,7 @@ class LocalIntakeWorker:
             raise WorkerViolation("RECOVERY_JOB_NOT_FOUND")
         if job["state"] not in {"RUNNING", "REVIEW_REQUIRED"}:
             raise WorkerViolation("RECOVERY_JOB_STATE_INVALID")
-        pipeline_fingerprint = sha256(canonical(pipeline_snapshot(self.pipeline, clock=self.clock))).hexdigest()
+        pipeline_fingerprint = self._pipeline_fingerprint(job)
         return sign_recovery_receipt(RecoveryReceipt(job_id, job["sha256"], pipeline_fingerprint,
             decision, actor_id, reason, self.clock()), recovery_key)
 
@@ -274,7 +300,11 @@ class LocalIntakeWorker:
             raise WorkerViolation("RECOVERY_KEY_MUST_BE_SEPARATE")
         now = self.clock()
         verify_recovery_receipt(receipt, recovery_key, now=now)
-        current_pipeline = sha256(canonical(pipeline_snapshot(self.pipeline, clock=self.clock))).hexdigest()
+        state = self.snapshot()
+        job = next((item for item in state["jobs"] if item["job_id"] == receipt.job_id), None)
+        if job is None:
+            raise WorkerViolation("RECOVERY_JOB_NOT_FOUND")
+        current_pipeline = self._pipeline_fingerprint(job)
         if current_pipeline != receipt.pipeline_fingerprint:
             raise WorkerViolation("RECOVERY_PIPELINE_CHANGED")
         with closing(self._connect()) as db:
@@ -306,6 +336,25 @@ class LocalIntakeWorker:
             db.commit()
         return {"state": next_state, "job_id": receipt.job_id}
 
+    def _pipeline_fingerprint(self, job: dict) -> str:
+        if job.get("source_type", "EUROSTAT_TRAN_R_MAGO_NM") == "HN_CUSTOMS_Q1_V1":
+            if self.hn_pipeline is None or self.hn_key is None:
+                raise WorkerViolation("HN_CUSTOMS_PIPELINE_NOT_CONFIGURED")
+            snapshot = load_hn_customs_pipeline(
+                self.hn_pipeline, key=self.hn_key, clock=self.clock,
+            ).snapshot()
+        else:
+            snapshot = pipeline_snapshot(self.pipeline, clock=self.clock)
+        return sha256(canonical(snapshot)).hexdigest()
+
+    def _all_pipeline_fingerprint(self) -> str:
+        snapshot = {"eurostat": pipeline_snapshot(self.pipeline, clock=self.clock)}
+        if self.hn_pipeline is not None and self.hn_key is not None:
+            snapshot["hn_customs"] = load_hn_customs_pipeline(
+                self.hn_pipeline, key=self.hn_key, clock=self.clock,
+            ).snapshot()
+        return sha256(canonical(snapshot)).hexdigest()
+
     def create_backup(self, destination: Path):
         """Create a verified, signed queue backup without copying either key."""
         target = Path(destination)
@@ -323,8 +372,7 @@ class LocalIntakeWorker:
         queue_sha256 = sha256(backup_db.read_bytes()).hexdigest()
         manifest = {"version": 1, "scope": "TELECARE_LOCAL_WORKER_QUEUE_BACKUP",
                     "created_at": self.clock(), "queue_sha256": queue_sha256,
-                    "pipeline_fingerprint": sha256(canonical(
-                        pipeline_snapshot(self.pipeline, clock=self.clock))).hexdigest()}
+                    "pipeline_fingerprint": self._all_pipeline_fingerprint()}
         manifest["signature"] = hmac.new(self.key, canonical(manifest), "sha256").hexdigest()
         (target / "manifest.json").write_text(json.dumps(manifest, sort_keys=True, indent=2), encoding="utf-8")
         self.verify_backup(target)
@@ -361,7 +409,7 @@ class LocalIntakeWorker:
         if (manifest["version"] != 1 or manifest["scope"] != "TELECARE_LOCAL_WORKER_QUEUE_BACKUP"
                 or sha256(queue_bytes).hexdigest() != manifest["queue_sha256"]):
             raise WorkerViolation("BACKUP_INTEGRITY_ERROR")
-        current_pipeline = sha256(canonical(pipeline_snapshot(self.pipeline, clock=self.clock))).hexdigest()
+        current_pipeline = self._all_pipeline_fingerprint()
         if current_pipeline != manifest["pipeline_fingerprint"]:
             raise WorkerViolation("BACKUP_PIPELINE_CHANGED")
         with closing(sqlite3.connect(root / "queue.sqlite")) as db:
@@ -378,8 +426,10 @@ class LocalIntakeWorker:
             raise WorkerViolation("RESTORE_TARGET_INVALID")
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((Path(source) / "queue.sqlite").read_bytes())
-        restored = LocalIntakeWorker(target, inbox=self.inbox, pipeline=self.pipeline,
-                                     key=self.key, clock=self.clock)
+        restored = LocalIntakeWorker(
+            target, inbox=self.inbox, pipeline=self.pipeline, key=self.key,
+            hn_pipeline=self.hn_pipeline, hn_key=self.hn_key, clock=self.clock,
+        )
         return {"status": "RESTORED_TO_NEW_PATH", "queue": str(target.resolve()),
                 "jobs": len(restored.snapshot()["jobs"])}
 

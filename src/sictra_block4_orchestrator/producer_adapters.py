@@ -13,6 +13,9 @@ from sictra_block2_design.runtime import execute_block2
 from sictra_block1.operator_pipeline import (
     EVIDENCE_MAX_AGE_SECONDS, OperatorPipelineViolation, load_operator_pipeline,
 )
+from sictra_block1.hn_customs_pipeline import (
+    HNCustomsPipelineViolation, load_hn_customs_pipeline,
+)
 from sictra_block3_precision.pipeline import PrecisionFoundationPipeline, PrecisionInput
 from sictra_block3_precision.adaptive import AdaptiveEvidence, AdaptivePolicy, HardConstraints
 from sictra_block3_precision.adaptive_pipeline import AdaptivePlanningInput, PrecisionAdaptivePipeline
@@ -90,6 +93,63 @@ class Block1DossierPackageAdapter:
         }
         package["signature"] = hmac.new(self.package_key, _canonical(package), "sha256").hexdigest()
         return package
+
+    def list_dossiers(self, *, now: datetime | None = None) -> list[dict]:
+        current = _now(now)
+        try:
+            return load_operator_pipeline(
+                self.pipeline, clock=lambda: int(current.timestamp()),
+            ).dossiers.list_dossiers()
+        except OperatorPipelineViolation as error:
+            raise FederatedContractError("BLOCK1_PIPELINE_INTEGRITY_ERROR") from error
+
+
+class HNCustomsDossierPackageAdapter:
+    """Export current HN customs dossiers without weakening the Eurostat path."""
+
+    def __init__(self, *, pipeline, integrity_key: bytes, package_key: bytes):
+        if not isinstance(integrity_key, bytes) or len(integrity_key) != 32:
+            raise FederatedContractError("HN_CUSTOMS_KEY_INVALID")
+        if not isinstance(package_key, bytes) or len(package_key) < 32:
+            raise FederatedContractError("PACKAGE_KEY_INVALID")
+        self.pipeline, self.integrity_key, self.package_key = pipeline, integrity_key, package_key
+
+    def _load(self, current: datetime):
+        try:
+            return load_hn_customs_pipeline(
+                self.pipeline, key=self.integrity_key,
+                clock=lambda: int(current.timestamp()),
+            )
+        except HNCustomsPipelineViolation as error:
+            raise FederatedContractError("HN_CUSTOMS_PIPELINE_INTEGRITY_ERROR") from error
+
+    def list_dossiers(self, *, now: datetime | None = None) -> list[dict]:
+        return self._load(_now(now)).list_dossiers()
+
+    def export(self, dossier_id: str, *, now: datetime | None = None) -> dict:
+        current = _now(now)
+        try:
+            return self._load(current).export_package(
+                dossier_id, package_key=self.package_key, now=int(current.timestamp()),
+            )
+        except HNCustomsPipelineViolation as error:
+            raise FederatedContractError("HN_CUSTOMS_DOSSIER_NOT_EXPORTABLE") from error
+
+
+class CompositeDossierPackageAdapter:
+    """Dispatch by explicit dossier namespace; never substitute one source."""
+
+    def __init__(self, *, eurostat: Block1DossierPackageAdapter,
+                 hn_customs: HNCustomsDossierPackageAdapter):
+        self.eurostat, self.hn_customs = eurostat, hn_customs
+
+    def list_dossiers(self, *, now: datetime | None = None) -> list[dict]:
+        return self.eurostat.list_dossiers(now=now) + self.hn_customs.list_dossiers(now=now)
+
+    def export(self, dossier_id: str, *, now: datetime | None = None) -> dict:
+        if isinstance(dossier_id, str) and dossier_id.startswith("hn-customs:"):
+            return self.hn_customs.export(dossier_id, now=now)
+        return self.eurostat.export(dossier_id, now=now)
 
 
 class Block2RuntimeAdapter:

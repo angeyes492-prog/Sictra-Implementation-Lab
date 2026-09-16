@@ -115,7 +115,11 @@ class OperationsHandler(CommandCenterHandler):
                 service.add_profile(value)
                 result = {"status": "PROFILE_CONFIGURED"}
             else:
-                if not isinstance(value, dict) or set(value) != {"content", "sha256", "geo_level"}:
+                if (not isinstance(value, dict)
+                        or set(value) not in ({"content", "sha256", "geo_level"},
+                                             {"content", "sha256", "geo_level", "source_type"})
+                        or value.get("source_type", "EUROSTAT_TRAN_R_MAGO_NM")
+                        not in {"EUROSTAT_TRAN_R_MAGO_NM", "HN_CUSTOMS_Q1_V1"}):
                     raise OperationsError("INTAKE_SCHEMA_INVALID")
                 content = base64.b64decode(value["content"], validate=True)
                 if len(content) > 8_388_608 or sha256(content).hexdigest() != value["sha256"]:
@@ -123,7 +127,10 @@ class OperationsHandler(CommandCenterHandler):
                 with tempfile.TemporaryDirectory(prefix="telecare-upload-") as directory:
                     source = Path(directory) / "approved.xlsx"
                     source.write_bytes(content)
-                    job_id = service.register_file(source, expected_sha256=value["sha256"], geo_level=value["geo_level"])
+                    job_id = service.register_file(
+                        source, expected_sha256=value["sha256"], geo_level=value["geo_level"],
+                        source_type=value.get("source_type", "EUROSTAT_TRAN_R_MAGO_NM"),
+                    )
                 result = {"status": "QUEUED", "job_id": job_id}
             self._json(HTTPStatus.OK, result)
         except Exception as error:

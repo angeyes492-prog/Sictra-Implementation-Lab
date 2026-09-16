@@ -10,12 +10,22 @@ import threading
 import time
 
 from sictra_block1.operator_pipeline import initialize_operator_pipeline, load_operator_pipeline
+from sictra_block1.hn_customs_pipeline import (
+    HNCustomsPipelineViolation, initialize_hn_customs_pipeline,
+    parse_hn_customs_workbook,
+)
+from sictra_block1.manual_source_preflight import (
+    ManualSourcePreflightViolation, preflight_manual_source_file,
+)
 from sictra_block2_design.design_artifact import (
     DesignArtifactError, compose_content_design, fingerprint, render_designed_review_artifact,
 )
 from sictra_block3_precision.audience_draft import adapt_content_design, validate_profile, AudiencePolicyError
 from .local_worker import LocalIntakeWorker
-from .producer_adapters import Block1DossierPackageAdapter
+from .producer_adapters import (
+    Block1DossierPackageAdapter, CompositeDossierPackageAdapter,
+    HNCustomsDossierPackageAdapter,
+)
 from .runtime import FederatedContractError, FederatedOrchestratorStore
 from .operations_store import OperationsError, OperationsStore, process_lock
 
@@ -25,9 +35,11 @@ def initialize(root, *, now=None):
     if root.is_symlink():
         raise OperationsError("STATE_PATH_INVALID")
     root.mkdir(parents=True, exist_ok=True)
-    for name in ("inbox", "dropbox", "keys", "backups"):
+    for name in ("inbox", "dropbox", "keys", "backups", "catalog"):
         (root / name).mkdir(exist_ok=True)
-    # Missing keys in an existing state must never silently generate new identity.
+    # Missing legacy keys in an existing state must never silently generate new
+    # identity. The HN key is an explicit additive migration and is created only
+    # when its state does not yet exist.
     existing = (root / "operations.sqlite").exists()
     for name in ("operations", "packages", "intake", "recovery"):
         path = root / "keys" / (name + ".key")
@@ -36,7 +48,19 @@ def initialize(root, *, now=None):
                 raise OperationsError("EXISTING_STATE_KEY_MISSING")
             with path.open("xb") as stream:
                 stream.write(os.urandom(32))
+    hn_path = root / "keys" / "hn-customs.key"
+    if not hn_path.exists():
+        hn_state = root / "hn-customs"
+        if hn_state.exists() and (hn_state.is_symlink() or any(hn_state.iterdir())):
+            raise OperationsError("EXISTING_HN_CUSTOMS_KEY_MISSING")
+        with hn_path.open("xb") as stream:
+            stream.write(os.urandom(32))
     initialize_operator_pipeline(root / "pipeline", clock=lambda: int(now if now is not None else time.time()))
+    hn_key = (root / "keys" / "hn-customs.key").read_bytes()
+    initialize_hn_customs_pipeline(
+        root / "hn-customs", key=hn_key,
+        clock=lambda: int(now if now is not None else time.time()),
+    )
     service = OperationsService(root, clock=(lambda: now) if now is not None else time.time)
     if not service.store.latest("PROFILE"):
         service.add_profile({"id": "logistics-general", "label": "Lectura logística general",
@@ -68,19 +92,28 @@ class OperationsService:
             return path.read_bytes()
         self.store = OperationsStore(self.root / "operations.sqlite", key("operations"))
         self.pipeline = self.root / "pipeline"
+        self.hn_pipeline = self.root / "hn-customs"
+        self.hn_key = key("hn-customs")
         self.intake = LocalIntakeWorker(self.root / "intake.sqlite", inbox=self.root / "inbox",
-            pipeline=self.pipeline, key=key("intake"), clock=lambda: int(self.clock()))
+            pipeline=self.pipeline, hn_pipeline=self.hn_pipeline, hn_key=self.hn_key,
+            key=key("intake"), clock=lambda: int(self.clock()))
         self.package_key = key("packages")
         self.recovery_key = key("recovery")
         self.cases = FederatedOrchestratorStore(self.root / "cases.sqlite", integrity_key=self.package_key)
-        self.exporter = Block1DossierPackageAdapter(pipeline=self.pipeline, package_key=self.package_key)
+        self.exporter = CompositeDossierPackageAdapter(
+            eurostat=Block1DossierPackageAdapter(pipeline=self.pipeline, package_key=self.package_key),
+            hn_customs=HNCustomsDossierPackageAdapter(
+                pipeline=self.hn_pipeline, integrity_key=self.hn_key,
+                package_key=self.package_key,
+            ),
+        )
 
     def add_profile(self, profile):
         validate_profile(profile, now=int(self.clock()))
         with self.lock:
             self.store.put("PROFILE", profile["id"], profile)
 
-    def register_file(self, source, *, expected_sha256, geo_level="COUNTRY"):
+    def register_file(self, source, *, expected_sha256, geo_level="COUNTRY", source_type="EUROSTAT_TRAN_R_MAGO_NM"):
         path = Path(source)
         if path.is_symlink() or path.suffix.lower() != ".xlsx":
             raise OperationsError("INPUT_NOT_ALLOWED")
@@ -98,7 +131,61 @@ class OperationsService:
             with destination.open("xb") as stream:
                 stream.write(data)
         with self.lock:
-            return self.intake.enqueue(destination.name, expected_sha256=expected_sha256, geo_level=geo_level)
+            return self.intake.enqueue(
+                destination.name, expected_sha256=expected_sha256,
+                geo_level=geo_level, source_type=source_type,
+            )
+
+    def retain_context_catalog(self, source, *, expected_sha256, catalog_id):
+        """Retain an exact operator-supplied XLSX as context, never observations."""
+        if (not isinstance(catalog_id, str) or not catalog_id.strip()
+                or len(catalog_id) > 128):
+            raise OperationsError("CATALOG_ID_INVALID")
+        path = Path(source)
+        if path.is_symlink() or not path.is_file() or path.suffix.lower() != ".xlsx":
+            raise OperationsError("CATALOG_INPUT_NOT_ALLOWED")
+        if path.stat().st_size > 8_388_608:
+            raise OperationsError("CATALOG_HASH_OR_SIZE_INVALID")
+        with path.open("rb") as stream:
+            data = stream.read(8_388_609)
+        if len(data) > 8_388_608 or sha256(data).hexdigest() != expected_sha256:
+            raise OperationsError("CATALOG_HASH_OR_SIZE_INVALID")
+        try:
+            preflight = preflight_manual_source_file(path.name, data)
+        except ManualSourcePreflightViolation as error:
+            raise OperationsError("CATALOG_PREFLIGHT_REJECTED") from error
+        if preflight.get("status") != "READY_FOR_SCHEMA_REVIEW" or preflight.get("format") != "XLSX":
+            raise OperationsError("CATALOG_PREFLIGHT_REJECTED")
+        destination = self.root / "catalog" / (expected_sha256 + ".xlsx")
+        if destination.is_symlink():
+            raise OperationsError("CATALOG_PATH_INVALID")
+        if destination.exists():
+            if destination.read_bytes() != data:
+                raise OperationsError("CATALOG_RETAINED_BYTES_CHANGED")
+        else:
+            with destination.open("xb") as stream:
+                stream.write(data)
+        record = {
+            "catalog_id": catalog_id.strip(), "raw_sha256": expected_sha256,
+            "retained_file": destination.name, "retained_at": int(self.clock()),
+            "classification": "CONTEXT_CATALOG_NOT_OBSERVATIONAL_EVIDENCE",
+            "runtime_effect": "NONE", "publication": "BLOCKED",
+        }
+        self.store.put("SOURCE_CATALOG", record["catalog_id"], record, immutable=True)
+        return record
+
+    def _catalog_snapshot(self):
+        records = list(self.store.latest("SOURCE_CATALOG").values())
+        for record in records:
+            path = self.root / "catalog" / record["retained_file"]
+            if (path.is_symlink() or not path.is_file()
+                    or path.stat().st_size > 8_388_608):
+                raise OperationsError("CATALOG_INTEGRITY_ERROR")
+            with path.open("rb") as stream:
+                payload = stream.read(8_388_609)
+            if sha256(payload).hexdigest() != record["raw_sha256"]:
+                raise OperationsError("CATALOG_INTEGRITY_ERROR")
+        return records
 
     def set_paused(self, paused):
         if type(paused) is not bool:
@@ -170,7 +257,12 @@ class OperationsService:
             digest = sha256(data).hexdigest()
             seen[path.name] = digest
             if self._seen_files.get(path.name) == digest:
-                self.register_file(path, expected_sha256=digest)
+                try:
+                    parse_hn_customs_workbook(path.name, data)
+                    source_type, geo_level = "HN_CUSTOMS_Q1_V1", "CUSTOMS_POINT"
+                except HNCustomsPipelineViolation:
+                    source_type, geo_level = "EUROSTAT_TRAN_R_MAGO_NM", "COUNTRY"
+                self.register_file(path, expected_sha256=digest, geo_level=geo_level, source_type=source_type)
         self._seen_files = seen
 
     def abstain_intake(self, job_id, reason):
@@ -228,8 +320,9 @@ class OperationsService:
                 return {"state": "PAUSED"}
             self.scan_inbox()
             intake_result = self.intake.run(max_jobs=1)
-            pipeline = load_operator_pipeline(self.pipeline, clock=lambda: now)
-            dossiers = pipeline.dossiers.list_dossiers()
+            # Both source adapters verify their own stores and authority before
+            # returning a dossier. One source can never stand in for the other.
+            dossiers = self.exporter.list_dossiers(now=datetime.fromtimestamp(now, timezone.utc))
             profiles = self.store.latest("PROFILE")
             outputs = self.store.latest("OUTPUT")
             work = [(d, p) for d in dossiers for p in profiles.values()]
@@ -316,6 +409,7 @@ class OperationsService:
             runs = self.store.latest("ORCHESTRATION_RESULT")
             latest_run = max(runs.values(), key=lambda item: item["requested_at"], default=None)
             return {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
+                    "source_catalogs": self._catalog_snapshot(),
                     "evidence_review_deferred": self.store.latest('CONTROL').get('deferred-evidence-review', {}).get('enabled', False),
                     "deferred_reviews": list(self.store.latest('DEFERRED_REVIEW').values()),
                     "watch_enabled": self.store.latest("CONTROL").get("watch", {}).get("enabled", False),
