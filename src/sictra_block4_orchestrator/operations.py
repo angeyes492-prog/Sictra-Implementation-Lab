@@ -278,6 +278,76 @@ class OperationsService:
             self.store.put('CONTROL', 'deferred-evidence-review',
                 {'enabled': enabled, 'publication': 'BLOCKED', 'acceptance': 'NOT_ACCEPTED'})
 
+    def _ensure_autonomy_tasks(self, dossiers):
+        """Turn explicit dossier gaps into bounded, non-executing work items.
+
+        A task can ask the operator for an approved, independent source. It
+        cannot fetch a source, declare corroboration, or create publication
+        authority. This gives the autonomous loop a durable next action without
+        silently expanding its authority.
+        """
+        existing = self.store.latest("AUTONOMY_TASK")
+        now = int(self.clock())
+        for dossier in dossiers:
+            source = dossier.get("source", {})
+            needs = dossier.get("next_data_needs", [])
+            if (not isinstance(dossier.get("dossier_id"), str)
+                    or not isinstance(source.get("source_id"), str)
+                    or not isinstance(needs, list)):
+                raise OperationsError("AUTONOMY_TASK_INPUT_INVALID")
+            root = source.get("root_source_identity", source["source_id"])
+            if not isinstance(root, str) or not root:
+                raise OperationsError("AUTONOMY_TASK_ROOT_INVALID")
+            for ordinal, need in enumerate(needs, 1):
+                if not isinstance(need, str) or not need.strip() or len(need) > 1000:
+                    raise OperationsError("AUTONOMY_TASK_NEED_INVALID")
+                identity = "TASK-" + fingerprint({
+                    "dossier_id": dossier["dossier_id"], "need": need,
+                    "source_root": root,
+                })[:24]
+                if identity in existing:
+                    continue
+                kind = ("INDEPENDENT_CORROBORATION" if "independiente" in need.lower()
+                        else "EVIDENCE_GAP")
+                task = {
+                    "task_id": identity, "dossier_id": dossier["dossier_id"],
+                    "source_id": source["source_id"], "source_root": root,
+                    "ordinal": ordinal, "kind": kind, "priority": "HIGH",
+                    "state": "OPEN", "requirement": need.strip(), "created_at": now,
+                    "required_evidence_root": "MUST_DIFFER_FROM:" + root,
+                    "allowed_actions": ["REGISTER_APPROVED_LOCAL_SOURCE", "LINK_VERIFIED_EVIDENCE"],
+                    "forbidden_actions": ["NETWORK_ACQUISITION", "CAUSAL_CONCLUSION", "PUBLICATION", "DELIVERY"],
+                    "completion_boundary": "VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED",
+                    "last_human_review": None,
+                }
+                self.store.put("AUTONOMY_TASK", identity, task, immutable=True)
+
+    def acknowledge_autonomy_task(self, task_id, *, reviewer_id, rationale):
+        """Record a human reading of a task without accepting its evidence."""
+        if (not isinstance(task_id, str) or not task_id.startswith("TASK-")
+                or not isinstance(reviewer_id, str) or not reviewer_id.strip()
+                or len(reviewer_id) > 128 or not isinstance(rationale, str)
+                or not 20 <= len(rationale.strip()) <= 1000):
+            raise OperationsError("AUTONOMY_TASK_REVIEW_INVALID")
+        with self.lock:
+            tasks = self.store.latest("AUTONOMY_TASK")
+            task = tasks.get(task_id)
+            if task is None or task.get("state") not in {"OPEN", "HUMAN_ACKNOWLEDGED"}:
+                raise OperationsError("AUTONOMY_TASK_NOT_REVIEWABLE")
+            review = {
+                "task_id": task_id, "reviewer_id": reviewer_id.strip(),
+                "rationale": rationale.strip(), "reviewed_at": int(self.clock()),
+                "decision": "ACKNOWLEDGED_NOT_ACCEPTED", "publication": "BLOCKED",
+                "evidence_link": None,
+            }
+            review_id = "TASK-REVIEW-" + fingerprint(review)[:24]
+            self.store.put("AUTONOMY_TASK_REVIEW", review_id, review, immutable=True)
+            self.store.put("AUTONOMY_TASK", task_id, {
+                **task, "state": "HUMAN_ACKNOWLEDGED", "last_human_review": review,
+            })
+            return {"status": "ACKNOWLEDGED_NOT_ACCEPTED", "task_id": task_id,
+                    "publication": "BLOCKED", "evidence_link": None}
+
     def _close_review_waits_by_abstention(self):
         if not self.store.latest('CONTROL').get('deferred-evidence-review', {}).get('enabled', False):
             return
@@ -323,6 +393,7 @@ class OperationsService:
             # Both source adapters verify their own stores and authority before
             # returning a dossier. One source can never stand in for the other.
             dossiers = self.exporter.list_dossiers(now=datetime.fromtimestamp(now, timezone.utc))
+            self._ensure_autonomy_tasks(dossiers)
             profiles = self.store.latest("PROFILE")
             outputs = self.store.latest("OUTPUT")
             work = [(d, p) for d in dossiers for p in profiles.values()]
@@ -410,6 +481,8 @@ class OperationsService:
             latest_run = max(runs.values(), key=lambda item: item["requested_at"], default=None)
             return {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
                     "source_catalogs": self._catalog_snapshot(),
+                    "autonomy_tasks": sorted(self.store.latest("AUTONOMY_TASK").values(),
+                                             key=lambda item: (item["state"], item["created_at"], item["task_id"])),
                     "evidence_review_deferred": self.store.latest('CONTROL').get('deferred-evidence-review', {}).get('enabled', False),
                     "deferred_reviews": list(self.store.latest('DEFERRED_REVIEW').values()),
                     "watch_enabled": self.store.latest("CONTROL").get("watch", {}).get("enabled", False),

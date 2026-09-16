@@ -66,7 +66,7 @@ class OperationsHandler(CommandCenterHandler):
 
     def do_POST(self):
         path = urlsplit(self.path).path
-        if path not in {"/api/operations/control", "/api/operations/profile", "/api/operations/intake", "/api/operations/abstain"}:
+        if path not in {"/api/operations/control", "/api/operations/profile", "/api/operations/intake", "/api/operations/abstain", "/api/operations/tasks/review"}:
             return super().do_POST()
         if not self._allowed():
             return
@@ -114,6 +114,12 @@ class OperationsHandler(CommandCenterHandler):
             elif path.endswith("/profile"):
                 service.add_profile(value)
                 result = {"status": "PROFILE_CONFIGURED"}
+            elif path.endswith("/tasks/review"):
+                if not isinstance(value, dict) or set(value) != {"task_id", "reviewer_id", "rationale"}:
+                    raise OperationsError("AUTONOMY_TASK_REVIEW_INVALID")
+                result = service.acknowledge_autonomy_task(
+                    value["task_id"], reviewer_id=value["reviewer_id"], rationale=value["rationale"],
+                )
             else:
                 if (not isinstance(value, dict)
                         or set(value) not in ({"content", "sha256", "geo_level"},

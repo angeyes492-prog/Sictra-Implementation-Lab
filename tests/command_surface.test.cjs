@@ -7,14 +7,15 @@ const fixture=()=>({scope:'LABORATORY_INTERNAL_SUPERVISED',publication:'BLOCKED'
  control_token:'local-test-token',last_cycle:1789300800,watch_enabled:false,watch_directory:'local/dropbox',
  profiles:[{id:'ops',label:'Operaciones'}],outputs:[{id:'one',title:'Dossier',profile:'Operaciones',availability:'CURRENT'},
  {id:'two',title:'Antiguo',profile:'Operaciones',availability:'STALE_OR_REVOKED'}],
- intake_waiting:[{job_id:'input-1',state:'REVIEW_REQUIRED'}],waiting:[{reason:'MISSING_PROFILE'}],orchestration:{last_run:null}});
+ intake_waiting:[{job_id:'input-1',state:'REVIEW_REQUIRED'}],waiting:[{reason:'MISSING_PROFILE'}],
+ autonomy_tasks:[{task_id:'TASK-1',dossier_id:'dossier-1',state:'OPEN',requirement:'Fuente independiente',required_evidence_root:'MUST_DIFFER_FROM:root-a'}],orchestration:{last_run:null}});
 test('projects actual availability without calling stale outputs current or completed',()=>{
- const input=fixture(); assert.deepEqual(operationProjection(input),{current:1,stale:1,waiting:1,alerts:2,watch:'Inactiva',service:'Servicio pausado'});
+ const input=fixture(); assert.deepEqual(operationProjection(input),{current:1,stale:1,waiting:1,alerts:3,watch:'Inactiva',service:'Servicio pausado'});
  assert.equal(input.publication,'BLOCKED');assert.equal(input.outputs[1].availability,'STALE_OR_REVOKED');
 });
 test('empty is zero only after valid reading; missing state is not zero',()=>{
  const input=fixture();input.outputs=[];assert.equal(operationProjection(input).current,0);
- for(const key of ['outputs','profiles','waiting','intake_waiting','control_token','watch_enabled','scope','publication']){
+ for(const key of ['outputs','profiles','waiting','intake_waiting','autonomy_tasks','control_token','watch_enabled','scope','publication']){
   const broken=fixture();delete broken[key];assert.throws(()=>validateOperations(broken));
  }
  assert.throws(()=>operationProjection(null));

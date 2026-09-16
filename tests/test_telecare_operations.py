@@ -263,6 +263,25 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual('DESIGN_REVIEW_REQUIRED', self.service.output(output['id'])['state'])
         self.assertEqual('BLOCKED', self.service.output(output['id'])['publication'])
 
+    def test_dossier_gaps_become_durable_supervised_autonomy_tasks(self):
+        output = self.ready()
+        tasks = self.service.snapshot()["autonomy_tasks"]
+        self.assertTrue(tasks)
+        self.assertTrue(all(task["dossier_id"] == output["dossier_id"] for task in tasks))
+        self.assertTrue(all(task["state"] == "OPEN" for task in tasks))
+        self.assertTrue(all(task["completion_boundary"] == "VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED"
+                            for task in tasks))
+        acknowledged = self.service.acknowledge_autonomy_task(
+            tasks[0]["task_id"], reviewer_id="operator-local",
+            rationale="Se requiere una fuente aprobada de raíz independiente antes de interpretar el cambio.",
+        )
+        self.assertEqual("ACKNOWLEDGED_NOT_ACCEPTED", acknowledged["status"])
+        current = {task["task_id"]: task for task in self.service.snapshot()["autonomy_tasks"]}
+        self.assertEqual("HUMAN_ACKNOWLEDGED", current[tasks[0]["task_id"]]["state"])
+        self.assertEqual("BLOCKED", self.service.output(output["id"])["publication"])
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_REVIEW_INVALID"):
+            self.service.acknowledge_autonomy_task(tasks[0]["task_id"], reviewer_id="", rationale="short")
+
     def test_http_control_requires_same_origin_token_and_artifacts_are_current(self):
         output = self.ready()
         server = create_operations_server(self.service, port=0)

@@ -41,6 +41,24 @@
       $('review-policy-status').textContent=data.evidence_review_deferred ? 'Revisión de evidencia diferida · la construcción y los ciclos locales continúan.' : 'Cada cambio espera revisión de evidencia.';
       $('deferred-reviews').replaceChildren();
       for(const item of data.deferred_reviews || []) {const row=document.createElement('li');row.textContent=item.dossier_id+' · Cerrado por abstención · evidencia pendiente · no aceptado';$('deferred-reviews').append(row);}
+      $('autonomy-task-list').replaceChildren();
+      for (const item of data.autonomy_tasks) {
+        const card=document.createElement('article');card.className='case';
+        const text=document.createElement('div'), title=document.createElement('strong'), body=document.createElement('p');
+        title.textContent=item.kind+' · '+item.state;
+        body.textContent=item.requirement+' · raíz requerida: '+item.required_evidence_root;
+        text.append(title,body);card.append(text);
+        if (item.state==='OPEN') {
+          const button=document.createElement('button');button.type='button';button.textContent='Registrar lectura humana';
+          button.addEventListener('click',()=>{
+            const reviewer=prompt('Identificador del revisor local:');
+            const rationale=prompt('Explica qué evidencia falta y la siguiente acción (20–1000 caracteres):');
+            if(reviewer&&rationale) post('/api/operations/tasks/review',{task_id:item.task_id,reviewer_id:reviewer,rationale}).catch(error=>$('operations-feedback').textContent=error.message);
+          });card.append(button);
+        }
+        $('autonomy-task-list').append(card);
+      }
+      if (!data.autonomy_tasks.length) $('autonomy-task-list').textContent='No hay tareas derivadas de un dossier vigente.';
       document.dispatchEvent(new CustomEvent('telecare:operations',{detail:data}));
       if (previewId && !data.outputs.some(item=>item.id===previewId && item.availability==='CURRENT')) closePreview();
       $('operations-status').textContent = (labels[data.status] || 'Estado desconocido') + (data.data_class === 'SYNTHETIC_PILOT' ? ' · PRUEBA CON DATOS SINTÉTICOS' : '') + (data.last_cycle ? ' · Último ciclo: ' + new Date(data.last_cycle*1000).toLocaleTimeString('es') : '');
@@ -88,6 +106,7 @@
       document.dispatchEvent(new CustomEvent('telecare:operations',{detail:null}));
       for(const id of ['operations-profiles','operations-watch','operations-orchestration','operations-wait','review-policy-status']) $(id).textContent='';
       $('deferred-reviews').replaceChildren();
+      $('autonomy-task-list').replaceChildren();
       $('operations-recovery').replaceChildren();
       for (const button of document.querySelectorAll('[data-operation]')) button.disabled=true;
     } finally {clearTimeout(timer); loading=false;}

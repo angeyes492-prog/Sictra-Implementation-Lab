@@ -7,13 +7,15 @@ function validateOperations(data) {
       || !['RUNNING','PAUSED','STOPPED','ERROR'].includes(data.status)
       || !text(data.control_token) || !timestamp(data.last_cycle)
       || typeof data.watch_enabled !== 'boolean' || !text(data.watch_directory)
-      || !['profiles','outputs','waiting','intake_waiting'].every(k => Array.isArray(data[k]))
+      || !['profiles','outputs','waiting','intake_waiting','autonomy_tasks'].every(k => Array.isArray(data[k]))
       || !data.profiles.every(p => p && text(p.id) && text(p.label))
       || !data.outputs.every(o => o && text(o.id) && text(o.title) && text(o.profile)
         && ['CURRENT','STALE_OR_REVOKED'].includes(o.availability))
       || new Set(data.outputs.map(o=>o.id)).size !== data.outputs.length
       || !data.waiting.every(w=>w && text(w.reason))
-      || !data.intake_waiting.every(w=>w && text(w.job_id) && text(w.state))) {
+      || !data.intake_waiting.every(w=>w && text(w.job_id) && text(w.state))
+      || !data.autonomy_tasks.every(t=>t && text(t.task_id) && text(t.dossier_id)
+        && text(t.state) && text(t.requirement) && text(t.required_evidence_root))) {
     throw new Error('Lectura operativa incompleta o fuera del alcance autorizado.');
   }
   const run = data.orchestration?.last_run;
@@ -26,7 +28,7 @@ function operationProjection(data) {
   validateOperations(data);
   return {current:data.outputs.filter(o=>o.availability==='CURRENT').length,
     stale:data.outputs.filter(o=>o.availability!=='CURRENT').length,
-    waiting:data.intake_waiting.length, alerts:data.intake_waiting.length+data.waiting.length,
+    waiting:data.intake_waiting.length, alerts:data.intake_waiting.length+data.waiting.length+data.autonomy_tasks.filter(t=>t.state==='OPEN').length,
     watch:data.watch_enabled ? 'Activa' : 'Inactiva',
     service:({RUNNING:'Servicio activo',PAUSED:'Servicio pausado',STOPPED:'Servicio detenido',ERROR:'Error · requiere recuperación'})[data.status]};
 }
