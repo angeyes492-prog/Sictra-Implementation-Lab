@@ -283,8 +283,9 @@ class OperationsTests(unittest.TestCase):
         self.assertTrue(tasks)
         self.assertTrue(all(task["dossier_id"] == output["dossier_id"] for task in tasks))
         self.assertTrue(all(task["state"] == "OPEN" for task in tasks))
-        self.assertTrue(all(task["completion_boundary"] == "VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED"
+        self.assertTrue(all(task["completion_boundary"] == "BLOCK1_CONTRACTED_RESOLUTION_REQUIRED"
                             for task in tasks))
+        self.assertTrue(all(task["boundary_status"] == "CURRENT" for task in tasks))
         acknowledged = self.service.acknowledge_autonomy_task(
             tasks[0]["task_id"], reviewer_id="operator-local",
             rationale="Se requiere una fuente aprobada de raíz independiente antes de interpretar el cambio.",
@@ -295,6 +296,22 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual("BLOCKED", self.service.output(output["id"])["publication"])
         with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_REVIEW_INVALID"):
             self.service.acknowledge_autonomy_task(tasks[0]["task_id"], reviewer_id="", rationale="short")
+
+    def test_legacy_task_boundary_is_preserved_but_never_projected_as_current_authority(self):
+        self.ready()
+        task = self.service.snapshot()["autonomy_tasks"][0]
+        legacy = {key: value for key, value in task.items()
+                  if key not in {"evidence_status", "effective_completion_boundary", "boundary_status"}}
+        legacy["completion_boundary"] = "VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED"
+        legacy["allowed_actions"] = ["REGISTER_APPROVED_LOCAL_SOURCE", "LINK_VERIFIED_EVIDENCE"]
+        self.service.store.put("AUTONOMY_TASK", task["task_id"], legacy)
+        count = len(self.service.store.records())
+        view = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["task_id"] == task["task_id"])
+        self.assertEqual("VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED", view["completion_boundary"])
+        self.assertEqual("BLOCK1_CONTRACTED_RESOLUTION_REQUIRED", view["effective_completion_boundary"])
+        self.assertEqual("LEGACY_SUPERSEDED", view["boundary_status"])
+        self.assertEqual(count, len(self.service.store.records()))
 
     def test_independent_current_dossier_link_requests_block1_reassessment_without_closing_gap(self):
         original = self.ready()

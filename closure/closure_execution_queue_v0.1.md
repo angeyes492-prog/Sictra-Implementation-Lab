@@ -39,11 +39,16 @@ a local human request for Block 1 reassessment. The task remains open;
 dossier certainty, editorial acceptance, publication and delivery remain unchanged. Candidate
 contract: `contracts/telecare_autonomy_task_evidence_cycle_contract_v0.1.md`.
 Positive, same-root, superseded, tamper, replay, non-closure and HTTP authority
-tests passed locally on 2026-09-28 (776 Python and 10 JavaScript regression
-tests). Exact-SHA hosted CI remains pending. This increment does not resolve the three live HN evidence gaps or
+tests passed locally on 2026-09-28 (777 Python and 11 JavaScript regression
+tests after the boundary correction). Hosted CI succeeded for precursor
+`c9ed55090904a681f604d9b8c860f6662d45dd4c` (run 36521030072);
+exact-SHA CI for the boundary correction remains pending. This increment does not resolve the three live HN evidence gaps or
 grant source approval. After exact-SHA CI, the next item is an approved,
 independent evidence path and editorial quality evaluation; absent that input,
 the tasks must remain open. Cross-block acceptance awaits MAR.
+Legacy task metadata claiming a link plus human review suffices for completion
+is retained in the journal but superseded in snapshots; the effective boundary
+is a contracted Block 1 resolution, not a Block 4 action.
 
 Design delta: reference-led isometric scene, compact glass cards, responsive
 layout, no fabricated metrics; B1 unsupported numeric uncertainty/age removed.

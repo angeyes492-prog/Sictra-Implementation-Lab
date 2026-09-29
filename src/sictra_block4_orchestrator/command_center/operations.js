@@ -47,7 +47,9 @@
         const text=document.createElement('div'), title=document.createElement('strong'), body=document.createElement('p');
         title.textContent=item.kind+' · '+item.state;
         body.textContent=item.requirement+' · raíz requerida: '+item.required_evidence_root+
-          (item.evidence_link ? ' · dossier candidato: '+item.evidence_link.dossier_id+' · '+item.evidence_status : '');
+          (item.evidence_link ? ' · dossier candidato: '+item.evidence_link.dossier_id+' · '+item.evidence_status : '')+
+          ' · cierre pendiente de resolución contratada por Intelligence'+
+          (item.boundary_status==='LEGACY_SUPERSEDED' ? ' · metadato histórico reemplazado' : '');
         text.append(title,body);card.append(text);
         if (item.state==='OPEN') {
           const button=document.createElement('button');button.type='button';button.textContent='Registrar lectura humana';

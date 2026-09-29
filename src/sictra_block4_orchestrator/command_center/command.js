@@ -16,6 +16,8 @@ function validateOperations(data) {
       || !data.intake_waiting.every(w=>w && text(w.job_id) && text(w.state))
       || !data.autonomy_tasks.every(t=>t && text(t.task_id) && text(t.dossier_id)
         && text(t.state) && text(t.requirement) && text(t.required_evidence_root)
+        && t.effective_completion_boundary==='BLOCK1_CONTRACTED_RESOLUTION_REQUIRED'
+        && ['CURRENT','LEGACY_SUPERSEDED'].includes(t.boundary_status)
         && ['NOT_LINKED','CURRENT','STALE_OR_REVOKED'].includes(t.evidence_status))) {
     throw new Error('Lectura operativa incompleta o fuera del alcance autorizado.');
   }

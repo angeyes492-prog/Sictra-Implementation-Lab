@@ -29,6 +29,8 @@ from .producer_adapters import (
 from .runtime import FederatedContractError, FederatedOrchestratorStore
 from .operations_store import OperationsError, OperationsStore, process_lock
 
+AUTONOMY_TASK_RESOLUTION_BOUNDARY = "BLOCK1_CONTRACTED_RESOLUTION_REQUIRED"
+
 
 def initialize(root, *, now=None):
     root = Path(root).absolute()
@@ -315,9 +317,9 @@ class OperationsService:
                     "ordinal": ordinal, "kind": kind, "priority": "HIGH",
                     "state": "OPEN", "requirement": need.strip(), "created_at": now,
                     "required_evidence_root": "MUST_DIFFER_FROM:" + root,
-                    "allowed_actions": ["REGISTER_APPROVED_LOCAL_SOURCE", "LINK_VERIFIED_EVIDENCE"],
+                    "allowed_actions": ["REGISTER_APPROVED_LOCAL_SOURCE", "LINK_CURRENT_CANDIDATE_DOSSIER"],
                     "forbidden_actions": ["NETWORK_ACQUISITION", "CAUSAL_CONCLUSION", "PUBLICATION", "DELIVERY"],
-                    "completion_boundary": "VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED",
+                    "completion_boundary": AUTONOMY_TASK_RESOLUTION_BOUNDARY,
                     "last_human_review": None,
                 }
                 self.store.put("AUTONOMY_TASK", identity, task, immutable=True)
@@ -571,6 +573,9 @@ class OperationsService:
             tasks = []
             for task in self.store.latest("AUTONOMY_TASK").values():
                 view = dict(task)
+                view["effective_completion_boundary"] = AUTONOMY_TASK_RESOLUTION_BOUNDARY
+                view["boundary_status"] = ("CURRENT" if task.get("completion_boundary") ==
+                                           AUTONOMY_TASK_RESOLUTION_BOUNDARY else "LEGACY_SUPERSEDED")
                 if view.get("evidence_link"):
                     try:
                         self._revalidate_task_link(view)

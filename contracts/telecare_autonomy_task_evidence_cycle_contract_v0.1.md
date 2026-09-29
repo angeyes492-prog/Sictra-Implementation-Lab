@@ -33,6 +33,10 @@ decisions retain an append-only record containing the previous link, and
 `publication=BLOCKED`, `acceptance=NOT_ACCEPTED`.
 `BLOCK1_REASSESSMENT_REQUIRED` cannot be relinked or reassessed by Block 4;
 Block 1 must provide a separate contracted resolution before task closure.
+New tasks use `BLOCK1_CONTRACTED_RESOLUTION_REQUIRED` as their completion
+boundary. Old task records retain their original metadata; snapshots mark it
+`LEGACY_SUPERSEDED` and expose the current effective boundary without rewriting
+the journal.
 
 ## Failure, recovery, and compatibility
 
