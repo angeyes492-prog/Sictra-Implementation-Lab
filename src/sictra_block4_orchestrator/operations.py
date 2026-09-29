@@ -29,6 +29,8 @@ from .producer_adapters import (
 from .runtime import FederatedContractError, FederatedOrchestratorStore
 from .operations_store import OperationsError, OperationsStore, process_lock
 
+AUTONOMY_TASK_RESOLUTION_BOUNDARY = "BLOCK1_CONTRACTED_RESOLUTION_REQUIRED"
+
 
 def initialize(root, *, now=None):
     root = Path(root).absolute()
@@ -315,9 +317,9 @@ class OperationsService:
                     "ordinal": ordinal, "kind": kind, "priority": "HIGH",
                     "state": "OPEN", "requirement": need.strip(), "created_at": now,
                     "required_evidence_root": "MUST_DIFFER_FROM:" + root,
-                    "allowed_actions": ["REGISTER_APPROVED_LOCAL_SOURCE", "LINK_VERIFIED_EVIDENCE"],
+                    "allowed_actions": ["REGISTER_APPROVED_LOCAL_SOURCE", "LINK_CURRENT_CANDIDATE_DOSSIER"],
                     "forbidden_actions": ["NETWORK_ACQUISITION", "CAUSAL_CONCLUSION", "PUBLICATION", "DELIVERY"],
-                    "completion_boundary": "VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED",
+                    "completion_boundary": AUTONOMY_TASK_RESOLUTION_BOUNDARY,
                     "last_human_review": None,
                 }
                 self.store.put("AUTONOMY_TASK", identity, task, immutable=True)
@@ -347,6 +349,95 @@ class OperationsService:
             })
             return {"status": "ACKNOWLEDGED_NOT_ACCEPTED", "task_id": task_id,
                     "publication": "BLOCKED", "evidence_link": None}
+
+    def _current_task_evidence(self, task, evidence_dossier_id):
+        """Recheck both Block 1 stores; a saved link is never proof of currency."""
+        if (not isinstance(evidence_dossier_id, str) or not evidence_dossier_id.strip()
+                or evidence_dossier_id == task["dossier_id"]):
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_ID_INVALID")
+        now = datetime.fromtimestamp(self.clock(), timezone.utc)
+        try:
+            self.exporter.export(task["dossier_id"], now=now)
+            package = self.exporter.export(evidence_dossier_id, now=now)
+            matches = [item for item in self.exporter.list_dossiers(now=now)
+                       if item.get("dossier_id") == evidence_dossier_id]
+        except FederatedContractError as error:
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_NOT_CURRENT") from error
+        if len(matches) != 1 or not isinstance(matches[0].get("source"), dict):
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_NOT_CURRENT")
+        source = matches[0]["source"]
+        root = source.get("root_source_identity", source.get("source_id"))
+        if not isinstance(root, str) or not root or root == task["source_root"]:
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_ROOT_NOT_INDEPENDENT")
+        if package["dossier_id"] != evidence_dossier_id:
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_ID_INVALID")
+        return {"dossier_id": evidence_dossier_id, "source_root": root,
+                "evidence_id": package["evidence_id"], "source_hash": package["source_hash"],
+                "expires_at": package["expires_at"]}
+
+    def _revalidate_task_link(self, task):
+        link = task.get("evidence_link")
+        if not isinstance(link, dict):
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_LINK_MISSING")
+        current = self._current_task_evidence(task, link.get("dossier_id"))
+        if any(link.get(key) != value for key, value in current.items()):
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_LINK_CHANGED")
+        return link
+
+    def link_autonomy_task_evidence(self, task_id, evidence_dossier_id):
+        """Link independent current evidence for review; do not close the task."""
+        if not isinstance(task_id, str) or not task_id.startswith("TASK-"):
+            raise OperationsError("AUTONOMY_TASK_ID_INVALID")
+        with self.lock:
+            if self.stop_event.is_set() or (self.root / "STOP").exists():
+                raise OperationsError("AUTONOMY_TASK_STOPPED")
+            task = self.store.latest("AUTONOMY_TASK").get(task_id)
+            if task is None:
+                raise OperationsError("AUTONOMY_TASK_NOT_FOUND")
+            if task["state"] == "EVIDENCE_LINKED_REVIEW_REQUIRED":
+                link = self._revalidate_task_link(task)
+                if link["dossier_id"] != evidence_dossier_id:
+                    raise OperationsError("AUTONOMY_TASK_LINK_REPLACEMENT_REQUIRES_REVIEW")
+                return {"status": task["state"], "task_id": task_id,
+                        "evidence_link": link, "publication": "BLOCKED", "acceptance": "NOT_ACCEPTED"}
+            if task["state"] not in {"OPEN", "HUMAN_ACKNOWLEDGED"}:
+                raise OperationsError("AUTONOMY_TASK_NOT_LINKABLE")
+            link = self._current_task_evidence(task, evidence_dossier_id)
+            self.store.put("AUTONOMY_TASK", task_id, {
+                **task, "state": "EVIDENCE_LINKED_REVIEW_REQUIRED", "evidence_link": link,
+                "publication": "BLOCKED", "acceptance": "NOT_ACCEPTED",
+            })
+            return {"status": "EVIDENCE_LINKED_REVIEW_REQUIRED", "task_id": task_id,
+                    "evidence_link": link, "publication": "BLOCKED", "acceptance": "NOT_ACCEPTED"}
+
+    def reassess_autonomy_task(self, task_id, *, reviewer_id, rationale, decision):
+        """Record a local request for Block 1 reassessment, never close the gap."""
+        if (not isinstance(task_id, str) or not task_id.startswith("TASK-")
+                or not isinstance(reviewer_id, str) or not reviewer_id.strip()
+                or len(reviewer_id) > 128 or not isinstance(rationale, str)
+                or not 20 <= len(rationale.strip()) <= 1000
+                or not isinstance(decision, str)
+                or decision not in {"REQUEST_BLOCK1_REASSESSMENT", "EVIDENCE_INSUFFICIENT"}):
+            raise OperationsError("AUTONOMY_TASK_REASSESSMENT_INVALID")
+        with self.lock:
+            if self.stop_event.is_set() or (self.root / "STOP").exists():
+                raise OperationsError("AUTONOMY_TASK_STOPPED")
+            task = self.store.latest("AUTONOMY_TASK").get(task_id)
+            if task is None or task["state"] != "EVIDENCE_LINKED_REVIEW_REQUIRED":
+                raise OperationsError("AUTONOMY_TASK_NOT_REASSESSABLE")
+            link = self._revalidate_task_link(task)
+            review = {"task_id": task_id, "reviewer_id": reviewer_id.strip(),
+                      "rationale": rationale.strip(), "decision": decision,
+                      "evidence_link": link, "reviewed_at": int(self.clock()),
+                      "publication": "BLOCKED", "acceptance": "NOT_ACCEPTED",
+                      "identity_boundary": "SELF_DECLARED_LOCAL_OPERATOR"}
+            state = "BLOCK1_REASSESSMENT_REQUIRED" if decision == "REQUEST_BLOCK1_REASSESSMENT" else "OPEN"
+            self.store.put("AUTONOMY_TASK", task_id, {
+                **task, "state": state, "evidence_link": link if state != "OPEN" else None,
+                "last_human_review": review, "publication": "BLOCKED", "acceptance": "NOT_ACCEPTED",
+            })
+            return {"status": state, "task_id": task_id, "publication": "BLOCKED",
+                    "acceptance": "NOT_ACCEPTED", "evidence_link": link}
 
     def _close_review_waits_by_abstention(self):
         if not self.store.latest('CONTROL').get('deferred-evidence-review', {}).get('enabled', False):
@@ -479,9 +570,24 @@ class OperationsService:
             done = self.store.latest("OUTPUT")
             runs = self.store.latest("ORCHESTRATION_RESULT")
             latest_run = max(runs.values(), key=lambda item: item["requested_at"], default=None)
+            tasks = []
+            for task in self.store.latest("AUTONOMY_TASK").values():
+                view = dict(task)
+                view["effective_completion_boundary"] = AUTONOMY_TASK_RESOLUTION_BOUNDARY
+                view["boundary_status"] = ("CURRENT" if task.get("completion_boundary") ==
+                                           AUTONOMY_TASK_RESOLUTION_BOUNDARY else "LEGACY_SUPERSEDED")
+                if view.get("evidence_link"):
+                    try:
+                        self._revalidate_task_link(view)
+                        view["evidence_status"] = "CURRENT"
+                    except (OperationsError, FederatedContractError):
+                        view["evidence_status"] = "STALE_OR_REVOKED"
+                else:
+                    view["evidence_status"] = "NOT_LINKED"
+                tasks.append(view)
             return {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
                     "source_catalogs": self._catalog_snapshot(),
-                    "autonomy_tasks": sorted(self.store.latest("AUTONOMY_TASK").values(),
+                    "autonomy_tasks": sorted(tasks,
                                              key=lambda item: (item["state"], item["created_at"], item["task_id"])),
                     "evidence_review_deferred": self.store.latest('CONTROL').get('deferred-evidence-review', {}).get('enabled', False),
                     "deferred_reviews": list(self.store.latest('DEFERRED_REVIEW').values()),

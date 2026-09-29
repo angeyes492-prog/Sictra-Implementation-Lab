@@ -46,7 +46,10 @@
         const card=document.createElement('article');card.className='case';
         const text=document.createElement('div'), title=document.createElement('strong'), body=document.createElement('p');
         title.textContent=item.kind+' · '+item.state;
-        body.textContent=item.requirement+' · raíz requerida: '+item.required_evidence_root;
+        body.textContent=item.requirement+' · raíz requerida: '+item.required_evidence_root+
+          (item.evidence_link ? ' · dossier candidato: '+item.evidence_link.dossier_id+' · '+item.evidence_status : '')+
+          ' · cierre pendiente de resolución contratada por Intelligence'+
+          (item.boundary_status==='LEGACY_SUPERSEDED' ? ' · metadato histórico reemplazado' : '');
         text.append(title,body);card.append(text);
         if (item.state==='OPEN') {
           const button=document.createElement('button');button.type='button';button.textContent='Registrar lectura humana';
@@ -55,6 +58,23 @@
             const rationale=prompt('Explica qué evidencia falta y la siguiente acción (20–1000 caracteres):');
             if(reviewer&&rationale) post('/api/operations/tasks/review',{task_id:item.task_id,reviewer_id:reviewer,rationale}).catch(error=>$('operations-feedback').textContent=error.message);
           });card.append(button);
+        }
+        if (['OPEN','HUMAN_ACKNOWLEDGED'].includes(item.state)) {
+          const link=document.createElement('button');link.type='button';link.textContent='Vincular dossier independiente vigente';
+          link.addEventListener('click',()=>{
+            const dossier=prompt('ID exacto del dossier de otra raíz actualmente exportable (solo candidato):');
+            if(dossier) post('/api/operations/tasks/link',{task_id:item.task_id,evidence_dossier_id:dossier.trim()}).catch(error=>$('operations-feedback').textContent=error.message);
+          });card.append(link);
+        }
+        if (item.state==='EVIDENCE_LINKED_REVIEW_REQUIRED' && item.evidence_status==='CURRENT') {
+          for(const [label,decision] of [['Solicitar reevaluación de Intelligence · la tarea sigue abierta','REQUEST_BLOCK1_REASSESSMENT'],['La evidencia es insuficiente','EVIDENCE_INSUFFICIENT']]) {
+            const button=document.createElement('button');button.type='button';button.textContent=label;
+            button.addEventListener('click',()=>{
+              const reviewer=prompt('Identificador del revisor local (no verifica identidad independiente):');
+              const rationale=prompt('Justificación de la reevaluación (20–1000 caracteres):');
+              if(reviewer&&rationale) post('/api/operations/tasks/reassess',{task_id:item.task_id,reviewer_id:reviewer,rationale,decision}).catch(error=>$('operations-feedback').textContent=error.message);
+            });card.append(button);
+          }
         }
         $('autonomy-task-list').append(card);
       }

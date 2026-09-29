@@ -22,6 +22,10 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
    production observability.
 6. Conditions under which a human review receipt can be authenticated without
    turning it into publication, delivery or global gate acceptance.
+7. Whether the candidate local evidence-task link/reassessment contract may
+   become a shared cross-block contract. The current local reviewer identifier
+   is self-declared; even a request for Block 1 reassessment cannot close a
+   source gap, accept content, or establish corroboration.
 
 ## Evidence available
 

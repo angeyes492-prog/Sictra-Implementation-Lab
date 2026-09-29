@@ -15,7 +15,10 @@ function validateOperations(data) {
       || !data.waiting.every(w=>w && text(w.reason))
       || !data.intake_waiting.every(w=>w && text(w.job_id) && text(w.state))
       || !data.autonomy_tasks.every(t=>t && text(t.task_id) && text(t.dossier_id)
-        && text(t.state) && text(t.requirement) && text(t.required_evidence_root))) {
+        && text(t.state) && text(t.requirement) && text(t.required_evidence_root)
+        && t.effective_completion_boundary==='BLOCK1_CONTRACTED_RESOLUTION_REQUIRED'
+        && ['CURRENT','LEGACY_SUPERSEDED'].includes(t.boundary_status)
+        && ['NOT_LINKED','CURRENT','STALE_OR_REVOKED'].includes(t.evidence_status))) {
     throw new Error('Lectura operativa incompleta o fuera del alcance autorizado.');
   }
   const run = data.orchestration?.last_run;
@@ -28,7 +31,7 @@ function operationProjection(data) {
   validateOperations(data);
   return {current:data.outputs.filter(o=>o.availability==='CURRENT').length,
     stale:data.outputs.filter(o=>o.availability!=='CURRENT').length,
-    waiting:data.intake_waiting.length, alerts:data.intake_waiting.length+data.waiting.length+data.autonomy_tasks.filter(t=>t.state==='OPEN').length,
+    waiting:data.intake_waiting.length, alerts:data.intake_waiting.length+data.waiting.length+data.autonomy_tasks.length,
     watch:data.watch_enabled ? 'Activa' : 'Inactiva',
     service:({RUNNING:'Servicio activo',PAUSED:'Servicio pausado',STOPPED:'Servicio detenido',ERROR:'Error · requiere recuperación'})[data.status]};
 }
