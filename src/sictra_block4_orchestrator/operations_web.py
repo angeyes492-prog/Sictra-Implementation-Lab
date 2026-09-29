@@ -66,7 +66,7 @@ class OperationsHandler(CommandCenterHandler):
 
     def do_POST(self):
         path = urlsplit(self.path).path
-        if path not in {"/api/operations/control", "/api/operations/profile", "/api/operations/intake", "/api/operations/abstain", "/api/operations/tasks/review"}:
+        if path not in {"/api/operations/control", "/api/operations/profile", "/api/operations/intake", "/api/operations/abstain", "/api/operations/tasks/review", "/api/operations/tasks/link", "/api/operations/tasks/reassess"}:
             return super().do_POST()
         if not self._allowed():
             return
@@ -119,6 +119,17 @@ class OperationsHandler(CommandCenterHandler):
                     raise OperationsError("AUTONOMY_TASK_REVIEW_INVALID")
                 result = service.acknowledge_autonomy_task(
                     value["task_id"], reviewer_id=value["reviewer_id"], rationale=value["rationale"],
+                )
+            elif path.endswith("/tasks/link"):
+                if not isinstance(value, dict) or set(value) != {"task_id", "evidence_dossier_id"}:
+                    raise OperationsError("AUTONOMY_TASK_LINK_INVALID")
+                result = service.link_autonomy_task_evidence(value["task_id"], value["evidence_dossier_id"])
+            elif path.endswith("/tasks/reassess"):
+                if not isinstance(value, dict) or set(value) != {"task_id", "reviewer_id", "rationale", "decision"}:
+                    raise OperationsError("AUTONOMY_TASK_REASSESSMENT_INVALID")
+                result = service.reassess_autonomy_task(
+                    value["task_id"], reviewer_id=value["reviewer_id"],
+                    rationale=value["rationale"], decision=value["decision"],
                 )
             else:
                 if (not isinstance(value, dict)

@@ -18,6 +18,7 @@ from sictra_block4_orchestrator.operations_store import OperationsError, Operati
 from sictra_block4_orchestrator.operations_web import create_operations_server
 from sictra_block4_orchestrator.runtime import FederatedContractError
 from test_block1_eurostat_maritime_mapper import workbook
+from hn_customs_fixture import workbook as hn_workbook
 
 NOW = 1789300800
 
@@ -47,6 +48,19 @@ class OperationsTests(unittest.TestCase):
         self.register(workbook(last_updated="07/09/2026 06:14", rows=(("BE", "Belgium", "14", None, "15"),)))
         self.service.tick()
         return next(iter(self.service.store.latest("OUTPUT").values()))
+
+    def hn_ready_after_eurostat(self):
+        for waiting in self.service.snapshot()["intake_waiting"]:
+            self.service.abstain_intake(waiting["job_id"], "Keep the prior dossier without editorial acceptance")
+        for year in (2024, 2025):
+            data = hn_workbook(year)
+            path = Path(self.temp.name) / f"hn-{year}.xlsx"
+            path.write_bytes(data)
+            self.service.register_file(path, expected_sha256=sha256(data).hexdigest(),
+                                       source_type="HN_CUSTOMS_Q1_V1", geo_level="CUSTOMS_POINT")
+            self.service.tick()
+        return next(value for value in self.service.store.latest("OUTPUT").values()
+                    if value["dossier_id"].startswith("hn-customs:"))
 
     def test_complete_content_design_preserves_numbers_and_has_evidence_first_structure(self):
         output = self.ready()
@@ -282,6 +296,97 @@ class OperationsTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_REVIEW_INVALID"):
             self.service.acknowledge_autonomy_task(tasks[0]["task_id"], reviewer_id="", rationale="short")
 
+    def test_independent_current_dossier_link_requests_block1_reassessment_without_closing_gap(self):
+        original = self.ready()
+        task = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["dossier_id"] == original["dossier_id"])
+        independent = self.hn_ready_after_eurostat()
+        linked = self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        self.assertEqual("EVIDENCE_LINKED_REVIEW_REQUIRED", linked["status"])
+        self.assertEqual("BLOCKED", linked["publication"])
+        self.assertEqual("NOT_ACCEPTED", linked["acceptance"])
+        self.assertEqual("HN_SARAH", linked["evidence_link"]["source_root"])
+        count = len(self.service.store.records())
+        self.assertEqual(linked, self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"]))
+        self.assertEqual(count, len(self.service.store.records()))
+        self.assertEqual("CURRENT", next(t for t in self.service.snapshot()["autonomy_tasks"]
+                                         if t["task_id"] == task["task_id"])["evidence_status"])
+        reassessed = self.service.reassess_autonomy_task(
+            task["task_id"], reviewer_id="local-reviewer",
+            rationale="Solicito reevaluación de Intelligence; esto no valida causalidad ni aprueba el boletín.",
+            decision="REQUEST_BLOCK1_REASSESSMENT")
+        self.assertEqual("BLOCK1_REASSESSMENT_REQUIRED", reassessed["status"])
+        self.assertEqual("NOT_ACCEPTED", reassessed["acceptance"])
+        count = len(self.service.store.records())
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_NOT_LINKABLE"):
+            self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_NOT_REASSESSABLE"):
+            self.service.reassess_autonomy_task(
+                task["task_id"], reviewer_id="local-reviewer",
+                rationale="Un segundo acto local no puede fingir que Intelligence ya concluyó.",
+                decision="REQUEST_BLOCK1_REASSESSMENT")
+        self.assertEqual(count, len(self.service.store.records()))
+        self.assertEqual("BLOCKED", self.service.output(original["id"])["publication"])
+        self.assertEqual("NONE", self.service.output(independent["id"])["delivery"])
+        reopened = OperationsService(self.root, clock=lambda: self.now)
+        self.assertEqual("BLOCK1_REASSESSMENT_REQUIRED", next(t for t in reopened.snapshot()["autonomy_tasks"]
+                                                           if t["task_id"] == task["task_id"])["state"])
+        self.now += 86402
+        historical = next(t for t in reopened.snapshot()["autonomy_tasks"]
+                          if t["task_id"] == task["task_id"])
+        self.assertEqual("STALE_OR_REVOKED", historical["evidence_status"])
+        self.assertEqual("BLOCK1_REASSESSMENT_REQUIRED", historical["state"])
+
+    def test_task_link_rejects_same_root_replacement_and_stale_or_tampered_evidence(self):
+        original = self.ready()
+        task = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["dossier_id"] == original["dossier_id"])
+        before = len(self.service.store.records())
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_ID_INVALID"):
+            self.service.link_autonomy_task_evidence(task["task_id"], original["dossier_id"])
+        self.assertEqual(before, len(self.service.store.records()))
+        independent = self.hn_ready_after_eurostat()
+        # Challenge the root check independently of the actual exporter.
+        real_dossiers = self.service.exporter.list_dossiers()
+        forged_metadata = [{**item, "source": {**item["source"], "root_source_identity": task["source_root"]}}
+                           if item["dossier_id"] == independent["dossier_id"] else item for item in real_dossiers]
+        count = len(self.service.store.records())
+        with patch.object(self.service.exporter, "list_dossiers", return_value=forged_metadata):
+            with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_ROOT_NOT_INDEPENDENT"):
+                self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        self.assertEqual(count, len(self.service.store.records()))
+        linked = self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_LINK_REPLACEMENT_REQUIRES_REVIEW"):
+            self.service.link_autonomy_task_evidence(task["task_id"], original["dossier_id"])
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_REASSESSMENT_INVALID"):
+            self.service.reassess_autonomy_task(task["task_id"], reviewer_id="x", rationale="too short", decision=[])
+        self.assertEqual("EVIDENCE_LINKED_REVIEW_REQUIRED", linked["status"])
+        retained = next((self.root / "hn-customs" / "sources").glob("*.xlsx"))
+        retained.write_bytes(retained.read_bytes() + b"tamper")
+        count = len(self.service.store.records())
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_NOT_CURRENT"):
+            self.service.reassess_autonomy_task(
+                task["task_id"], reviewer_id="local-reviewer",
+                rationale="No se puede aceptar una fuente retenida cuyo contenido cambió después del enlace.",
+                decision="REQUEST_BLOCK1_REASSESSMENT")
+        self.assertEqual(count, len(self.service.store.records()))
+        view = next(t for t in self.service.snapshot()["autonomy_tasks"] if t["task_id"] == task["task_id"])
+        self.assertEqual("STALE_OR_REVOKED", view["evidence_status"])
+
+    def test_task_link_rejects_superseded_original_dossier_without_writes(self):
+        original = self.ready()
+        task = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["dossier_id"] == original["dossier_id"])
+        self.service.abstain_intake(self.service.snapshot()["intake_waiting"][0]["job_id"],
+                                    "Keep the prior dossier without editorial acceptance")
+        self.register(workbook(last_updated="08/09/2026 06:14", rows=(("BE", "Belgium", "15", None, "17"),)))
+        self.service.tick()
+        independent = self.hn_ready_after_eurostat()
+        count = len(self.service.store.records())
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_NOT_CURRENT"):
+            self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        self.assertEqual(count, len(self.service.store.records()))
+
     def test_http_control_requires_same_origin_token_and_artifacts_are_current(self):
         output = self.ready()
         server = create_operations_server(self.service, port=0)
@@ -310,6 +415,22 @@ class OperationsTests(unittest.TestCase):
             self.assertEqual(200, status)
             self.assertEqual("ORCHESTRATION_EXECUTED", json.loads(body)["status"])
             self.assertEqual(400, request("POST", "/api/operations/control", {"action": "execute", "extra": True}, trusted)[0])
+            independent = self.hn_ready_after_eurostat()
+            task = next(t for t in self.service.snapshot()["autonomy_tasks"]
+                        if t["dossier_id"] == output["dossier_id"])
+            link_request = {"task_id": task["task_id"], "evidence_dossier_id": independent["dossier_id"]}
+            self.assertEqual(403, request("POST", "/api/operations/tasks/link")[0])
+            self.assertEqual(400, request("POST", "/api/operations/tasks/link", {**link_request, "approve": True}, trusted)[0])
+            status, _, body = request("POST", "/api/operations/tasks/link", link_request, trusted)
+            self.assertEqual(200, status)
+            self.assertEqual("EVIDENCE_LINKED_REVIEW_REQUIRED", json.loads(body)["status"])
+            review_request = {"task_id": task["task_id"], "reviewer_id": "local-reviewer",
+                              "rationale": "La tarea se evalúa localmente; el dossier y el boletín siguen sin aceptación.",
+                              "decision": "EVIDENCE_INSUFFICIENT"}
+            self.assertEqual(403, request("POST", "/api/operations/tasks/reassess")[0])
+            status, _, body = request("POST", "/api/operations/tasks/reassess", review_request, trusted)
+            self.assertEqual(200, status)
+            self.assertEqual("OPEN", json.loads(body)["status"])
             self.assertEqual(200, request("POST", "/api/operations/control", {"action": "pause"}, trusted)[0])
             self.assertTrue(self.service.is_paused())
             self.assertEqual(403, request("GET", "/api/operations", headers={"Host": "evil.example"})[0])
