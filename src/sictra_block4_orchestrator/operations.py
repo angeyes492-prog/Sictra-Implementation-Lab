@@ -30,6 +30,18 @@ from .runtime import FederatedContractError, FederatedOrchestratorStore
 from .operations_store import OperationsError, OperationsStore, process_lock
 
 
+def _design_for_dossier(dossier, package, *, synthetic):
+    """Reproduce the local Block 2 handoff, including its explicit pilot label."""
+    design = compose_content_design(dossier, package)
+    if synthetic:
+        design["title"] = "PRUEBA SINTÉTICA · " + design["title"]
+        design["content_blocks"][0]["body"] = (
+            "Datos de prueba generados localmente; no representan una publicación real de Eurostat. "
+            + design["content_blocks"][0]["body"])
+        design["fingerprint"] = fingerprint({k: v for k, v in design.items() if k != "fingerprint"})
+    return design
+
+
 def initialize(root, *, now=None):
     root = Path(root).absolute()
     if root.is_symlink():
@@ -414,13 +426,9 @@ class OperationsService:
                         validate_profile(profile, now=int(current.timestamp()))
                         package = self.exporter.export(dossier["dossier_id"], now=current)
                         self.cases.ingest(package, now=current)
-                        design = compose_content_design(dossier, package)
-                        if self.store.latest("ENV").get("data", {}).get("class") == "SYNTHETIC_PILOT":
-                            design["title"] = "PRUEBA SINTÉTICA · " + design["title"]
-                            design["content_blocks"][0]["body"] = (
-                                "Datos de prueba generados localmente; no representan una publicación real de Eurostat. "
-                                + design["content_blocks"][0]["body"])
-                            design["fingerprint"] = fingerprint({k: v for k, v in design.items() if k != "fingerprint"})
+                        design = _design_for_dossier(
+                            dossier, package,
+                            synthetic=self.store.latest("ENV").get("data", {}).get("class") == "SYNTHETIC_PILOT")
                         adaptation = adapt_content_design(design, profile, now=int(current.timestamp()))
                         html, plain = render_designed_review_artifact(design, adaptation)
                         # Recheck mutable source controls before committing a completed artifact.
@@ -452,13 +460,34 @@ class OperationsService:
         # compatible artifact under the new design boundary.
         if "design_artifact" not in value:
             raise OperationsError("LEGACY_OUTPUT_REQUIRES_MIGRATION")
+        if (value.get("id") != identity or value.get("state") != "DESIGN_REVIEW_REQUIRED"
+                or value.get("review") != "HUMAN_REVIEW_REQUIRED"
+                or value.get("publication") != "BLOCKED" or value.get("delivery") != "NONE"
+                or value.get("stages") != ["BLOCK1_DOSSIER_VERIFIED", "BLOCK2_CONTENT_DESIGN",
+                                            "BLOCK3_AUDIENCE_ADAPTATION"]):
+            raise OperationsError("OUTPUT_BOUNDARY_INVALID")
         now = int(self.clock())
         validate_profile(value["profile"], now=now)
         if self.store.latest("PROFILE").get(value["profile"]["id"]) != value["profile"]:
             raise OperationsError("PROFILE_SUPERSEDED")
-        package = self.exporter.export(value["dossier_id"], now=datetime.fromtimestamp(now, timezone.utc))
-        if package["source_hash"] != value["design_artifact"]["source_hash"]:
-            raise OperationsError("SOURCE_SUPERSEDED")
+        current = datetime.fromtimestamp(now, timezone.utc)
+        package = self.exporter.export(value["dossier_id"], now=current)
+        dossiers = [item for item in self.exporter.list_dossiers(now=current)
+                    if item.get("dossier_id") == value["dossier_id"]]
+        if len(dossiers) != 1 or value.get("case_id") != package["case_id"]:
+            raise OperationsError("OUTPUT_SOURCE_LINEAGE_INVALID")
+        design = _design_for_dossier(
+            dossiers[0], package,
+            synthetic=self.store.latest("ENV").get("data", {}).get("class") == "SYNTHETIC_PILOT")
+        if value["design_artifact"] != design:
+            raise OperationsError("OUTPUT_DESIGN_MISMATCH")
+        adaptation = adapt_content_design(design, value["profile"], now=now)
+        if value.get("adaptation") != adaptation:
+            raise OperationsError("OUTPUT_ADAPTATION_MISMATCH")
+        html, plain = render_designed_review_artifact(design, adaptation)
+        if (value.get("html") != html or value.get("plain_text") != plain
+                or value.get("html_sha256") != sha256(html.encode()).hexdigest()):
+            raise OperationsError("OUTPUT_CONTENT_MISMATCH")
         return value
 
     def snapshot(self):
@@ -470,12 +499,15 @@ class OperationsService:
             for identity, value in self.store.latest("OUTPUT").items():
                 try:
                     self.output(identity)
-                    availability = "CURRENT"
+                    summaries.append({"id": identity, "title": value["adaptation"]["heading"],
+                        "profile": value["profile"]["label"], "case_id": value["case_id"],
+                        "dossier_id": value["dossier_id"], "created_at": value["created_at"],
+                        "availability": "CURRENT", "state": value["state"]})
                 except (OperationsError, FederatedContractError, DesignArtifactError, AudiencePolicyError):
-                    availability = "STALE_OR_REVOKED"
-                summaries.append({"id": identity, "title": value["adaptation"]["heading"],
-                    "profile": value["profile"]["label"], "case_id": value["case_id"], "dossier_id": value["dossier_id"],
-                    "created_at": value["created_at"], "availability": availability, "state": value["state"]})
+                    # A rejected artifact cannot donate display text to the dashboard.
+                    summaries.append({"id": identity, "title": "Resultado no verificable",
+                        "profile": "No verificable", "case_id": None, "dossier_id": None,
+                        "created_at": None, "availability": "STALE_OR_REVOKED", "state": "UNVERIFIED"})
             done = self.store.latest("OUTPUT")
             runs = self.store.latest("ORCHESTRATION_RESULT")
             latest_run = max(runs.values(), key=lambda item: item["requested_at"], default=None)
