@@ -118,6 +118,68 @@ class OperationsTests(unittest.TestCase):
         with self.assertRaisesRegex(AudiencePolicyError, "REQUIRED_BLOCK_MISSING"):
             adapt_content_design(missing_provenance, output["profile"], now=self.now)
 
+    def test_read_rejects_self_consistent_but_source_unbound_editorial_copy(self):
+        output = self.ready()
+        self.assertIn("14 miles de toneladas", output["plain_text"])
+        forged = deepcopy(output)
+        design = forged["design_artifact"]
+        design["claims"][0]["text"] = design["claims"][0]["text"].replace("14 miles de toneladas", "999 miles de toneladas")
+        design["content_blocks"][1]["body"] = design["claims"][0]["text"]
+        design["fingerprint"] = fingerprint({k: v for k, v in design.items() if k != "fingerprint"})
+        forged["adaptation"] = adapt_content_design(design, forged["profile"], now=self.now)
+        forged["html"], forged["plain_text"] = render_designed_review_artifact(design, forged["adaptation"])
+        forged["html_sha256"] = sha256(forged["html"].encode()).hexdigest()
+        self.assertIn("999 miles de toneladas", forged["plain_text"])
+        self.service.store.put("OUTPUT", output["id"], forged)
+        before = self.service.store.records()
+        with self.assertRaisesRegex(OperationsError, "OUTPUT_DESIGN_MISMATCH"):
+            self.service.output(output["id"])
+        summary = self.service.snapshot()["outputs"][0]
+        self.assertEqual("STALE_OR_REVOKED", summary["availability"])
+        self.assertEqual("Resultado no verificable", summary["title"])
+        self.assertNotIn("999 miles de toneladas", str(summary))
+        self.assertEqual(before, self.service.store.records())
+        server = create_operations_server(self.service, port=0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        client = HTTPConnection("127.0.0.1", server.server_port)
+        try:
+            client.request("GET", "/api/operations/outputs/" + output["id"] + "/text")
+            response = client.getresponse()
+            self.assertEqual(409, response.status)
+            self.assertNotIn(b"999 miles de toneladas", response.read())
+        finally:
+            client.close()
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+    def test_read_rejects_rebound_adaptation_copy_and_authority_fields(self):
+        output = self.ready()
+        variants = []
+        altered_adaptation = deepcopy(output)
+        altered_adaptation["adaptation"]["framing"] = "Conclusión comercial inventada"
+        altered_adaptation["adaptation"]["fingerprint"] = fingerprint({
+            k: v for k, v in altered_adaptation["adaptation"].items() if k != "fingerprint"})
+        altered_adaptation["html"], altered_adaptation["plain_text"] = render_designed_review_artifact(
+            altered_adaptation["design_artifact"], altered_adaptation["adaptation"])
+        altered_adaptation["html_sha256"] = sha256(altered_adaptation["html"].encode()).hexdigest()
+        variants.append((altered_adaptation, "OUTPUT_ADAPTATION_MISMATCH"))
+        altered_copy = deepcopy(output)
+        altered_copy["plain_text"] += "\nConclusión inventada"
+        variants.append((altered_copy, "OUTPUT_CONTENT_MISMATCH"))
+        altered_authority = deepcopy(output)
+        altered_authority["publication"] = "ALLOWED"
+        variants.append((altered_authority, "OUTPUT_BOUNDARY_INVALID"))
+        for forged, reason in variants:
+            self.service.store.put("OUTPUT", output["id"], forged)
+            before = self.service.store.records()
+            with self.assertRaisesRegex(OperationsError, reason):
+                self.service.output(output["id"])
+            self.assertEqual(before, self.service.store.records())
+        self.service.store.put("OUTPUT", output["id"], output)
+        self.assertEqual(output, self.service.output(output["id"]))
+
     def test_legacy_source_draft_output_cannot_be_rendered_as_current_design(self):
         output = self.ready()
         legacy = deepcopy(output)

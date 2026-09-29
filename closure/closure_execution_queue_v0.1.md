@@ -5,6 +5,20 @@ It prioritizes work but never converts a human, independent-review, or architect
 
 ## Technical execution
 
+### Independent read-side integrity continuation — 2026-09-28
+
+`OPS-OUTPUT-READ-ATTESTATION`: `IMPLEMENTED; VALIDATION_IN_PROGRESS`.
+The normal B4 output read previously rechecked source hash and profile but did
+not revalidate the saved B2 design, B3 adaptation, rendered copy and blocked
+authority fields. The candidate now reconstructs each stage from the current
+Block 1 dossier and serves only exact matches; stale or altered overview rows
+use generic labels. Focused positive, forged self-consistent copy, adaptation,
+authority and HTTP rejection tests passed locally. Full local regression on
+2026-09-28: 775 Python and 9 JavaScript tests passed. Owner: Block 4 local
+implementation. Next: hosted CI on the final SHA.
+Promotion boundary: local laboratory integrity only; no editorial quality,
+independent validation, publication or global gate acceptance follows.
+
 ### Astra execution cycle — 2026-09-15 (highest-priority active backlog)
 
 This ordered backlog supersedes the historical pending next-actions below,
