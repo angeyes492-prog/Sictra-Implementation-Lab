@@ -40,9 +40,9 @@ dossier certainty, editorial acceptance, publication and delivery remain unchang
 contract: `contracts/telecare_autonomy_task_evidence_cycle_contract_v0.1.md`.
 Positive, same-root, superseded, tamper, replay, non-closure and HTTP authority
 tests passed locally on 2026-09-28 (777 Python and 11 JavaScript regression
-tests after the boundary correction). Hosted CI succeeded for precursor
-`c9ed55090904a681f604d9b8c860f6662d45dd4c` (run 36521030072);
-exact-SHA CI for the boundary correction remains pending. This increment does not resolve the three live HN evidence gaps or
+tests after the boundary correction). Hosted CI succeeded on implementation
+SHA `01a4e248fb68658d5dca2ae1ca9c3b745e97d907` (push run
+36521371237 and PR run 36521374341). This increment does not resolve the three live HN evidence gaps or
 grant source approval. After exact-SHA CI, the next item is an approved,
 independent evidence path and editorial quality evaluation; absent that input,
 the tasks must remain open. Cross-block acceptance awaits MAR.
