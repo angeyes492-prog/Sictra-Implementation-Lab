@@ -7,7 +7,9 @@ function validateOperations(data) {
       || !['RUNNING','PAUSED','STOPPED','ERROR'].includes(data.status)
       || !text(data.control_token) || !timestamp(data.last_cycle)
       || typeof data.watch_enabled !== 'boolean' || !text(data.watch_directory)
-      || !['profiles','outputs','waiting','intake_waiting','autonomy_tasks'].every(k => Array.isArray(data[k]))
+      || !['profiles','outputs','waiting','intake_waiting','autonomy_tasks','dossier_evidence'].every(k => Array.isArray(data[k]))
+      || !data.dossier_evidence.every(d=>d && text(d.dossier_id)
+        && ['CURRENT','UNAVAILABLE'].includes(d.status) && Number.isFinite(d.checked_at))
       || !data.profiles.every(p => p && text(p.id) && text(p.label))
       || !data.outputs.every(o => o && text(o.id) && text(o.title) && text(o.profile)
         && ['CURRENT','STALE_OR_REVOKED'].includes(o.availability))
@@ -15,6 +17,7 @@ function validateOperations(data) {
       || !data.waiting.every(w=>w && text(w.reason))
       || !data.intake_waiting.every(w=>w && text(w.job_id) && text(w.state))
       || !data.autonomy_tasks.every(t=>t && text(t.task_id) && text(t.dossier_id)
+        && ['CURRENT','UNAVAILABLE'].includes(t.source_evidence_status)
         && text(t.state) && text(t.requirement) && text(t.required_evidence_root)
         && t.effective_completion_boundary==='BLOCK1_CONTRACTED_RESOLUTION_REQUIRED'
         && ['CURRENT','LEGACY_SUPERSEDED'].includes(t.boundary_status)

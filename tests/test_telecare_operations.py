@@ -81,6 +81,99 @@ class OperationsTests(unittest.TestCase):
         self.assertIn("UNCERTAINTY", [block["kind"] for block in output["adaptation"]["content_blocks"]])
         self.assertEqual(output, self.service.output(output["id"]))
 
+    def test_retained_expired_dossier_cannot_create_autonomy_work(self):
+        self.register(workbook())
+        self.service.intake.run()
+        self.register(workbook(last_updated="07/09/2026 06:14", rows=(("BE", "Belgium", "14", None, "15"),)))
+        self.service.intake.run()
+        self.now += 86402
+        self.service.tick()
+        self.assertFalse(self.service.store.latest("AUTONOMY_TASK"))
+        self.assertFalse(self.service.store.latest("OUTPUT"))
+        states = self.service.snapshot()["dossier_evidence"]
+        self.assertEqual(1, len(states))
+        self.assertEqual("UNAVAILABLE", states[0]["status"])
+
+    def test_task_source_expiry_is_observed_without_rewriting_history(self):
+        output = self.ready()
+        original = self.service.store.latest("AUTONOMY_TASK")
+        self.assertTrue(original)
+        self.assertEqual("CURRENT", self.service.snapshot()["dossier_evidence"][0]["status"])
+        self.now += 86402
+        before = self.service.store.records()
+        view = self.service.snapshot()
+        self.assertEqual(before, self.service.store.records())
+        self.assertTrue(all(t["source_evidence_status"] == "UNAVAILABLE" for t in view["autonomy_tasks"]))
+        task_id = next(iter(original))
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_SOURCE_NOT_CURRENT"):
+            self.service.acknowledge_autonomy_task(task_id, reviewer_id="local-operator",
+                rationale="No new action should use the expired source dossier.")
+        self.assertEqual(before, self.service.store.records())
+        self.service.tick()
+        transitions = [r for r in self.service.store.records() if r["kind"] == "DOSSIER_EVIDENCE_STATE"]
+        self.assertEqual(["CURRENT", "UNAVAILABLE"], [r["value"]["status"] for r in transitions])
+        reopened = OperationsService(self.root, clock=lambda: self.now)
+        reopened.tick()
+        self.assertEqual(transitions, [r for r in reopened.store.records() if r["kind"] == "DOSSIER_EVIDENCE_STATE"])
+        self.assertEqual(original, reopened.store.latest("AUTONOMY_TASK"))
+        self.assertEqual([output["id"]], list(reopened.store.latest("OUTPUT")))
+
+    def test_expired_source_does_not_starve_current_other_source(self):
+        original = self.ready()
+        self.now += 86402
+        independent = self.hn_ready_after_eurostat()
+        self.assertIn("2025", independent["plain_text"])
+        view = self.service.snapshot()
+        by_id = {item["dossier_id"]: item["status"] for item in view["dossier_evidence"]}
+        self.assertEqual("UNAVAILABLE", by_id[original["dossier_id"]])
+        self.assertEqual("CURRENT", by_id[independent["dossier_id"]])
+        self.assertTrue(any(t["dossier_id"] == independent["dossier_id"] for t in view["autonomy_tasks"]))
+        self.assertEqual("BLOCKED", self.service.output(independent["id"])["publication"])
+
+    def test_task_generation_rejects_substitution_invalid_attestation_and_midcycle_expiry(self):
+        self.register(workbook())
+        self.service.intake.run()
+        self.register(workbook(last_updated="07/09/2026 06:14", rows=(("BE", "Belgium", "14", None, "15"),)))
+        self.service.intake.run()
+        dossiers = self.service.exporter.list_dossiers()
+        # A real signed export for a different identity must not authorize this dossier.
+        substitute = deepcopy(dossiers[0])
+        substitute["dossier_id"] = "eurostat:substituted"
+        real_export = self.service.exporter.export
+        with patch.object(self.service.exporter, "export", side_effect=lambda identity, **kw:
+                          real_export(dossiers[0]["dossier_id"], **kw)):
+            self.assertEqual([], self.service._ensure_autonomy_tasks([substitute]))
+        altered = deepcopy(dossiers[0])
+        altered["source"]["content_sha256"] = "0" * 64
+        self.assertEqual([], self.service._ensure_autonomy_tasks([altered]))
+        def forged(identity, **kw):
+            result = real_export(identity, **kw)
+            result["signature"] = "0" * 64
+            return result
+        with patch.object(self.service.exporter, "export", side_effect=forged):
+            self.assertEqual([], self.service._ensure_autonomy_tasks(dossiers))
+        def expires_after_export(identity, **kw):
+            result = real_export(identity, **kw)
+            self.now += 86402
+            return result
+        with patch.object(self.service.exporter, "export", side_effect=expires_after_export):
+            self.assertEqual([], self.service._ensure_autonomy_tasks(dossiers))
+        self.assertFalse(self.service.store.latest("AUTONOMY_TASK"))
+        self.assertFalse(self.service.store.latest("OUTPUT"))
+
+    def test_lifecycle_polling_respects_pause_and_stop_without_hidden_transitions(self):
+        self.ready()
+        self.service.set_paused(True)
+        self.now += 86402
+        before = self.service.store.records()
+        self.assertEqual("PAUSED", self.service.tick()["state"])
+        self.assertEqual(before, self.service.store.records())
+        self.service.set_paused(False)
+        (self.root / "STOP").touch()
+        before = self.service.store.records()
+        self.assertEqual("STOPPED", self.service.tick()["state"])
+        self.assertEqual(before, self.service.store.records())
+
     def test_restart_and_repeated_cycles_preserve_single_output(self):
         output = self.ready()
         reopened = OperationsService(self.root, clock=lambda: self.now)
@@ -515,6 +608,17 @@ class OperationsTests(unittest.TestCase):
             self.assertEqual(403, request("GET", "/api/operations", headers={"Host": "evil.example"})[0])
             self.now += 86402
             self.assertEqual(409, request("GET", route)[0])
+            status, _, body = request("GET", "/api/operations")
+            self.assertEqual(200, status)
+            self.assertTrue(all(t["source_evidence_status"] == "UNAVAILABLE"
+                                for t in json.loads(body)["autonomy_tasks"]))
+            before = self.service.store.records()
+            status, _, body = request("POST", "/api/operations/tasks/review", {
+                "task_id": task["task_id"], "reviewer_id": "local-reviewer",
+                "rationale": "Expired evidence must not allow a new workflow action."}, trusted)
+            self.assertEqual(400, status)  # Existing POST contract: rejected commands are 400.
+            self.assertEqual("OperationsError", json.loads(body)["reason"])
+            self.assertEqual(before, self.service.store.records())
         finally:
             server.shutdown(); server.server_close(); thread.join(timeout=2)
 

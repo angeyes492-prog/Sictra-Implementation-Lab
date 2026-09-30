@@ -47,11 +47,12 @@
         const text=document.createElement('div'), title=document.createElement('strong'), body=document.createElement('p');
         title.textContent=item.kind+' · '+item.state;
         body.textContent=item.requirement+' · raíz requerida: '+item.required_evidence_root+
+          (item.source_evidence_status==='CURRENT' ? ' · fuente vigente' : ' · fuente no vigente: tarea histórica, acciones suspendidas')+
           (item.evidence_link ? ' · dossier candidato: '+item.evidence_link.dossier_id+' · '+item.evidence_status : '')+
           ' · cierre pendiente de resolución contratada por Intelligence'+
           (item.boundary_status==='LEGACY_SUPERSEDED' ? ' · metadato histórico reemplazado' : '');
         text.append(title,body);card.append(text);
-        if (item.state==='OPEN') {
+        if (item.state==='OPEN' && item.source_evidence_status==='CURRENT') {
           const button=document.createElement('button');button.type='button';button.textContent='Registrar lectura humana';
           button.addEventListener('click',()=>{
             const reviewer=prompt('Identificador del revisor local:');
@@ -59,14 +60,14 @@
             if(reviewer&&rationale) post('/api/operations/tasks/review',{task_id:item.task_id,reviewer_id:reviewer,rationale}).catch(error=>$('operations-feedback').textContent=error.message);
           });card.append(button);
         }
-        if (['OPEN','HUMAN_ACKNOWLEDGED'].includes(item.state)) {
+        if (['OPEN','HUMAN_ACKNOWLEDGED'].includes(item.state) && item.source_evidence_status==='CURRENT') {
           const link=document.createElement('button');link.type='button';link.textContent='Vincular dossier independiente vigente';
           link.addEventListener('click',()=>{
             const dossier=prompt('ID exacto del dossier de otra raíz actualmente exportable (solo candidato):');
             if(dossier) post('/api/operations/tasks/link',{task_id:item.task_id,evidence_dossier_id:dossier.trim()}).catch(error=>$('operations-feedback').textContent=error.message);
           });card.append(link);
         }
-        if (item.state==='EVIDENCE_LINKED_REVIEW_REQUIRED' && item.evidence_status==='CURRENT') {
+        if (item.state==='EVIDENCE_LINKED_REVIEW_REQUIRED' && item.evidence_status==='CURRENT' && item.source_evidence_status==='CURRENT') {
           for(const [label,decision] of [['Solicitar reevaluación de Intelligence · la tarea sigue abierta','REQUEST_BLOCK1_REASSESSMENT'],['La evidencia es insuficiente','EVIDENCE_INSUFFICIENT']]) {
             const button=document.createElement('button');button.type='button';button.textContent=label;
             button.addEventListener('click',()=>{
@@ -118,7 +119,9 @@
       }
       if (!data.outputs.length) $('operations-outputs').textContent='Todavía no hay boletines. Registra una versión base y después una versión distinta de la fuente marítima autorizada.';
       if(requestedArtifact){const match=data.outputs.find(item=>item.id===requestedArtifact&&item.availability==='CURRENT');if(match)openPreview(match.id);else $('operations-feedback').textContent='El boletín solicitado no está vigente o no pertenece a esta cadena. No se sustituyó por otro.';requestedArtifact=null;}
-      $('operations-wait').textContent = data.waiting.map(w=>w.reason).join(' · ');
+      $('operations-wait').textContent = data.waiting.map(w=>w.reason).concat(
+        data.dossier_evidence.filter(d=>d.status!=='CURRENT').map(d=>
+          'Dossier sin evidencia vigente: '+d.dossier_id+' · no genera trabajo nuevo')).join(' · ');
       controls();
     } catch (error) {
       token=''; $('operations-status').textContent=error.message; $('operations-outputs').replaceChildren();

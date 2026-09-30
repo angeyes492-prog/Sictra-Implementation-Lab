@@ -5,6 +5,57 @@ It prioritizes work but never converts a human, independent-review, or architect
 
 ## Technical execution
 
+### Integrated autonomy cycle — 2026-09-29
+
+Ordered active backlog (owner: local implementation; no gate promotion):
+
+1. `AUTONOMY-INTEGRATION`: IMPLEMENTED / EXECUTED locally. PRs #16 and #17
+   combined without replacing either history; 779 Python and 11 JavaScript
+   tests passed. Exact final-SHA CI remains required.
+2. `CURRENT-DOSSIER-WORK`: IMPLEMENTED / EXECUTED locally. New contradictory evidence:
+   `tick` derives tasks from retained dossiers before export checks currentness.
+   Require current Block 1 evidence and matching dossier identity/hash before
+   task creation; reject expired, superseded or altered input; preserve old
+   tasks as historical/unavailable, never resolved. Revalidate at observation
+   and action time. Current independent dossiers must continue. Persist only
+   evidence-state transitions; repeated polling/restart must not create duplicate
+   tasks or promote evidence. Pause/STOP remain effective. Positive, expiry,
+   substitution, mixed-source, restart and HTTP/UI rejection tests are required.
+3. `INTEGRATED-REGRESSION`: local regression passed; exact-SHA hosted CI pending.
+   Technical results remain local candidate evidence, not installed acceptance.
+4. `EDITORIAL-QUALITY`: INSUFFICIENT EVIDENCE. Approved independent source
+   semantics and Block 1 resolution contract remain prerequisites to substantive
+   gap closure. Owner: source/architecture authority; next action: evaluate a
+   contracted source-specific resolution, not infer it from another root.
+
+Notion plan `3c789f66-067b-8108-bb44-c13ac4b15ac0` was fetched (last edited
+2026-08-28): it describes the reference-runtime scope, not the current product.
+GitHub confirms #16/#17 are open drafts. Slack public search for `Telecare`
+returned no results. Context is not substituted for executable evidence.
+
+Verification on 2026-09-29 (Windows, Python 3.12, explicit worktree `src` on
+PYTHONPATH): focused operations suite 30/30, full Python regression 784/784
+(75.539 seconds), JavaScript 12/12, compileall and launcher-path tests passed.
+The new expiry test first reproduced three incorrectly created tasks, then
+passed after the repair. New vectors cover expiry before first cycle,
+read-only stale snapshots, restart/idempotency, old-task preservation, mixed
+Eurostat/HN currentness, signed identity substitution, source hash substitution,
+invalid signature, midcycle expiry, pause/STOP, and HTTP action rejection without
+journal writes. A prior focused HTTP attempt encountered Windows socket error
+10053; the subsequent focused and full suites passed without suppressing errors
+or adding retries. CI remains the external check on the exact published head.
+
+Wolfram evaluator: 512 three-step sequences for two sources and running/paused
+control passed the declared model properties: no new task without a current
+source while running, history monotonicity after expiry, and progress of source
+B when A is unavailable. Model transition is
+`nextTask[i] = previousTask[i] OR (running AND currentSource[i])`, with all eight
+Boolean input triples enumerated over three steps. This validates the small
+model only; it is not independent source corroboration or runtime acceptance.
+Certainty: VERIFIED / confidence B for the executed local test boundary;
+unmeasured editorial quality remains INSUFFICIENT EVIDENCE. No installation,
+independent review, MAR acceptance, publication or global gate promotion follows.
+
 ### Independent read-side integrity continuation — 2026-09-28
 
 `OPS-OUTPUT-READ-ATTESTATION`: `IMPLEMENTED; LOCAL_CI_PASS; MAR_REQUIRED`.

@@ -26,7 +26,7 @@ from .producer_adapters import (
     Block1DossierPackageAdapter, CompositeDossierPackageAdapter,
     HNCustomsDossierPackageAdapter,
 )
-from .runtime import FederatedContractError, FederatedOrchestratorStore
+from .runtime import FederatedContractError, FederatedOrchestratorStore, _validate_package
 from .operations_store import OperationsError, OperationsStore, process_lock
 
 AUTONOMY_TASK_RESOLUTION_BOUNDARY = "BLOCK1_CONTRACTED_RESOLUTION_REQUIRED"
@@ -302,6 +302,7 @@ class OperationsService:
         """
         existing = self.store.latest("AUTONOMY_TASK")
         now = int(self.clock())
+        current_dossiers = []
         for dossier in dossiers:
             source = dossier.get("source", {})
             needs = dossier.get("next_data_needs", [])
@@ -312,6 +313,11 @@ class OperationsService:
             root = source.get("root_source_identity", source["source_id"])
             if not isinstance(root, str) or not root:
                 raise OperationsError("AUTONOMY_TASK_ROOT_INVALID")
+            evidence = self._dossier_evidence(dossier["dossier_id"], dossier=dossier)
+            self._record_dossier_evidence(evidence)
+            if evidence["status"] != "CURRENT":
+                continue
+            current_dossiers.append(dossier)
             for ordinal, need in enumerate(needs, 1):
                 if not isinstance(need, str) or not need.strip() or len(need) > 1000:
                     raise OperationsError("AUTONOMY_TASK_NEED_INVALID")
@@ -321,6 +327,13 @@ class OperationsService:
                 })[:24]
                 if identity in existing:
                     continue
+                # Do not turn an earlier observation into durable execution
+                # authority after expiry or a concurrent source replacement.
+                latest = self._dossier_evidence(dossier["dossier_id"], dossier=dossier)
+                self._record_dossier_evidence(latest)
+                if latest["status"] != "CURRENT":
+                    current_dossiers.remove(dossier)
+                    break
                 kind = ("INDEPENDENT_CORROBORATION" if "independiente" in need.lower()
                         else "EVIDENCE_GAP")
                 task = {
@@ -335,6 +348,39 @@ class OperationsService:
                     "last_human_review": None,
                 }
                 self.store.put("AUTONOMY_TASK", identity, task, immutable=True)
+        return current_dossiers
+
+    def _dossier_evidence(self, dossier_id, *, dossier=None):
+        """Read current producer authority; the lifecycle journal is not a cache."""
+        checked_at = int(self.clock())
+        state = {"dossier_id": dossier_id, "checked_at": checked_at,
+                 "status": "UNAVAILABLE", "reason": None, "evidence_id": None,
+                 "source_hash": None, "expires_at": None}
+        try:
+            package = self.exporter.export(
+                dossier_id, now=datetime.fromtimestamp(checked_at, timezone.utc))
+            _validate_package(package, self.package_key, datetime.fromtimestamp(checked_at, timezone.utc))
+            if (package.get("dossier_id") != dossier_id
+                    or package.get("currentness") != "CURRENT"
+                    or package.get("certainty") in {"CONTRADICTED", "INSUFFICIENT EVIDENCE"}
+                    or package.get("disposition") != "REVIEW_REQUIRED"
+                    or datetime.fromisoformat(package["expires_at"]).timestamp() <= checked_at
+                    or dossier is not None and
+                    package.get("source_hash") != dossier["source"].get("content_sha256")):
+                raise FederatedContractError("DOSSIER_PACKAGE_BINDING_INVALID")
+        except FederatedContractError as error:
+            state["reason"] = str(error)
+            return state
+        return {**state, "status": "CURRENT", "evidence_id": package["evidence_id"],
+                "source_hash": package["source_hash"], "expires_at": package["expires_at"]}
+
+    def _record_dossier_evidence(self, evidence):
+        # Retain transitions, not an ever-growing event for each unchanged poll.
+        value = {key: value for key, value in evidence.items() if key != "checked_at"}
+        previous = self.store.latest("DOSSIER_EVIDENCE_STATE").get(value["dossier_id"])
+        if previous is None or {k: v for k, v in previous.items() if k != "changed_at"} != value:
+            self.store.put("DOSSIER_EVIDENCE_STATE", value["dossier_id"],
+                           {**value, "changed_at": evidence["checked_at"]})
 
     def acknowledge_autonomy_task(self, task_id, *, reviewer_id, rationale):
         """Record a human reading of a task without accepting its evidence."""
@@ -348,6 +394,10 @@ class OperationsService:
             task = tasks.get(task_id)
             if task is None or task.get("state") not in {"OPEN", "HUMAN_ACKNOWLEDGED"}:
                 raise OperationsError("AUTONOMY_TASK_NOT_REVIEWABLE")
+            if self.stop_event.is_set() or (self.root / "STOP").exists():
+                raise OperationsError("AUTONOMY_TASK_STOPPED")
+            if self._dossier_evidence(task["dossier_id"])["status"] != "CURRENT":
+                raise OperationsError("AUTONOMY_TASK_SOURCE_NOT_CURRENT")
             review = {
                 "task_id": task_id, "reviewer_id": reviewer_id.strip(),
                 "rationale": rationale.strip(), "reviewed_at": int(self.clock()),
@@ -493,10 +543,10 @@ class OperationsService:
                 return {"state": "PAUSED"}
             self.scan_inbox()
             intake_result = self.intake.run(max_jobs=1)
-            # Both source adapters verify their own stores and authority before
-            # returning a dossier. One source can never stand in for the other.
+            # Listing verifies storage, not current execution authority. Retained
+            # history must pass a fresh producer export before deriving work.
             dossiers = self.exporter.list_dossiers(now=datetime.fromtimestamp(now, timezone.utc))
-            self._ensure_autonomy_tasks(dossiers)
+            dossiers = self._ensure_autonomy_tasks(dossiers)
             profiles = self.store.latest("PROFILE")
             outputs = self.store.latest("OUTPUT")
             work = [(d, p) for d in dossiers for p in profiles.values()]
@@ -603,8 +653,13 @@ class OperationsService:
             runs = self.store.latest("ORCHESTRATION_RESULT")
             latest_run = max(runs.values(), key=lambda item: item["requested_at"], default=None)
             tasks = []
+            dossier_ids = set(self.store.latest("DOSSIER_EVIDENCE_STATE"))
+            dossier_ids.update(t["dossier_id"] for t in self.store.latest("AUTONOMY_TASK").values())
+            dossier_ids.update(o["dossier_id"] for o in done.values())
+            evidence = {identity: self._dossier_evidence(identity) for identity in sorted(dossier_ids)}
             for task in self.store.latest("AUTONOMY_TASK").values():
                 view = dict(task)
+                view["source_evidence_status"] = evidence[task["dossier_id"]]["status"]
                 view["effective_completion_boundary"] = AUTONOMY_TASK_RESOLUTION_BOUNDARY
                 view["boundary_status"] = ("CURRENT" if task.get("completion_boundary") ==
                                            AUTONOMY_TASK_RESOLUTION_BOUNDARY else "LEGACY_SUPERSEDED")
@@ -618,6 +673,7 @@ class OperationsService:
                     view["evidence_status"] = "NOT_LINKED"
                 tasks.append(view)
             return {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
+                    "dossier_evidence": list(evidence.values()),
                     "source_catalogs": self._catalog_snapshot(),
                     "autonomy_tasks": sorted(tasks,
                                              key=lambda item: (item["state"], item["created_at"], item["task_id"])),

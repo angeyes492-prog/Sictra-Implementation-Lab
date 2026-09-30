@@ -40,6 +40,25 @@ the journal.
 
 ## Failure, recovery, and compatibility
 
+Local currentness clarification (2026-09-29): retention does not authorize new
+work. Before deriving tasks, Operations must obtain a current signed Block 1
+package matching the dossier identity and retained source hash. Invalid,
+expired, superseded, contradictory or out-of-scope packages cannot create tasks
+or enter the design batch. Recheck immediately before creating a new task;
+existing design execution retains its own precommit checks.
+
+`DOSSIER_EVIDENCE_STATE` is an append-only observation of status transitions,
+not an authority cache. Unchanged polls and restarts do not append duplicates.
+Snapshots re-export at the current clock without modifying the journal, expose
+`dossier_evidence`, and add `source_evidence_status=CURRENT|UNAVAILABLE` to
+each task. The paired local UI requires these fields; an older server is not
+silently interpreted as current. Historical tasks remain unchanged and open
+when their source expires. Acknowledgement also rechecks source authority;
+link/reassessment retain their two-source revalidation. Source-unavailable
+actions are hidden by the UI and rejected by the backend. Pause/STOP prevent
+automatic lifecycle transitions; stale source history never stops unrelated
+current design work. Intake crash/review recovery rules are unchanged.
+
 Unknown task, same-root or same-dossier substitution, expired/tampered dossier,
 changed evidence ID/hash, malformed decision, and replay collision fail before
 any journal write. Snapshot revalidates linked evidence; stale links show

@@ -8,14 +8,15 @@ const fixture=()=>({scope:'LABORATORY_INTERNAL_SUPERVISED',publication:'BLOCKED'
  profiles:[{id:'ops',label:'Operaciones'}],outputs:[{id:'one',title:'Dossier',profile:'Operaciones',availability:'CURRENT'},
  {id:'two',title:'Antiguo',profile:'Operaciones',availability:'STALE_OR_REVOKED'}],
  intake_waiting:[{job_id:'input-1',state:'REVIEW_REQUIRED'}],waiting:[{reason:'MISSING_PROFILE'}],
- autonomy_tasks:[{task_id:'TASK-1',dossier_id:'dossier-1',state:'OPEN',requirement:'Fuente independiente',required_evidence_root:'MUST_DIFFER_FROM:root-a',evidence_status:'NOT_LINKED',effective_completion_boundary:'BLOCK1_CONTRACTED_RESOLUTION_REQUIRED',boundary_status:'CURRENT'}],orchestration:{last_run:null}});
+ dossier_evidence:[{dossier_id:'dossier-1',status:'CURRENT',checked_at:1789300800}],
+ autonomy_tasks:[{task_id:'TASK-1',dossier_id:'dossier-1',state:'OPEN',requirement:'Fuente independiente',required_evidence_root:'MUST_DIFFER_FROM:root-a',evidence_status:'NOT_LINKED',source_evidence_status:'CURRENT',effective_completion_boundary:'BLOCK1_CONTRACTED_RESOLUTION_REQUIRED',boundary_status:'CURRENT'}],orchestration:{last_run:null}});
 test('projects actual availability without calling stale outputs current or completed',()=>{
  const input=fixture(); assert.deepEqual(operationProjection(input),{current:1,stale:1,waiting:1,alerts:3,watch:'Inactiva',service:'Servicio pausado'});
  assert.equal(input.publication,'BLOCKED');assert.equal(input.outputs[1].availability,'STALE_OR_REVOKED');
 });
 test('empty is zero only after valid reading; missing state is not zero',()=>{
  const input=fixture();input.outputs=[];assert.equal(operationProjection(input).current,0);
- for(const key of ['outputs','profiles','waiting','intake_waiting','autonomy_tasks','control_token','watch_enabled','scope','publication']){
+ for(const key of ['outputs','profiles','waiting','intake_waiting','autonomy_tasks','dossier_evidence','control_token','watch_enabled','scope','publication']){
   const broken=fixture();delete broken[key];assert.throws(()=>validateOperations(broken));
  }
  assert.throws(()=>operationProjection(null));
@@ -42,6 +43,14 @@ test('legacy task boundary is explicit and a forged resolved boundary is rejecte
  const input=fixture();input.autonomy_tasks[0].boundary_status='LEGACY_SUPERSEDED';
  assert.equal(validateOperations(input).autonomy_tasks[0].boundary_status,'LEGACY_SUPERSEDED');
  input.autonomy_tasks[0].effective_completion_boundary='HUMAN_REVIEW_IS_ENOUGH';
+ assert.throws(()=>validateOperations(input));
+});
+test('expired task sources remain visible and unknown currentness fails closed',()=>{
+ const input=fixture();input.dossier_evidence[0].status='UNAVAILABLE';input.autonomy_tasks[0].source_evidence_status='UNAVAILABLE';
+ assert.equal(validateOperations(input).autonomy_tasks[0].state,'OPEN');
+ assert.equal(operationProjection(input).alerts,3);
+ input.autonomy_tasks[0].source_evidence_status='ACCEPTED';assert.throws(()=>validateOperations(input));
+ input.autonomy_tasks[0].source_evidence_status='CURRENT';input.dossier_evidence[0].status='VERIFIED';
  assert.throws(()=>validateOperations(input));
 });
 test('Intelligence does not infer numeric uncertainty from counts or fabricate source age',()=>{
