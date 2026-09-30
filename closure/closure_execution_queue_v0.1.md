@@ -47,6 +47,26 @@ evidence requests/review as construction blockers in this session.
    for test evidence, exact product SHA/CI, installation, risks and deferred
    authority. No unfinished planned local-construction item remains in this list.
 
+### Evidence-task continuation — 2026-09-28
+
+The owner requested further supervised autonomy after the historical Astra
+closure. `TASK-EVIDENCE-LINK` is the first new bounded technical increment:
+link a durable task to a separately rooted, current Block 1 dossier and record
+a local human request for Block 1 reassessment. The task remains open;
+dossier certainty, editorial acceptance, publication and delivery remain unchanged. Candidate
+contract: `contracts/telecare_autonomy_task_evidence_cycle_contract_v0.1.md`.
+Positive, same-root, superseded, tamper, replay, non-closure and HTTP authority
+tests passed locally on 2026-09-28 (777 Python and 11 JavaScript regression
+tests after the boundary correction). Hosted CI succeeded on implementation
+SHA `01a4e248fb68658d5dca2ae1ca9c3b745e97d907` (push run
+36521371237 and PR run 36521374341). This increment does not resolve the three live HN evidence gaps or
+grant source approval. After exact-SHA CI, the next item is an approved,
+independent evidence path and editorial quality evaluation; absent that input,
+the tasks must remain open. Cross-block acceptance awaits MAR.
+Legacy task metadata claiming a link plus human review suffices for completion
+is retained in the journal but superseded in snapshots; the effective boundary
+is a contracted Block 1 resolution, not a Block 4 action.
+
 Design delta: reference-led isometric scene, compact glass cards, responsive
 layout, no fabricated metrics; B1 unsupported numeric uncertainty/age removed.
 See architecture/telecare_astra_local_closure_20260915.md and the runbook.
