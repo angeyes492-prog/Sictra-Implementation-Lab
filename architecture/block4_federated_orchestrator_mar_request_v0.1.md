@@ -26,6 +26,11 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
    become a shared cross-block contract. The current local reviewer identifier
    is self-declared; even a request for Block 1 reassessment cannot close a
    source gap, accept content, or establish corroboration.
+8. Whether the new Block 1 comparison projection can become a shared
+   measurement contract. It compares only exact typed metric, unit, geography
+   and period without resolving any task. The two currently admitted source
+   types have no shared metric. New metric mapping or tolerance, if needed,
+   requires source-specific evidence and an explicit architectural decision.
 
 ## Evidence available
 

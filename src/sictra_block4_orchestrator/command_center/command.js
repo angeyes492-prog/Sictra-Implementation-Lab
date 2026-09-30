@@ -19,9 +19,16 @@ function validateOperations(data) {
       || !data.autonomy_tasks.every(t=>t && text(t.task_id) && text(t.dossier_id)
         && ['CURRENT','UNAVAILABLE'].includes(t.source_evidence_status)
         && text(t.state) && text(t.requirement) && text(t.required_evidence_root)
+        && ['INDEPENDENT_CORROBORATION','SOURCE_METHODOLOGY','COMPANY_EXPOSURE',
+            'SOURCE_GRANULARITY','UNCLASSIFIED'].includes(t.effective_kind)
         && t.effective_completion_boundary==='BLOCK1_CONTRACTED_RESOLUTION_REQUIRED'
         && ['CURRENT','LEGACY_SUPERSEDED'].includes(t.boundary_status)
-        && ['NOT_LINKED','CURRENT','STALE_OR_REVOKED'].includes(t.evidence_status))) {
+        && ['NOT_LINKED','CURRENT','STALE_OR_REVOKED'].includes(t.evidence_status)
+        && (t.evidence_comparison===null || t.evidence_comparison &&
+          ['NO_SHARED_MEASUREMENT','PARTIAL_COVERAGE_REVIEW_REQUIRED',
+           'VALUE_DIFFERENCE_REVIEW_REQUIRED','EXACT_VALUE_AGREEMENT_REVIEW_REQUIRED'].includes(t.evidence_comparison.status)
+          && t.evidence_comparison.resolution==='NOT_RESOLVED'
+          && t.evidence_comparison.publication==='BLOCKED'))) {
     throw new Error('Lectura operativa incompleta o fuera del alcance autorizado.');
   }
   const run = data.orchestration?.last_run;

@@ -33,10 +33,21 @@ decisions retain an append-only record containing the previous link, and
 `publication=BLOCKED`, `acceptance=NOT_ACCEPTED`.
 `BLOCK1_REASSESSMENT_REQUIRED` cannot be relinked or reassessed by Block 4;
 Block 1 must provide a separate contracted resolution before task closure.
+New links include the Block 1 measurement comparison candidate defined in
+`block1_cross_source_measurement_contract_v0.1.md`. It is visible on read and
+recomputed for current links; legacy links without this field remain readable.
+`NO_SHARED_MEASUREMENT` is a valid candidate-link result, not evidence that a
+gap was resolved. The operator can record insufficiency; Block 4 cannot upgrade
+the dossier or task from this comparison.
 New tasks use `BLOCK1_CONTRACTED_RESOLUTION_REQUIRED` as their completion
 boundary. Old task records retain their original metadata; snapshots mark it
 `LEGACY_SUPERSEDED` and expose the current effective boundary without rewriting
 the journal.
+Known Block 1 need texts are classified by exact source-specific wording into
+independent corroboration, source methodology, company exposure, or source
+granularity. Unknown or changed wording is `UNCLASSIFIED`, never guessed from
+keywords. A read-side `effective_kind` safely reclassifies legacy task metadata
+without rewriting history. This is routing metadata, not a resolution verdict.
 
 ## Failure, recovery, and compatibility
 

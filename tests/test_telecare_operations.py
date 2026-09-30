@@ -441,6 +441,8 @@ class OperationsTests(unittest.TestCase):
         self.assertTrue(all(task["completion_boundary"] == "BLOCK1_CONTRACTED_RESOLUTION_REQUIRED"
                             for task in tasks))
         self.assertTrue(all(task["boundary_status"] == "CURRENT" for task in tasks))
+        self.assertEqual({"INDEPENDENT_CORROBORATION", "SOURCE_METHODOLOGY", "COMPANY_EXPOSURE"},
+                         {task["effective_kind"] for task in tasks})
         acknowledged = self.service.acknowledge_autonomy_task(
             tasks[0]["task_id"], reviewer_id="operator-local",
             rationale="Se requiere una fuente aprobada de raíz independiente antes de interpretar el cambio.",
@@ -478,11 +480,24 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual("BLOCKED", linked["publication"])
         self.assertEqual("NOT_ACCEPTED", linked["acceptance"])
         self.assertEqual("HN_SARAH", linked["evidence_link"]["source_root"])
+        self.assertEqual("NO_SHARED_MEASUREMENT", linked["evidence_link"]["comparison"]["status"])
+        self.assertEqual("NOT_RESOLVED", linked["evidence_link"]["comparison"]["resolution"])
         count = len(self.service.store.records())
         self.assertEqual(linked, self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"]))
         self.assertEqual(count, len(self.service.store.records()))
         self.assertEqual("CURRENT", next(t for t in self.service.snapshot()["autonomy_tasks"]
                                          if t["task_id"] == task["task_id"])["evidence_status"])
+        self.assertEqual("NO_SHARED_MEASUREMENT", next(t for t in self.service.snapshot()["autonomy_tasks"]
+            if t["task_id"] == task["task_id"])["evidence_comparison"]["status"])
+        legacy_task = deepcopy(self.service.store.latest("AUTONOMY_TASK")[task["task_id"]])
+        legacy_task["evidence_link"].pop("comparison")
+        self.service.store.put("AUTONOMY_TASK", task["task_id"], legacy_task)
+        before_legacy_read = self.service.store.records()
+        legacy_view = next(t for t in self.service.snapshot()["autonomy_tasks"]
+                           if t["task_id"] == task["task_id"])
+        self.assertEqual("CURRENT", legacy_view["evidence_status"])
+        self.assertEqual("NO_SHARED_MEASUREMENT", legacy_view["evidence_comparison"]["status"])
+        self.assertEqual(before_legacy_read, self.service.store.records())
         reassessed = self.service.reassess_autonomy_task(
             task["task_id"], reviewer_id="local-reviewer",
             rationale="Solicito reevaluación de Intelligence; esto no valida causalidad ni aprueba el boletín.",
@@ -518,6 +533,14 @@ class OperationsTests(unittest.TestCase):
             self.service.link_autonomy_task_evidence(task["task_id"], original["dossier_id"])
         self.assertEqual(before, len(self.service.store.records()))
         independent = self.hn_ready_after_eurostat()
+        real_export = self.service.exporter.export
+        count = len(self.service.store.records())
+        with patch.object(self.service.exporter, "export", side_effect=lambda identity, **kw:
+                          real_export(independent["dossier_id"], **kw)
+                          if identity == task["dossier_id"] else real_export(identity, **kw)):
+            with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_NOT_CURRENT"):
+                self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        self.assertEqual(count, len(self.service.store.records()))
         # Challenge the root check independently of the actual exporter.
         real_dossiers = self.service.exporter.list_dossiers()
         forged_metadata = [{**item, "source": {**item["source"], "root_source_identity": task["source_root"]}}

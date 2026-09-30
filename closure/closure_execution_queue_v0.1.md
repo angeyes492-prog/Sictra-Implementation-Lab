@@ -5,6 +5,35 @@ It prioritizes work but never converts a human, independent-review, or architect
 
 ## Technical execution
 
+### Twelve-arista continuation — 2026-09-29
+
+First local increment: `B1-CROSS-SOURCE-MEASUREMENT` is a candidate Block 1
+comparison projection for arista 4, with Block 4 read/link integration. It
+requires two current signed producer packages and exact source-hash lineage.
+The projection compares metric, unit, geography and period, reports value
+agreement or difference, and always leaves resolution `NOT_RESOLVED` and
+publication `BLOCKED`. Existing links without the new field remain readable.
+With the two current admitted source types (Eurostat maritime tonnes and HN
+customs CIF USD), `NO_SHARED_MEASUREMENT` is the expected result: different
+roots alone cannot corroborate the original need. Owner: Block 1 measurement
+semantics; consumer: Block 4 local UI. Positive and adversarial tests, full
+regression and exact final-SHA CI are required before calling this executed.
+Master Architecture Review must decide any common metric mappings, tolerance,
+cross-block acceptance and eventual task resolution. The next local item is a
+typed Block 1 resolution policy; no task closes from this comparison. Exact
+source-specific need classification now distinguishes corroboration,
+methodology, company exposure and granularity; unknown wording stays
+`UNCLASSIFIED`, including for legacy tasks projected without journal rewrite.
+Local verification on 2026-09-29: 790/790 Python tests, 14/14 JavaScript
+tests, Python compileall and launcher-path validation passed. The exact-SHA
+hosted CI result remains pending until this increment is pushed. Certainty:
+VERIFIED / confidence B for local behavior only; cross-source semantic
+acceptance remains INSUFFICIENT EVIDENCE. Next technical dependency: a
+versioned Block 1 per-need resolution contract and approved comparable source
+fixtures; current Eurostat and HN customs observations cannot resolve one
+another's corroboration need.
+
+
 ### Integrated autonomy cycle — 2026-09-29
 
 Ordered active backlog (owner: local implementation; no gate promotion):

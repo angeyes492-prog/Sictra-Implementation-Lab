@@ -10,6 +10,10 @@ import threading
 import time
 
 from sictra_block1.operator_pipeline import initialize_operator_pipeline, load_operator_pipeline
+from sictra_block1.evidence_comparison import (
+    EvidenceComparisonViolation, compare_dossier_measurements,
+)
+from sictra_block1.need_classification import classify_data_need
 from sictra_block1.hn_customs_pipeline import (
     HNCustomsPipelineViolation, initialize_hn_customs_pipeline,
     parse_hn_customs_workbook,
@@ -334,8 +338,7 @@ class OperationsService:
                 if latest["status"] != "CURRENT":
                     current_dossiers.remove(dossier)
                     break
-                kind = ("INDEPENDENT_CORROBORATION" if "independiente" in need.lower()
-                        else "EVIDENCE_GAP")
+                kind = classify_data_need(source["source_id"], need)
                 task = {
                     "task_id": identity, "dossier_id": dossier["dossier_id"],
                     "source_id": source["source_id"], "source_root": root,
@@ -419,13 +422,20 @@ class OperationsService:
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_ID_INVALID")
         now = datetime.fromtimestamp(self.clock(), timezone.utc)
         try:
-            self.exporter.export(task["dossier_id"], now=now)
+            original = self.exporter.export(task["dossier_id"], now=now)
             package = self.exporter.export(evidence_dossier_id, now=now)
-            matches = [item for item in self.exporter.list_dossiers(now=now)
-                       if item.get("dossier_id") == evidence_dossier_id]
+            _validate_package(original, self.package_key, now)
+            _validate_package(package, self.package_key, now)
+            dossiers = self.exporter.list_dossiers(now=now)
+            originals = [item for item in dossiers if item.get("dossier_id") == task["dossier_id"]]
+            matches = [item for item in dossiers if item.get("dossier_id") == evidence_dossier_id]
         except FederatedContractError as error:
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_NOT_CURRENT") from error
-        if len(matches) != 1 or not isinstance(matches[0].get("source"), dict):
+        if (len(matches) != 1 or len(originals) != 1
+                or not isinstance(matches[0].get("source"), dict)
+                or original.get("dossier_id") != task["dossier_id"]
+                or original["source_hash"] != originals[0]["source"].get("content_sha256")
+                or package["source_hash"] != matches[0]["source"].get("content_sha256")):
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_NOT_CURRENT")
         source = matches[0]["source"]
         root = source.get("root_source_identity", source.get("source_id"))
@@ -433,18 +443,23 @@ class OperationsService:
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_ROOT_NOT_INDEPENDENT")
         if package["dossier_id"] != evidence_dossier_id:
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_ID_INVALID")
+        try:
+            comparison = compare_dossier_measurements(originals[0], matches[0])
+        except EvidenceComparisonViolation as error:
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_NOT_COMPARABLE") from error
         return {"dossier_id": evidence_dossier_id, "source_root": root,
                 "evidence_id": package["evidence_id"], "source_hash": package["source_hash"],
-                "expires_at": package["expires_at"]}
+                "expires_at": package["expires_at"], "comparison": comparison}
 
     def _revalidate_task_link(self, task):
         link = task.get("evidence_link")
         if not isinstance(link, dict):
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_LINK_MISSING")
         current = self._current_task_evidence(task, link.get("dossier_id"))
-        if any(link.get(key) != value for key, value in current.items()):
+        if any(link.get(key) != value for key, value in current.items()
+               if key != "comparison" or "comparison" in link):
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_LINK_CHANGED")
-        return link
+        return current
 
     def link_autonomy_task_evidence(self, task_id, evidence_dossier_id):
         """Link independent current evidence for review; do not close the task."""
@@ -661,16 +676,20 @@ class OperationsService:
                 view = dict(task)
                 view["source_evidence_status"] = evidence[task["dossier_id"]]["status"]
                 view["effective_completion_boundary"] = AUTONOMY_TASK_RESOLUTION_BOUNDARY
+                view["effective_kind"] = classify_data_need(task["source_id"], task["requirement"])
                 view["boundary_status"] = ("CURRENT" if task.get("completion_boundary") ==
                                            AUTONOMY_TASK_RESOLUTION_BOUNDARY else "LEGACY_SUPERSEDED")
                 if view.get("evidence_link"):
                     try:
-                        self._revalidate_task_link(view)
+                        current_link = self._revalidate_task_link(view)
                         view["evidence_status"] = "CURRENT"
+                        view["evidence_comparison"] = current_link["comparison"]
                     except (OperationsError, FederatedContractError):
                         view["evidence_status"] = "STALE_OR_REVOKED"
+                        view["evidence_comparison"] = None
                 else:
                     view["evidence_status"] = "NOT_LINKED"
+                    view["evidence_comparison"] = None
                 tasks.append(view)
             return {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
                     "dossier_evidence": list(evidence.values()),
