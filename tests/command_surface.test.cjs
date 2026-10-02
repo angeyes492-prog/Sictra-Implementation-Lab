@@ -9,7 +9,7 @@ const fixture=()=>({scope:'LABORATORY_INTERNAL_SUPERVISED',publication:'BLOCKED'
  {id:'two',title:'Antiguo',profile:'Operaciones',availability:'STALE_OR_REVOKED'}],
  intake_waiting:[{job_id:'input-1',state:'REVIEW_REQUIRED'}],waiting:[{reason:'MISSING_PROFILE'}],
  dossier_evidence:[{dossier_id:'dossier-1',status:'CURRENT',checked_at:1789300800}],
- autonomy_tasks:[{task_id:'TASK-1',dossier_id:'dossier-1',state:'OPEN',requirement:'Fuente independiente',required_evidence_root:'MUST_DIFFER_FROM:root-a',evidence_status:'NOT_LINKED',evidence_comparison:null,evidence_assessment:null,source_evidence_status:'CURRENT',effective_kind:'UNCLASSIFIED',effective_completion_boundary:'BLOCK1_CONTRACTED_RESOLUTION_REQUIRED',boundary_status:'CURRENT'}],orchestration:{last_run:null}});
+ autonomy_tasks:[{task_id:'TASK-1',dossier_id:'dossier-1',state:'OPEN',requirement:'Fuente independiente',required_evidence_root:'MUST_DIFFER_FROM:root-a',evidence_status:'NOT_LINKED',evidence_comparison:null,evidence_assessment:null,research_evaluation:null,source_evidence_status:'CURRENT',effective_kind:'UNCLASSIFIED',effective_completion_boundary:'BLOCK1_CONTRACTED_RESOLUTION_REQUIRED',boundary_status:'CURRENT'}],orchestration:{last_run:null}});
 test('projects actual availability without calling stale outputs current or completed',()=>{
  const input=fixture(); assert.deepEqual(operationProjection(input),{current:1,stale:1,waiting:1,alerts:3,watch:'Inactiva',service:'Servicio pausado'});
  assert.equal(input.publication,'BLOCKED');assert.equal(input.outputs[1].availability,'STALE_OR_REVOKED');
@@ -71,6 +71,15 @@ test('assessment cannot promote task or disappear from an active comparison',()=
 test('unknown task routing is visible but forged resolution route is rejected',()=>{
  const input=fixture();assert.equal(validateOperations(input).autonomy_tasks[0].effective_kind,'UNCLASSIFIED');
  input.autonomy_tasks[0].effective_kind='AUTO_RESOLVED';assert.throws(()=>validateOperations(input));
+});
+test('automatic research remains an unresolved local observation and stale verdicts cannot display',()=>{
+ const input=fixture(),task=input.autonomy_tasks[0];
+ task.research_evaluation={id:'RESEARCH-1',task_id:'TASK-1',availability:'CURRENT_INPUTS',scope:'ADMITTED_LOCAL_DOSSIERS_ONLY',verdict:'INSUFFICIENT',resolution:'NOT_RESOLVED',acceptance:'NOT_ACCEPTED',publication:'BLOCKED'};
+ assert.equal(validateOperations(input).autonomy_tasks[0].state,'OPEN');
+ task.research_evaluation.resolution='RESOLVED';assert.throws(()=>validateOperations(input));
+ task.research_evaluation={id:'RESEARCH-1',task_id:'TASK-1',availability:'STALE_OR_REVOKED'};
+ assert.equal(validateOperations(input).autonomy_tasks[0].research_evaluation.availability,'STALE_OR_REVOKED');
+ task.research_evaluation.verdict='INSUFFICIENT';assert.throws(()=>validateOperations(input));
 });
 test('Intelligence does not infer numeric uncertainty from counts or fabricate source age',()=>{
  const source=fs.readFileSync(require.resolve('../src/sictra_block1/web/app.js'),'utf8');

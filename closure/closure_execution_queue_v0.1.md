@@ -5,6 +5,85 @@ It prioritizes work but never converts a human, independent-review, or architect
 
 ## Technical execution
 
+### Current ordered twelve-arista backlog — 2026-10-01
+
+This is the single active backlog; the lists below retain historical evidence,
+not parallel queues. Architecture: `architecture/telecare_twelve_aristas_v0.1.md`.
+Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
+
+1. `LOCAL-RESEARCH-CYCLE` (aristas 4/5/10/12): IMPLEMENTED / EXECUTED locally;
+   final-SHA CI remains a separate GitHub evidence requirement. B4 automatically examines
+   admitted current local dossier pairs, consumes B1 comparison/assessment,
+   records evidence-bound unresolved results with bounded fair scheduling,
+   atomic result/head persistence and restart replay. No manual link is needed;
+   absent comparable input remains WAITING_LOCAL_EVIDENCE or INSUFFICIENT.
+   Recheck before persistence and read; STOP/pause, expiry, changed candidate,
+   self-sealed forged resolution, injected partial write and full restoration
+   are rejection/recovery vectors. Owner: local implementation agent.
+   Next action: exact-SHA CI, then the approved-input decision below. Promotion boundary:
+   candidate local mechanism only, not resolved need or accepted architecture.
+2. `COMPARABLE-APPROVED-INPUT` (aristas 1/2/4/5): INSUFFICIENT EVIDENCE.
+   Eurostat maritime tonnes and HN customs CIF USD do not measure the same
+   phenomenon. Registry candidates are not approvals; no network source
+   acquisition is authorized by root AGENTS.md. Owner: source authority.
+   Next action: approve a bounded comparable source with rights, scope, binding,
+   refresh/revision policy and admissible retained cases; continue local work
+   while this decision remains pending. No corroboration or resolution follows.
+3. `RESOLUTION-INTELLIGENCE-EDITORIAL` (aristas 3/5/6/7): ARCHITECTURE_DECISION_REQUIRED
+   and INSUFFICIENT EVIDENCE. Current triage is not causal interpretation or
+   accepted editorial quality. Owner: B1 architecture/business authority.
+   Next action: source-specific resolution semantics, independent reference
+   cases and interpretation/hypothesis acceptance; technical deltas stay literal.
+4. `DESIGN-PRECISION-EFFECTS` (aristas 8/9/11): INSUFFICIENT EVIDENCE.
+   Current local rendering and generic profiles do not demonstrate user
+   comprehension, account exposure or delivery/outcome. Owner: product/data
+   authority. Next action: authorized profiles, usability cases and explicit
+   channel/receipt contracts; publication/contact/CRM remain blocked.
+5. `INTEGRATED-ACTIVATION` (arista 12): ARCHITECTURE_DECISION_REQUIRED.
+   Isolated candidate tests/pilot cannot promote the installed app. Owner:
+   architecture/operator authority. Next action: MAR, accepted activation and
+   sustained multi-cycle operation with organizational identity/key custody;
+   preserve deferred independent review. No production/global GREEN claim.
+
+Four-source reconciliation: current GitHub base 0f2770292350c6fe79a387993f7677b82b45f15e
+has successful push 36948904219 and PR 36948909440. Notion page
+3c789f66-067b-8108-bb44-c13ac4b15ac0 (edited 2026-08-28) retains historical
+reference scope; public Slack Telecare search returned no results. Neither
+provides source or MAR acceptance. Wolfram evaluated 26,240 fixed-inventory
+N/B/initial-cursor cases with coverage within ceil(N/min(N,B)) running ticks;
+all passed that finite model, not runtime acceptance or changing-inventory fairness.
+Certainty VERIFIED / confidence B for executed local mechanisms; unmet product
+closure remains INSUFFICIENT EVIDENCE. Reviewer: implementation agent, not independent.
+
+Historical CI-pending annotations below are superseded for these exact heads:
+0f2770292350c6fe79a387993f7677b82b45f15e: push 36948904219 / PR 36948909440,
+both success; 3ecc3307b0eab890910ea61ecc22140179b6275a: push 36948236771 /
+PR 36948241271, both success. This only binds those bounded mechanisms;
+no architecture or editorial gate is promoted.
+
+Local execution evidence (2026-10-01, Windows/Python 3.12, explicit candidate
+worktree src on PYTHONPATH): final full discovery 809/809 Python tests in
+117.121 seconds, 16/16 JavaScript tests, compileall and launcher-path checks
+passed. Twelve new research tests and two pilot tests cover budget/fairness,
+same-root wait, unavailable-candidate progress, immutable collision rollback,
+atomic partial failure, source/candidate expiry during recheck, forged result,
+restart/pause/STOP, source-to-dossier integration and read-only rejection.
+The existing HTTP test now verifies automatic insufficiency and withdrawal of
+stale verdicts; integral laboratory restore retains current evaluations and
+starts paused. Oracles are fixed expected states, independent input values and
+injected failures, not the scheduler's conclusion. These are mechanism fixtures,
+not independent source corroboration.
+
+Final isolated SYNTHETIC_LOCAL_PILOT: three cycles, two blocked drafts, three
+WAITING_LOCAL_EVIDENCE evaluations, restart without duplicates, pause and
+operations-only restore verified. Local retained report:
+`C:/Users/angel/AppData/Local/Temp/telecare-research-final-c06f08c67ed04c14a59cf17ef80f8340/pilot-report.json`.
+Block 1 reference demo also retained one bounded candidate with replay producing
+no new effect; it is not real-source interpretation. Installed application
+and live state were not modified. Bind the final checkout SHA and hosted CI via
+PR #18 / workflow history after publication; this file cannot contain its own
+commit hash. No system completion, independent acceptance or GREEN promotion.
+
 ### Twelve-arista continuation — 2026-09-29
 
 Second local increment (2026-10-01): `B1-NEED-ASSESSMENT` is a candidate

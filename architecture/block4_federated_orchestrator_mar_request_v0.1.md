@@ -36,6 +36,12 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
    guide research, but never resolve a task or promote a dossier; source-specific
    acceptance semantics and independently validated comparable inputs are
    still absent.
+10. Whether the candidate twelve-arista composition and bounded local research
+    cycle may become accepted cross-block interfaces. Block 4 only schedules
+    current admitted dossiers and journals Block 1 comparisons/assessments;
+    its automatic search cannot close a task, mint approval, infer causal
+    intelligence, or activate network acquisition/delivery. Review ownership,
+    budget, retention, migration and source-specific resolution separately.
 
 ## Evidence available
 

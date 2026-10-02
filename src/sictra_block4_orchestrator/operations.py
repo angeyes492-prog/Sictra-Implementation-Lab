@@ -33,6 +33,7 @@ from .producer_adapters import (
 )
 from .runtime import FederatedContractError, FederatedOrchestratorStore, _validate_package
 from .operations_store import OperationsError, OperationsStore, process_lock
+from .research_cycle import LocalResearchCycle
 
 AUTONOMY_TASK_RESOLUTION_BOUNDARY = "BLOCK1_CONTRACTED_RESOLUTION_REQUIRED"
 
@@ -125,6 +126,11 @@ class OperationsService:
                 pipeline=self.hn_pipeline, integrity_key=self.hn_key,
                 package_key=self.package_key,
             ),
+        )
+        self.research = LocalResearchCycle(
+            store=self.store, source_check=self._dossier_evidence,
+            candidate_check=self._current_task_evidence, clock=lambda: self.clock(),
+            stopped=lambda: self.stop_event.is_set() or (self.root / "STOP").exists() or self.is_paused(),
         )
 
     def add_profile(self, profile):
@@ -548,9 +554,11 @@ class OperationsService:
                 recovery_key=self.recovery_key)
             self.intake.recover(receipt, recovery_key=self.recovery_key)
 
-    def tick(self, *, max_cases=16):
+    def tick(self, *, max_cases=16, max_research_attempts=8):
         if type(max_cases) is not int or not 1 <= max_cases <= 32:
             raise OperationsError("CASE_BUDGET_INVALID")
+        if type(max_research_attempts) is not int or not 1 <= max_research_attempts <= 32:
+            raise OperationsError("RESEARCH_BUDGET_INVALID")
         with self.lock:
             now = int(self.clock())
             if self.stop_event.is_set() or (self.root / "STOP").exists():
@@ -565,6 +573,8 @@ class OperationsService:
             # history must pass a fresh producer export before deriving work.
             dossiers = self.exporter.list_dossiers(now=datetime.fromtimestamp(now, timezone.utc))
             dossiers = self._ensure_autonomy_tasks(dossiers)
+            research = self.research.run(list(self.store.latest("AUTONOMY_TASK").values()),
+                                         dossiers, budget=max_research_attempts)
             profiles = self.store.latest("PROFILE")
             outputs = self.store.latest("OUTPUT")
             work = [(d, p) for d in dossiers for p in profiles.values()]
@@ -608,7 +618,8 @@ class OperationsService:
                 self.store.put("CURSOR", "designs", {"position": (cursor + len(batch)) % len(work)})
             self._close_review_waits_by_abstention()
             self.last_cycle, self.last_error = int(self.clock()), None
-            return {"state": "RUNNING", "intake": intake_result[-1]["state"], "outcomes": outcome}
+            return {"state": "RUNNING", "intake": intake_result[-1]["state"],
+                    "outcomes": outcome, "research_outcomes": research}
 
     def output(self, identity):
         value = self.store.latest("OUTPUT").get(identity)
@@ -680,6 +691,7 @@ class OperationsService:
                 view["source_evidence_status"] = evidence[task["dossier_id"]]["status"]
                 view["effective_completion_boundary"] = AUTONOMY_TASK_RESOLUTION_BOUNDARY
                 view["effective_kind"] = classify_data_need(task["source_id"], task["requirement"])
+                view["research_evaluation"] = self.research.view(task)
                 view["boundary_status"] = ("CURRENT" if task.get("completion_boundary") ==
                                            AUTONOMY_TASK_RESOLUTION_BOUNDARY else "LEGACY_SUPERSEDED")
                 if view.get("evidence_link"):

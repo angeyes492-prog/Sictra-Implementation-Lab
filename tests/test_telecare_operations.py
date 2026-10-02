@@ -624,6 +624,8 @@ class OperationsTests(unittest.TestCase):
             status, _, body = request("GET", "/api/operations")
             token = json.loads(body)["control_token"]
             self.assertEqual(200, status)
+            self.assertTrue(all(t["research_evaluation"]["verdict"] == "WAITING_LOCAL_EVIDENCE"
+                                for t in json.loads(body)["autonomy_tasks"]))
             route = "/api/operations/outputs/" + output["id"] + "/html"
             status, headers, body = request("GET", route)
             self.assertEqual(200, status)
@@ -636,6 +638,10 @@ class OperationsTests(unittest.TestCase):
             self.assertEqual("ORCHESTRATION_EXECUTED", json.loads(body)["status"])
             self.assertEqual(400, request("POST", "/api/operations/control", {"action": "execute", "extra": True}, trusted)[0])
             independent = self.hn_ready_after_eurostat()
+            status, _, body = request("GET", "/api/operations")
+            self.assertEqual(200, status)
+            self.assertTrue(all(t["research_evaluation"]["verdict"] == "INSUFFICIENT"
+                                for t in json.loads(body)["autonomy_tasks"]))
             task = next(t for t in self.service.snapshot()["autonomy_tasks"]
                         if t["dossier_id"] == output["dossier_id"])
             link_request = {"task_id": task["task_id"], "evidence_dossier_id": independent["dossier_id"]}
@@ -659,6 +665,9 @@ class OperationsTests(unittest.TestCase):
             status, _, body = request("GET", "/api/operations")
             self.assertEqual(200, status)
             self.assertTrue(all(t["source_evidence_status"] == "UNAVAILABLE"
+                                for t in json.loads(body)["autonomy_tasks"]))
+            self.assertTrue(all(t["research_evaluation"]["availability"] == "STALE_OR_REVOKED"
+                                and "verdict" not in t["research_evaluation"]
                                 for t in json.loads(body)["autonomy_tasks"]))
             before = self.service.store.records()
             status, _, body = request("POST", "/api/operations/tasks/review", {

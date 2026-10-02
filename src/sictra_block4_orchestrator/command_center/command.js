@@ -24,6 +24,15 @@ function validateOperations(data) {
         && t.effective_completion_boundary==='BLOCK1_CONTRACTED_RESOLUTION_REQUIRED'
         && ['CURRENT','LEGACY_SUPERSEDED'].includes(t.boundary_status)
         && ['NOT_LINKED','CURRENT','STALE_OR_REVOKED'].includes(t.evidence_status)
+        && (t.research_evaluation===null || t.research_evaluation &&
+          t.research_evaluation.task_id===t.task_id && text(t.research_evaluation.id) &&
+          (t.research_evaluation.availability==='STALE_OR_REVOKED' && !('verdict' in t.research_evaluation)
+           || t.research_evaluation.availability==='CURRENT_INPUTS'
+           && ['WAITING_LOCAL_EVIDENCE','INSUFFICIENT','MEASUREMENT_DISAGREEMENT','REVIEW_REQUIRED'].includes(t.research_evaluation.verdict)
+           && t.research_evaluation.scope==='ADMITTED_LOCAL_DOSSIERS_ONLY'
+           && t.research_evaluation.resolution==='NOT_RESOLVED'
+           && t.research_evaluation.acceptance==='NOT_ACCEPTED'
+           && t.research_evaluation.publication==='BLOCKED'))
         && (t.evidence_comparison===null || t.evidence_comparison &&
           ['NO_SHARED_MEASUREMENT','PARTIAL_COVERAGE_REVIEW_REQUIRED',
            'VALUE_DIFFERENCE_REVIEW_REQUIRED','EXACT_VALUE_AGREEMENT_REVIEW_REQUIRED'].includes(t.evidence_comparison.status)
