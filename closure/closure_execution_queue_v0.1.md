@@ -47,6 +47,11 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    comprehension, account exposure or delivery/outcome. Owner: product/data
    authority. Next action: authorized profiles, usability cases and explicit
    channel/receipt contracts; publication/contact/CRM remain blocked.
+   New runtime repair: a nonempty geographic filter over HN customs claims
+   without `geo_code` now produces NO_GEOGRAPHIC_MATCH, not an uncaught
+   KeyError that aborts the cycle. Exact Eurostat matches and unfiltered HN
+   work continue; restart replay preserves outputs. No country mapping,
+   personal exposure, consent or delivery was inferred.
 5. `INTEGRATED-ACTIVATION` (arista 12): ARCHITECTURE_DECISION_REQUIRED.
    Isolated candidate tests/pilot cannot promote the installed app. Owner:
    architecture/operator authority. Next action: MAR, accepted activation and
@@ -113,11 +118,75 @@ EVIDENCE. Reviewer: implementation agent, not independent. No source approval,
 accepted shared contract, installed activation, real causal interpretation,
 delivery or global gate promotion follows.
 
+### Scheduled execution — geographic rejection repair, 2026-10-01 local
+
+Fresh base: 8b2bcfd85c86dfe51d5948a9f6ce1332d05721d5, clean isolated candidate,
+branch codex/telecare-integrated-autonomy. GitHub push 36955997423 and PR
+36956002273 both completed successfully on that exact base. No unrelated
+checkout or installed application was edited. Highest-risk viable item:
+DESIGN-PRECISION-EFFECTS (arista 9 with arista 10/12 cycle impact). Existing
+adaptation was IMPLEMENTED / EXECUTED for prior cases, not validated for a
+filtered customs claim. Observable target: controlled no-match rejection,
+positive exact-code and unfiltered paths, independent work after rejection and
+restart without duplicates or changed saved outputs.
+
+Two new regression tests first produced three errors with KeyError 'geo_code'
+on real retained-pipeline fixture output. Precision now selects only explicit
+claim geography. The focused repair run exposed a wrong fixture expectation
+of one Belgium claim: the producer emits separate value and flag facts. The
+test now requires the exact unchanged producer claims plus explicit BE scope,
+not an assumed count. Both new tests pass. Integration demonstrates a blocked
+match does not prevent a subsequent unfiltered profile over both sources,
+source-bound read/restart replay, no fabricated HN/country/customs-label match,
+unchanged input and intact publication/delivery restrictions. No exception
+catch-all or authorization bypass was introduced. Version 1 successful outputs
+are unchanged; rollback reintroduces the former unsupported-filter failure.
+
+One focused 38-test run encountered ConnectionAbortedError / Windows 10053 on
+an existing unauthorized-control HTTP assertion. That HTTP test passed three
+additional executions, and the full regression passed 827/827 in 137.475s.
+No cause was established; intermittent transport failure remains UNCONFIRMED,
+not silently declared repaired. Owner: local runtime agent; next action upon
+recurrence: capture the rejected-body/socket path and add a deterministic
+failure vector, preserving the 403/no-mutation requirement. This observation
+does not invalidate the independently reproduced geographic repair.
+17/17 JavaScript tests, compileall, launcher-path checks and diff checks pass.
+Final SHA/CI is bound through PR #18/workflow history after commit; it cannot
+be self-embedded in this commit. The finite 24-test diagnostic is rerun on the
+unchanged checkout, with exact-final-SHA CI separate from this local result.
+
+Four-source reconciliation: Notion 3c789f66-067b-8108-bb44-c13ac4b15ac0 remains
+historical reference scope (edited 2026-08-28); public Slack Telecare search
+returned no results. Neither supplies a source/MAR/data decision. Wolfram
+checked 45 abstract explicit-code/customs-label/filter combinations: zero
+selection violations and zero label-dependent selections. It excludes parser,
+signed evidence, replay and runtime acceptance. Certainty VERIFIED / confidence
+B for executed geographic mechanism fixtures; reviewer implementation agent,
+not independent. Product closure remains INSUFFICIENT EVIDENCE.
+
+After this repair, the single remaining ordered queue has no identified
+unfinished behavior that can be implemented from its present specified inputs:
+item 2 requires a bounded approved comparable retained source, not the 18
+unapproved catalog candidates; item 3 requires per-need resolution/interpretation
+semantics and reference cases, not an invented RESOLVED verdict; item 4 requires
+authorized audience/exposure, usability cases and channel/receipt semantics,
+not active publication; item 5 requires MAR/operator activation and key/identity
+decisions before installing. Existing specified validators, local orchestration,
+rendering and recovery are implemented with evidence. This is an inventory
+decision, not a proof of bug absence or twelve-arista completion. No arbitrary
+feature expansion or unchanged-source polling is a closure delta. Resume only
+when one of those concrete inputs/decisions changes, or new reproducible
+contradictory evidence identifies a safe technical repair. No automatic resume.
+
 ### Proactive execution control — separate from gates/backlog
 
-Consecutive zero-technical-delta runs: `0`. Last real delta: executable literal
-change-context classification/read rejection plus finite execution-bound
-twelve-arista diagnostic with adversarial tests. Status text, rerunning old
+Consecutive zero-technical-delta runs: `0`. Last real delta: geographic no-match
+rejection repair with retained-pipeline independent progress and replay tests.
+Automation construcci-n-proactiva-de-telecare-os: PAUSED by the app on
+2026-10-01 local under the authorized immediate-no-safe-next-item rule; name,
+prompt, hourly schedule and target thread were preserved. A material delta
+occurred this run, so this is not a three-zero-delta pause or completion claim.
+Status text, rerunning old
 unchanged checks and cosmetic documents do not reset this counter. Follow the
 active skill's anti-loop rule: after three consecutive no-delta scheduled runs,
 or immediately when no independent safe technical path remains, pause the

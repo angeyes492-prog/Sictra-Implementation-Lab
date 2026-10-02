@@ -445,6 +445,51 @@ class OperationsTests(unittest.TestCase):
         self.service.tick()
         self.assertTrue(any(w["reason"] == "NO_GEOGRAPHIC_MATCH" for w in self.service.snapshot()["waiting"]))
 
+    def test_geographic_filter_rejects_customs_without_stopping_other_work_or_replay(self):
+        euro = self.ready()
+        customs = self.hn_ready_after_eurostat()
+        profile = {**euro["profile"], "id": "belgium-only", "geo_codes": ["BE"]}
+        self.service.add_profile(profile)
+        independent = {**euro["profile"], "id": "independent-unfiltered"}
+        self.service.add_profile(independent)
+        cycle = self.service.tick()
+        self.assertEqual("RUNNING", cycle["state"])
+        filtered = [value for value in self.service.store.latest("OUTPUT").values()
+                    if value["profile"]["id"] == profile["id"]]
+        self.assertEqual(1, len(filtered))
+        self.assertEqual(euro["dossier_id"], filtered[0]["dossier_id"])
+        self.assertEqual({"BE"}, {claim["geo_code"] for claim in filtered[0]["design_artifact"]["claims"]})
+        self.assertEqual(euro["design_artifact"]["claims"], filtered[0]["design_artifact"]["claims"])
+        self.assertIn("UNCERTAINTY", [block["kind"] for block in filtered[0]["adaptation"]["content_blocks"]])
+        self.assertEqual("BLOCKED", filtered[0]["publication"])
+        self.assertEqual("NONE", filtered[0]["delivery"])
+        self.assertTrue(any(value["dossier_id"] == customs["dossier_id"]
+                            and value["reason"] == "NO_GEOGRAPHIC_MATCH"
+                            for value in self.service.store.latest("WAIT").values()))
+        independent_outputs = [value for value in self.service.store.latest("OUTPUT").values()
+                               if value["profile"]["id"] == independent["id"]]
+        self.assertEqual({euro["dossier_id"], customs["dossier_id"]},
+                         {value["dossier_id"] for value in independent_outputs})
+        self.assertEqual(customs, self.service.output(customs["id"]))
+        outputs = self.service.store.latest("OUTPUT")
+        reopened = OperationsService(self.root, clock=lambda: self.now)
+        self.assertEqual("RUNNING", reopened.tick()["state"])
+        self.assertEqual(outputs, reopened.store.latest("OUTPUT"))
+        self.assertEqual(customs, reopened.output(customs["id"]))
+
+    def test_customs_label_and_country_do_not_impersonate_explicit_geo_code(self):
+        self.ready()
+        customs = self.hn_ready_after_eurostat()
+        design = customs["design_artifact"]
+        original = deepcopy(design)
+        for value in ("HN", design["claims"][0]["customs_point"]):
+            with self.subTest(filter=value):
+                profile = {**customs["profile"], "geo_codes": [value]}
+                with self.assertRaisesRegex(AudiencePolicyError, "^NO_GEOGRAPHIC_MATCH$"):
+                    adapt_content_design(design, profile, now=self.now)
+        self.assertEqual(original, design)
+        self.assertEqual(customs["adaptation"], adapt_content_design(design, customs["profile"], now=self.now))
+
     def test_single_writer_lock_and_background_polling(self):
         with process_lock(self.root / "service.lock"):
             with self.assertRaisesRegex(OperationsError, "SERVICE_ALREADY_RUNNING"):
