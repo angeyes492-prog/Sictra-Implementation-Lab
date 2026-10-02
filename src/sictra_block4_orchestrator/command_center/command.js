@@ -27,8 +27,22 @@ function validateOperations(data) {
         && (t.evidence_comparison===null || t.evidence_comparison &&
           ['NO_SHARED_MEASUREMENT','PARTIAL_COVERAGE_REVIEW_REQUIRED',
            'VALUE_DIFFERENCE_REVIEW_REQUIRED','EXACT_VALUE_AGREEMENT_REVIEW_REQUIRED'].includes(t.evidence_comparison.status)
+          && t.evidence_comparison.primary_dossier_id===t.dossier_id
+          && text(t.evidence_comparison.candidate_dossier_id)
+          && Array.isArray(t.evidence_comparison.matched)
           && t.evidence_comparison.resolution==='NOT_RESOLVED'
-          && t.evidence_comparison.publication==='BLOCKED'))) {
+          && t.evidence_comparison.publication==='BLOCKED')
+        && (t.evidence_assessment===null || t.evidence_assessment &&
+          ['INSUFFICIENT','MEASUREMENT_DISAGREEMENT','REVIEW_REQUIRED'].includes(t.evidence_assessment.verdict)
+          && text(t.evidence_assessment.reason_code) && text(t.evidence_assessment.next_action)
+          && t.evidence_assessment.need_kind===t.effective_kind
+          && t.evidence_assessment.primary_dossier_id===t.dossier_id
+          && t.evidence_assessment.candidate_dossier_id===t.evidence_comparison.candidate_dossier_id
+          && t.evidence_assessment.comparison_status===t.evidence_comparison.status
+          && t.evidence_assessment.resolution==='NOT_RESOLVED'
+          && t.evidence_assessment.acceptance==='NOT_ACCEPTED'
+          && t.evidence_assessment.publication==='BLOCKED')
+        && (t.evidence_assessment===null)===(t.evidence_comparison===null))) {
     throw new Error('Lectura operativa incompleta o fuera del alcance autorizado.');
   }
   const run = data.orchestration?.last_run;

@@ -39,6 +39,14 @@ recomputed for current links; legacy links without this field remain readable.
 `NO_SHARED_MEASUREMENT` is a valid candidate-link result, not evidence that a
 gap was resolved. The operator can record insufficiency; Block 4 cannot upgrade
 the dossier or task from this comparison.
+The Block 1 read-only need assessment derives from the exact need class and
+fresh comparison. Its verdict is `INSUFFICIENT`, `MEASUREMENT_DISAGREEMENT`, or
+`REVIEW_REQUIRED` with a reason code and next action. It always retains
+`NOT_RESOLVED`, `NOT_ACCEPTED`, and `BLOCKED`. A reported-value disagreement is
+not a causal explanation or a source-level contradiction. An exact match still
+requires a source-specific Block 1 review; no current input can mint `RESOLVED`.
+Block 4 links and snapshots may expose the assessment, while legacy links are
+recomputed read-only without rewriting their journal records.
 New tasks use `BLOCK1_CONTRACTED_RESOLUTION_REQUIRED` as their completion
 boundary. Old task records retain their original metadata; snapshots mark it
 `LEGACY_SUPERSEDED` and expose the current effective boundary without rewriting

@@ -31,6 +31,11 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
    and period without resolving any task. The two currently admitted source
    types have no shared metric. New metric mapping or tolerance, if needed,
    requires source-specific evidence and an explicit architectural decision.
+9. Whether Block 1's candidate per-need read-only assessment can become a
+   shared cross-block contract. Its insufficient/disagreement/review verdicts
+   guide research, but never resolve a task or promote a dossier; source-specific
+   acceptance semantics and independently validated comparable inputs are
+   still absent.
 
 ## Evidence available
 

@@ -14,6 +14,7 @@ from sictra_block1.evidence_comparison import (
     EvidenceComparisonViolation, compare_dossier_measurements,
 )
 from sictra_block1.need_classification import classify_data_need
+from sictra_block1.need_assessment import assess_linked_data_need
 from sictra_block1.hn_customs_pipeline import (
     HNCustomsPipelineViolation, initialize_hn_customs_pipeline,
     parse_hn_customs_workbook,
@@ -447,9 +448,11 @@ class OperationsService:
             comparison = compare_dossier_measurements(originals[0], matches[0])
         except EvidenceComparisonViolation as error:
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_NOT_COMPARABLE") from error
+        assessment = assess_linked_data_need(task["source_id"], task["requirement"], comparison)
         return {"dossier_id": evidence_dossier_id, "source_root": root,
                 "evidence_id": package["evidence_id"], "source_hash": package["source_hash"],
-                "expires_at": package["expires_at"], "comparison": comparison}
+                "expires_at": package["expires_at"], "comparison": comparison,
+                "assessment": assessment}
 
     def _revalidate_task_link(self, task):
         link = task.get("evidence_link")
@@ -457,7 +460,7 @@ class OperationsService:
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_LINK_MISSING")
         current = self._current_task_evidence(task, link.get("dossier_id"))
         if any(link.get(key) != value for key, value in current.items()
-               if key != "comparison" or "comparison" in link):
+               if key not in {"comparison", "assessment"} or key in link):
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_LINK_CHANGED")
         return current
 
@@ -684,12 +687,15 @@ class OperationsService:
                         current_link = self._revalidate_task_link(view)
                         view["evidence_status"] = "CURRENT"
                         view["evidence_comparison"] = current_link["comparison"]
+                        view["evidence_assessment"] = current_link["assessment"]
                     except (OperationsError, FederatedContractError):
                         view["evidence_status"] = "STALE_OR_REVOKED"
                         view["evidence_comparison"] = None
+                        view["evidence_assessment"] = None
                 else:
                     view["evidence_status"] = "NOT_LINKED"
                     view["evidence_comparison"] = None
+                    view["evidence_assessment"] = None
                 tasks.append(view)
             return {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
                     "dossier_evidence": list(evidence.values()),

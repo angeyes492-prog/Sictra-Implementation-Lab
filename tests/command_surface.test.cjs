@@ -9,7 +9,7 @@ const fixture=()=>({scope:'LABORATORY_INTERNAL_SUPERVISED',publication:'BLOCKED'
  {id:'two',title:'Antiguo',profile:'Operaciones',availability:'STALE_OR_REVOKED'}],
  intake_waiting:[{job_id:'input-1',state:'REVIEW_REQUIRED'}],waiting:[{reason:'MISSING_PROFILE'}],
  dossier_evidence:[{dossier_id:'dossier-1',status:'CURRENT',checked_at:1789300800}],
- autonomy_tasks:[{task_id:'TASK-1',dossier_id:'dossier-1',state:'OPEN',requirement:'Fuente independiente',required_evidence_root:'MUST_DIFFER_FROM:root-a',evidence_status:'NOT_LINKED',evidence_comparison:null,source_evidence_status:'CURRENT',effective_kind:'UNCLASSIFIED',effective_completion_boundary:'BLOCK1_CONTRACTED_RESOLUTION_REQUIRED',boundary_status:'CURRENT'}],orchestration:{last_run:null}});
+ autonomy_tasks:[{task_id:'TASK-1',dossier_id:'dossier-1',state:'OPEN',requirement:'Fuente independiente',required_evidence_root:'MUST_DIFFER_FROM:root-a',evidence_status:'NOT_LINKED',evidence_comparison:null,evidence_assessment:null,source_evidence_status:'CURRENT',effective_kind:'UNCLASSIFIED',effective_completion_boundary:'BLOCK1_CONTRACTED_RESOLUTION_REQUIRED',boundary_status:'CURRENT'}],orchestration:{last_run:null}});
 test('projects actual availability without calling stale outputs current or completed',()=>{
  const input=fixture(); assert.deepEqual(operationProjection(input),{current:1,stale:1,waiting:1,alerts:3,watch:'Inactiva',service:'Servicio pausado'});
  assert.equal(input.publication,'BLOCKED');assert.equal(input.outputs[1].availability,'STALE_OR_REVOKED');
@@ -54,9 +54,19 @@ test('expired task sources remain visible and unknown currentness fails closed',
  assert.throws(()=>validateOperations(input));
 });
 test('comparison remains unresolved and false resolution is rejected',()=>{
- const input=fixture();input.autonomy_tasks[0].evidence_comparison={status:'NO_SHARED_MEASUREMENT',resolution:'NOT_RESOLVED',publication:'BLOCKED'};
+ const input=fixture();input.autonomy_tasks[0].evidence_comparison={primary_dossier_id:'dossier-1',candidate_dossier_id:'dossier-2',matched:[],status:'NO_SHARED_MEASUREMENT',resolution:'NOT_RESOLVED',publication:'BLOCKED'};
+ input.autonomy_tasks[0].evidence_assessment={need_kind:'UNCLASSIFIED',primary_dossier_id:'dossier-1',candidate_dossier_id:'dossier-2',comparison_status:'NO_SHARED_MEASUREMENT',verdict:'INSUFFICIENT',reason_code:'NO_SHARED_MEASUREMENT',next_action:'REQUEST_COMPARABLE_APPROVED_SOURCE',resolution:'NOT_RESOLVED',acceptance:'NOT_ACCEPTED',publication:'BLOCKED'};
  assert.equal(validateOperations(input).autonomy_tasks[0].evidence_comparison.status,'NO_SHARED_MEASUREMENT');
  input.autonomy_tasks[0].evidence_comparison.resolution='RESOLVED';assert.throws(()=>validateOperations(input));
+});
+test('assessment cannot promote task or disappear from an active comparison',()=>{
+ const input=fixture();input.autonomy_tasks[0].evidence_comparison={primary_dossier_id:'dossier-1',candidate_dossier_id:'dossier-2',matched:[],status:'NO_SHARED_MEASUREMENT',resolution:'NOT_RESOLVED',publication:'BLOCKED'};
+ assert.throws(()=>validateOperations(input));
+ input.autonomy_tasks[0].evidence_assessment={need_kind:'UNCLASSIFIED',primary_dossier_id:'dossier-1',candidate_dossier_id:'dossier-2',comparison_status:'NO_SHARED_MEASUREMENT',verdict:'INSUFFICIENT',reason_code:'NO_SHARED_MEASUREMENT',next_action:'REQUEST_COMPARABLE_APPROVED_SOURCE',resolution:'NOT_RESOLVED',acceptance:'NOT_ACCEPTED',publication:'BLOCKED'};
+ assert.equal(validateOperations(input).autonomy_tasks[0].evidence_assessment.verdict,'INSUFFICIENT');
+ input.autonomy_tasks[0].evidence_assessment.candidate_dossier_id='forged';assert.throws(()=>validateOperations(input));
+ input.autonomy_tasks[0].evidence_assessment.candidate_dossier_id='dossier-2';
+ input.autonomy_tasks[0].evidence_assessment.resolution='RESOLVED';assert.throws(()=>validateOperations(input));
 });
 test('unknown task routing is visible but forged resolution route is rejected',()=>{
  const input=fixture();assert.equal(validateOperations(input).autonomy_tasks[0].effective_kind,'UNCLASSIFIED');

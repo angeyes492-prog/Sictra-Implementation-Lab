@@ -7,6 +7,24 @@ It prioritizes work but never converts a human, independent-review, or architect
 
 ### Twelve-arista continuation — 2026-09-29
 
+Second local increment (2026-10-01): `B1-NEED-ASSESSMENT` is a candidate
+read-only per-need verdict for arista 5. Exact source-specific need type plus a
+fresh measurement comparison produces `INSUFFICIENT`,
+`MEASUREMENT_DISAGREEMENT`, or `REVIEW_REQUIRED`, with reason and next action.
+The verdict is bound to both dossier IDs, never `RESOLVED`, and retains
+`NOT_ACCEPTED`/`BLOCKED`. Old task links are projected without rewriting
+history. Owner: Block 1 assessment semantics; consumer: Block 4 local view.
+Positive/no-shared/partial/difference/forged-boundary/replay tests and full
+regression are required. Master Architecture Review decides any accepted
+cross-block contract or task closure. Current approved source types cannot
+substantively resolve each other's needs; this is triage, not resolution.
+Local verification on 2026-10-01: 795/795 Python tests, 15/15 JavaScript
+tests, compileall and launcher-path validation passed. A forged saved
+`RESOLVED` assessment is rejected on replay; a legacy link is recomputed
+without journal mutation. Exact final-SHA CI is pending. Certainty:
+VERIFIED / confidence B for the local candidate behavior only; substantive
+need resolution remains INSUFFICIENT EVIDENCE.
+
 First local increment: `B1-CROSS-SOURCE-MEASUREMENT` is a candidate Block 1
 comparison projection for arista 4, with Block 4 read/link integration. It
 requires two current signed producer packages and exact source-hash lineage.

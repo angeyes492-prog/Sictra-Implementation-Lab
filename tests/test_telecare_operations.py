@@ -489,14 +489,18 @@ class OperationsTests(unittest.TestCase):
                                          if t["task_id"] == task["task_id"])["evidence_status"])
         self.assertEqual("NO_SHARED_MEASUREMENT", next(t for t in self.service.snapshot()["autonomy_tasks"]
             if t["task_id"] == task["task_id"])["evidence_comparison"]["status"])
+        self.assertEqual("INSUFFICIENT", next(t for t in self.service.snapshot()["autonomy_tasks"]
+            if t["task_id"] == task["task_id"])["evidence_assessment"]["verdict"])
         legacy_task = deepcopy(self.service.store.latest("AUTONOMY_TASK")[task["task_id"]])
         legacy_task["evidence_link"].pop("comparison")
+        legacy_task["evidence_link"].pop("assessment")
         self.service.store.put("AUTONOMY_TASK", task["task_id"], legacy_task)
         before_legacy_read = self.service.store.records()
         legacy_view = next(t for t in self.service.snapshot()["autonomy_tasks"]
                            if t["task_id"] == task["task_id"])
         self.assertEqual("CURRENT", legacy_view["evidence_status"])
         self.assertEqual("NO_SHARED_MEASUREMENT", legacy_view["evidence_comparison"]["status"])
+        self.assertEqual("INSUFFICIENT", legacy_view["evidence_assessment"]["verdict"])
         self.assertEqual(before_legacy_read, self.service.store.records())
         reassessed = self.service.reassess_autonomy_task(
             task["task_id"], reviewer_id="local-reviewer",
@@ -523,6 +527,27 @@ class OperationsTests(unittest.TestCase):
                           if t["task_id"] == task["task_id"])
         self.assertEqual("STALE_OR_REVOKED", historical["evidence_status"])
         self.assertEqual("BLOCK1_REASSESSMENT_REQUIRED", historical["state"])
+
+    def test_forged_need_assessment_cannot_be_replayed_as_resolution(self):
+        original = self.ready()
+        task = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["dossier_id"] == original["dossier_id"])
+        independent = self.hn_ready_after_eurostat()
+        self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        altered = deepcopy(self.service.store.latest("AUTONOMY_TASK")[task["task_id"]])
+        altered["evidence_link"]["assessment"]["resolution"] = "RESOLVED"
+        self.service.store.put("AUTONOMY_TASK", task["task_id"], altered)
+        before = self.service.store.records()
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_LINK_CHANGED"):
+            self.service.reassess_autonomy_task(
+                task["task_id"], reviewer_id="local-reviewer",
+                rationale="Un recibo de tarea alterado no puede fabricar resolución de Intelligence.",
+                decision="REQUEST_BLOCK1_REASSESSMENT")
+        view = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["task_id"] == task["task_id"])
+        self.assertEqual("STALE_OR_REVOKED", view["evidence_status"])
+        self.assertIsNone(view["evidence_assessment"])
+        self.assertEqual(before, self.service.store.records())
 
     def test_task_link_rejects_same_root_replacement_and_stale_or_tampered_evidence(self):
         original = self.ready()

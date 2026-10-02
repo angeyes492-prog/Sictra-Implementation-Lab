@@ -43,6 +43,7 @@
       for(const item of data.deferred_reviews || []) {const row=document.createElement('li');row.textContent=item.dossier_id+' · Cerrado por abstención · evidencia pendiente · no aceptado';$('deferred-reviews').append(row);}
       $('autonomy-task-list').replaceChildren();
       const comparisonLabels={NO_SHARED_MEASUREMENT:'Sin mediciones equivalentes',PARTIAL_COVERAGE_REVIEW_REQUIRED:'Cobertura parcial para revisión',VALUE_DIFFERENCE_REVIEW_REQUIRED:'Valor posterior discrepante; revisión pendiente',EXACT_VALUE_AGREEMENT_REVIEW_REQUIRED:'Mismo valor posterior; revisión pendiente'};
+      const assessmentLabels={INSUFFICIENT:'Necesidad aún insuficiente',MEASUREMENT_DISAGREEMENT:'Mediciones discrepantes; investigar revisiones',REVIEW_REQUIRED:'Comparación pendiente de evaluación de Intelligence'};
       for (const item of data.autonomy_tasks) {
         const card=document.createElement('article');card.className='case';
         const text=document.createElement('div'), title=document.createElement('strong'), body=document.createElement('p');
@@ -51,6 +52,7 @@
           (item.source_evidence_status==='CURRENT' ? ' · fuente vigente' : ' · fuente no vigente: tarea histórica, acciones suspendidas')+
           (item.evidence_link ? ' · dossier candidato: '+item.evidence_link.dossier_id+' · '+item.evidence_status : '')+
           (item.evidence_comparison ? ' · '+comparisonLabels[item.evidence_comparison.status]+' · mediciones comparadas: '+item.evidence_comparison.matched.length : '')+
+          (item.evidence_assessment ? ' · '+assessmentLabels[item.evidence_assessment.verdict]+' · siguiente: '+item.evidence_assessment.next_action : '')+
           ' · cierre pendiente de resolución contratada por Intelligence'+
           (item.boundary_status==='LEGACY_SUPERSEDED' ? ' · metadato histórico reemplazado' : '');
         text.append(title,body);card.append(text);
