@@ -94,6 +94,91 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual(1, len(states))
         self.assertEqual("UNAVAILABLE", states[0]["status"])
 
+    def test_change_context_is_current_read_only_and_replayable(self):
+        output = self.ready()
+        records = self.service.store.records()
+        view = self.service.snapshot()["dossier_evidence"][0]["change_context"]
+        self.assertEqual(output["dossier_id"], view["dossier_id"])
+        self.assertEqual("SAME_PERIOD_REPORTED_VALUE_CHANGE", view["facts"][0]["kind"])
+        self.assertEqual("UNCONFIRMED", view["cause_certainty"])
+        reopened = OperationsService(self.root, clock=lambda: self.now)
+        self.assertEqual(view, reopened.snapshot()["dossier_evidence"][0]["change_context"])
+        self.assertEqual(records, self.service.store.records())
+        self.now += 86402
+        self.assertIsNone(self.service.snapshot()["dossier_evidence"][0]["change_context"])
+        self.assertEqual(records, self.service.store.records())
+
+    def test_customs_read_classifies_period_difference_not_revision(self):
+        self.ready()
+        output = self.hn_ready_after_eurostat()
+        contexts = {d["dossier_id"]: d["change_context"] for d in self.service.snapshot()["dossier_evidence"]}
+        changes = contexts[output["dossier_id"]]["facts"]
+        self.assertTrue(changes)
+        self.assertTrue(all(c["kind"] == "DISTINCT_PERIOD_VALUE_COMPARISON" and
+                            c["before_period"] == "2024Q1" and c["after_period"] == "2025Q1" for c in changes))
+
+    def test_slow_research_read_cannot_return_an_expired_change_context(self):
+        self.ready()
+        records = self.service.store.records()
+        original = self.service.research.view
+        def slow(task):
+            value = original(task)
+            self.now += 86402
+            return value
+        with patch.object(self.service.research, "view", side_effect=slow):
+            view = self.service.snapshot()
+        self.assertTrue(all(d["change_context"] is None for d in view["dossier_evidence"]))
+        self.assertEqual(records, self.service.store.records())
+
+    def test_slow_catalog_read_cannot_return_an_expired_change_context(self):
+        self.ready()
+        records = self.service.store.records()
+        original = self.service._catalog_snapshot
+        def slow():
+            value = original()
+            self.now += 86402
+            return value
+        with patch.object(self.service, "_catalog_snapshot", side_effect=slow):
+            view = self.service.snapshot()
+        self.assertTrue(all(d["change_context"] is None for d in view["dossier_evidence"]))
+        self.assertEqual(records, self.service.store.records())
+
+    def test_context_is_withdrawn_on_invalid_signature_changed_body_and_midread_expiry(self):
+        output = self.ready()
+        identity = output["dossier_id"]
+        records = self.service.store.records()
+        real_export = self.service.exporter.export
+        real_list = self.service.exporter.list_dossiers
+        def invalid_signature(*args, **kw):
+            result = real_export(*args, **kw)
+            result["signature"] = "0" * 64
+            return result
+        with patch.object(self.service.exporter, "export", side_effect=invalid_signature):
+            self.assertIsNone(self.service.snapshot()["dossier_evidence"][0]["change_context"])
+        calls = 0
+        def changing_list(**kw):
+            nonlocal calls
+            result = real_list(**kw)
+            calls += 1
+            if calls == 2:
+                result[0]["limitations"].append("Unbound alteration during observation")
+            return result
+        with patch.object(self.service.exporter, "list_dossiers", side_effect=changing_list):
+            with self.assertRaisesRegex(OperationsError, "CHANGE_CONTEXT_INPUT_CHANGED"):
+                self.service._current_change_context(identity)
+        calls = 0
+        def expiring_list(**kw):
+            nonlocal calls
+            result = real_list(**kw)
+            calls += 1
+            if calls == 2:
+                self.now += 86402
+            return result
+        with patch.object(self.service.exporter, "list_dossiers", side_effect=expiring_list):
+            with self.assertRaisesRegex(OperationsError, "CHANGE_CONTEXT_EXPIRED"):
+                self.service._current_change_context(identity)
+        self.assertEqual(records, self.service.store.records())
+
     def test_task_source_expiry_is_observed_without_rewriting_history(self):
         output = self.ready()
         original = self.service.store.latest("AUTONOMY_TASK")
@@ -626,6 +711,8 @@ class OperationsTests(unittest.TestCase):
             self.assertEqual(200, status)
             self.assertTrue(all(t["research_evaluation"]["verdict"] == "WAITING_LOCAL_EVIDENCE"
                                 for t in json.loads(body)["autonomy_tasks"]))
+            self.assertEqual("SAME_PERIOD_REPORTED_VALUE_CHANGE",
+                             json.loads(body)["dossier_evidence"][0]["change_context"]["facts"][0]["kind"])
             route = "/api/operations/outputs/" + output["id"] + "/html"
             status, headers, body = request("GET", route)
             self.assertEqual(200, status)
@@ -666,6 +753,7 @@ class OperationsTests(unittest.TestCase):
             self.assertEqual(200, status)
             self.assertTrue(all(t["source_evidence_status"] == "UNAVAILABLE"
                                 for t in json.loads(body)["autonomy_tasks"]))
+            self.assertTrue(all(d["change_context"] is None for d in json.loads(body)["dossier_evidence"]))
             self.assertTrue(all(t["research_evaluation"]["availability"] == "STALE_OR_REVOKED"
                                 and "verdict" not in t["research_evaluation"]
                                 for t in json.loads(body)["autonomy_tasks"]))

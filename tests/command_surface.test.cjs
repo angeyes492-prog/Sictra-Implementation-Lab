@@ -2,7 +2,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
-const {validateOperations,operationProjection}=require('../src/sictra_block4_orchestrator/command_center/command.js');
+const {validateOperations,operationProjection,changeContextLabel}=require('../src/sictra_block4_orchestrator/command_center/command.js');
 const fixture=()=>({scope:'LABORATORY_INTERNAL_SUPERVISED',publication:'BLOCKED',status:'PAUSED',
  control_token:'local-test-token',last_cycle:1789300800,watch_enabled:false,watch_directory:'local/dropbox',
  profiles:[{id:'ops',label:'Operaciones'}],outputs:[{id:'one',title:'Dossier',profile:'Operaciones',availability:'CURRENT'},
@@ -91,4 +91,21 @@ test('Intelligence does not infer numeric uncertainty from counts or fabricate s
  assert.equal(sandbox.requestedDossier('?dossier=other',{status:'AVAILABLE',dossiers:[{dossier_id:'eurostat:abc'}]}),false);
  assert.equal(sandbox.requestedDossier('?dossier=eurostat:abc',{status:'INTEGRITY_ERROR',dossiers:[{dossier_id:'eurostat:abc'}]}),false);
  assert.equal(sandbox.requestedDossier('?dossier=%3Cscript%3E',{status:'AVAILABLE',dossiers:[]}),false);
+});
+
+test('literal change context cannot escape currentness, lineage or causal limits',()=>{
+ const input=fixture(),state=input.dossier_evidence[0];state.source_hash='a'.repeat(64);
+ state.change_context={version:'0.1.0',scope:'LOCAL_LITERAL_CHANGE_CONTEXT',dossier_id:state.dossier_id,
+  source_hash:state.source_hash,dossier_sha256:'b'.repeat(64),cause_certainty:'UNCONFIRMED',
+  resolution:'NOT_RESOLVED',acceptance:'NOT_ACCEPTED',publication:'BLOCKED',
+  facts:[{fact_id:'FACT-001',kind:'SAME_PERIOD_REPORTED_VALUE_CHANGE',unit:'THOUSAND_TONNES',geography:'BE',before_period:'2021',after_period:'2021'}]};
+ assert.equal(validateOperations(input),input);
+ assert.equal(changeContextLabel(state.change_context),'Valor reportado cambiado en el mismo periodo · causa no confirmada');
+ for(const [key,value] of [['cause_certainty','VERIFIED'],['resolution','RESOLVED'],['publication','ALLOWED'],
+                         ['source_hash','c'.repeat(64)],['dossier_id','forged']]) {
+  const broken=structuredClone(input);broken.dossier_evidence[0].change_context[key]=value;
+  assert.throws(()=>validateOperations(broken));
+ }
+ state.status='UNAVAILABLE';assert.throws(()=>validateOperations(input));
+ state.change_context=null;assert.equal(validateOperations(input),input);
 });

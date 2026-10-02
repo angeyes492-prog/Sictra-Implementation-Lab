@@ -39,7 +39,7 @@ entrega; un borrador o una lectura local no satisface M08.
 | --- | --- | --- | --- |
 | 1 Fuentes | B1 `source_control_store`, `source_gateway`, `source_portfolio` | aprobación/binding con alcance, derechos, hash y expiración → fuente admisible | Rechazar fuente propuesta, host/dataset no ligado, licencia ausente o binding caducado. Eurostat/HN son las rutas locales; las 18 candidatas del registro necesitan aprobación propia. |
 | 2 Obtención | B4 `local_worker`, `operations.scan_inbox`; B1 adaptadores por fuente | archivo estable hash-bound → entrada retenida | Dos observaciones estables, límite de bytes, identidad de fuente, rechazo de cambio de bytes/replay. Obtener por red requiere un contrato de acceso aprobado; la capacidad local no autoriza otro adaptador. |
-| 3 Versiones | B1 `eurostat_maritime_delta`, `manual_watchlist_cycle`, `hn_customs_pipeline` | versiones retenidas → cambio/no cambio/revisión insuficiente | Conservar padres, periodos y procedencia; cambio literal separado de revisión o cambio de cobertura. La causa exige metadatos de la fuente. |
+| 3 Versiones | B1 `eurostat_maritime_delta`, `manual_watchlist_cycle`, `hn_customs_pipeline`, `change_context` | versiones retenidas → cambio/no cambio y contexto literal verificable | Conservar padres, periodos y procedencia; distinguir cambio de valor del mismo periodo, comparación entre periodos, bandera y observación añadida/retirada. La causa exige metadatos de la fuente. |
 | 4 Correspondencia | B1 `evidence_comparison` | dos dossiers actuales → pares de métrica/unidad/lugar/periodo y discrepancias | No convertir raíces distintas o valores iguales en corroboración. Conservar cobertura de ambos lados. El catálogo actual no tiene una segunda raíz con la misma medición. |
 | 5 Necesidades | B1 `need_classification`, `need_assessment` | necesidad exacta y comparación → insuficiencia/discrepancia/revisión y próximo dato | Conservar razón, IDs y frontera de resolución. `RESOLVED` requiere semántica de aceptación por necesidad, evidencia adecuada y revisión autorizada; el candidato actual sólo hace triaje. |
 | 6 Intelligence | B1 E01–E08, `intelligence_dossier`, `dossier_editorial_bridge` | evidencia válida y evaluación → hechos/interpretaciones/hipótesis/límites separados | No derivar causalidad de un delta. Las interpretaciones deben referenciar evidencia y alternativas refutables; los dossiers operativos actuales abstienen interpretación. |
@@ -51,6 +51,29 @@ entrega; un borrador o una lectura local no satisface M08.
 | 12 Operación | B4 `operations_store`, `laboratory_recovery`, lanzador y preflight | versión/configuración/estado → servicio local y recuperación | SHA/CI, claves separadas, respaldo íntegro, restauración pausada, migración reversible, piloto de varios ciclos e identidad del operador. El piloto sintético y recuperación están probados; despliegue sostenido y revisión independiente siguen abiertos. |
 
 ## Nuevos mecanismos de este incremento
+
+Continuación 2026-10-01: el candidato `change_context` clasifica hechos de las
+dos rutas existentes sin reescribir dossiers ni inferir causas. B4 lo expone
+sólo después de comprobar paquete firmado actual, identidad/hash, cuerpo
+idéntico en segunda lectura y expiración al devolver el resultado. La interfaz
+conserva «causa no confirmada». Su contrato separado requiere MAR para aceptación
+compartida. Coste: dos lecturas de productor por dossier en cada snapshot;
+ninguna nueva escritura, migración ni efecto externo. Rollback omite la lectura.
+
+Los doce objetivos son además un inventario ejecutable en
+`sictra.closure_preflight`: una prueba positiva y una de rechazo identificadas
+por arista, propietario y evidencia de producto pendiente. Una ejecución finita
+devuelve JSON ligado a SHA y huella de los bytes antes/después; falla ante pruebas
+ausentes, repetidas, omitidas, errores/subtests fallidos o cambio del checkout.
+La CI lo ejecuta en cada SHA. Este centinela seleccionado no reemplaza regresión
+completa ni revisión independiente, y nunca cambia `product_completion` de
+`NOT_DEMONSTRATED`. Ejecutar: `python -m sictra.closure_preflight` desde este
+repositorio con el paquete candidato instalado o su `src` en PYTHONPATH.
+
+Wolfram comprobó 80 combinaciones abstractas de tipo, presencia de valores,
+cambio de valor y bandera: ningún caso de cobertura se etiquetó cambio de valor,
+los tipos desconocidos se rechazaron y valor/bandera sin cambio se rechazaron.
+No prueba parser, hashes, vigencia ni comportamiento del runtime.
 
 `research_cycle` pasa de DESIGNED a IMPLEMENTED en este candidato. B4 selecciona
 pares tarea/dossier de un inventario local actual, con cantidad limitada por ciclo.

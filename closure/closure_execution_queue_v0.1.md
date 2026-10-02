@@ -20,7 +20,9 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    Recheck before persistence and read; STOP/pause, expiry, changed candidate,
    self-sealed forged resolution, injected partial write and full restoration
    are rejection/recovery vectors. Owner: local implementation agent.
-   Next action: exact-SHA CI, then the approved-input decision below. Promotion boundary:
+   Exact implementation SHA d40901b5e97409371ce61aa3a4a82556bd5b87b9 passed
+   GitHub push 36951251785 and PR 36951254882 (rechecked 2026-10-01).
+   Next action: retain that immutable evidence, then the approved-input decision below. Promotion boundary:
    candidate local mechanism only, not resolved need or accepted architecture.
 2. `COMPARABLE-APPROVED-INPUT` (aristas 1/2/4/5): INSUFFICIENT EVIDENCE.
    Eurostat maritime tonnes and HN customs CIF USD do not measure the same
@@ -32,6 +34,12 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
 3. `RESOLUTION-INTELLIGENCE-EDITORIAL` (aristas 3/5/6/7): ARCHITECTURE_DECISION_REQUIRED
    and INSUFFICIENT EVIDENCE. Current triage is not causal interpretation or
    accepted editorial quality. Owner: B1 architecture/business authority.
+   New local closure delta: B1 `change_context` distinguishes same-period
+   reported value, status flag, observation coverage added/removed and HN
+   distinct-period comparison. B4/HTTP/UI expose a nullable current projection
+   after signed-package/hash/body/expiry rechecks. History is not rewritten;
+   cause remains UNCONFIRMED, resolution NOT_RESOLVED. Source metadata and
+   accepted substantive interpretation remain pending, not replaced by this classifier.
    Next action: source-specific resolution semantics, independent reference
    cases and interpretation/hypothesis acceptance; technical deltas stay literal.
 4. `DESIGN-PRECISION-EFFECTS` (aristas 8/9/11): INSUFFICIENT EVIDENCE.
@@ -44,6 +52,77 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    architecture/operator authority. Next action: MAR, accepted activation and
    sustained multi-cycle operation with organizational identity/key custody;
    preserve deferred independent review. No production/global GREEN claim.
+
+   New local closure delta: `python -m sictra.closure_preflight` executes a finite
+   24-test sentinel inventory, two identified behavior tests per arista, and
+   reports each observable objective, owner and outstanding product evidence.
+   It binds actual execution to HEAD plus relevant checkout bytes before/after,
+   fails on missing/duplicate/skipped/expected-failing/subtest-failing execution
+   or changing checkout, and never promotes the product. GitHub CI now executes
+   this command in addition to full regression. It is not an exhaustive proof
+   or architecture acceptance authority. Next action: exact-final-SHA CI and
+   retained diagnostic; installed app/live state remain untouched.
+
+### Continuation evidence — literal context and finite closure checks
+
+Date: 2026-10-01 local / 2026-10-02 UTC. Base d40901b, candidate isolated
+worktree, Python 3.12 / Windows. Five new pure classification tests, five
+retained-pipeline integration/replay/expiry/tamper tests, six diagnostic tests
+and one JavaScript authority/currentness vector. Existing HTTP coverage now
+checks current context and withdrawal after expiry. Positive oracles use stated
+before/after values, fixed periods and literal expected categories; no cause
+is used as its own validation. Failures/skip/expected failures/subtests/duplicates
+are injected into real unittest execution to attack the closure diagnostic.
+
+A first diagnostic unit run reproduced a fixture defect: decorating a shared
+passing function as expected-failure contaminated positive cases. Distinct
+fixture functions repaired it; all six diagnostic tests then passed. The
+actual 24 repository sentinel tests passed in a finite CLI run. The final
+diagnostic is rerun on the final unchanged checkout; full regression/final SHA
+remain separate evidence requirements, not inferred from that selected run.
+
+Four-source reconciliation: Notion 3c789f66-067b-8108-bb44-c13ac4b15ac0 still
+describes the historical reference runtime (last edit 2026-08-28); public Slack
+Telecare search found no results. Neither supplies a source or MAR decision.
+GitHub confirms the base exact-SHA CI above. Wolfram checked 80 abstract change
+type/value-presence/value-change/flag-change cases; coverage was never labeled
+a value change, unknown types and unchanged value/flag cases were rejected.
+This small model excludes parser/currentness/hash/runtime validation.
+
+First full local regression: 823/823 tests in 313.760 seconds. Red-team review
+then found the initial diagnostic fingerprint omitted JSON/other fixture bytes:
+same HEAD and already-dirty state could hide a changed test input. The digest
+now binds all tracked/untracked checkout file bytes, excluding ignored runtime
+state, and its test changes a JSON measurement while HEAD remains unchanged.
+The final full regression and diagnostic are rerun after that repair. GitHub CI
+has a 15-minute job deadline so a hung check cannot run indefinitely.
+The repaired-fingerprint regression passed 823/823 in 269.137 seconds. A final
+read-side attack identified that slower research/catalog work after context
+derivation could outlive expiry. Context is now derived after all those reads,
+with one final expiry cutoff across contexts before return; two added slow-read
+vectors prove withdrawal without journal writes. Final full regression after
+both repairs: 825/825 Python tests in 123.456 seconds, no failures/errors.
+This is the final local code result, not the earlier 823-test execution.
+Compileall, launcher-path
+checks and 17 JavaScript tests passed; final compileall and diff checks passed.
+The final 24-test CLI sentinel is executed on the unchanged candidate before
+commit and again by CI; bind the final SHA/run through PR #18 rather than
+rewriting this file to embed its own SHA. Certainty VERIFIED / confidence B for
+the focused local mechanism execution; product closure remains INSUFFICIENT
+EVIDENCE. Reviewer: implementation agent, not independent. No source approval,
+accepted shared contract, installed activation, real causal interpretation,
+delivery or global gate promotion follows.
+
+### Proactive execution control — separate from gates/backlog
+
+Consecutive zero-technical-delta runs: `0`. Last real delta: executable literal
+change-context classification/read rejection plus finite execution-bound
+twelve-arista diagnostic with adversarial tests. Status text, rerunning old
+unchanged checks and cosmetic documents do not reset this counter. Follow the
+active skill's anti-loop rule: after three consecutive no-delta scheduled runs,
+or immediately when no independent safe technical path remains, pause the
+automation and emit one concrete diagnosis; never restart on unchanged state.
+This control is not a completion claim and does not change any gate.
 
 Four-source reconciliation: current GitHub base 0f2770292350c6fe79a387993f7677b82b45f15e
 has successful push 36948904219 and PR 36948909440. Notion page

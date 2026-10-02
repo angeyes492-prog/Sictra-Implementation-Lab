@@ -3,13 +3,25 @@
 function validateOperations(data) {
   const text = x => typeof x === 'string' && x.length > 0;
   const timestamp = x => x === null || (Number.isFinite(x) && x >= 0);
+  const contextValid = d => d.change_context === undefined || d.change_context === null ||
+    d.status === 'CURRENT' && d.change_context.dossier_id === d.dossier_id &&
+    d.change_context.scope === 'LOCAL_LITERAL_CHANGE_CONTEXT' && d.change_context.version === '0.1.0' &&
+    d.change_context.source_hash === d.source_hash && /^[0-9a-f]{64}$/.test(d.change_context.source_hash) &&
+    /^[0-9a-f]{64}$/.test(d.change_context.dossier_sha256) &&
+    d.change_context.cause_certainty === 'UNCONFIRMED' && d.change_context.resolution === 'NOT_RESOLVED' &&
+    d.change_context.acceptance === 'NOT_ACCEPTED' && d.change_context.publication === 'BLOCKED' &&
+    Array.isArray(d.change_context.facts) && d.change_context.facts.length > 0 &&
+    d.change_context.facts.every(f => f && text(f.fact_id) && text(f.geography) && text(f.before_period) && text(f.after_period) &&
+      (['SAME_PERIOD_REPORTED_VALUE_CHANGE','SAME_PERIOD_STATUS_FLAG_CHANGE','OBSERVATION_COVERAGE_ADDED',
+        'OBSERVATION_COVERAGE_REMOVED'].includes(f.kind) && f.unit === 'THOUSAND_TONNES' && f.before_period === f.after_period ||
+       f.kind === 'DISTINCT_PERIOD_VALUE_COMPARISON' && f.unit === 'USD_MILLION' && f.before_period < f.after_period));
   if (!data || data.scope !== 'LABORATORY_INTERNAL_SUPERVISED' || data.publication !== 'BLOCKED'
       || !['RUNNING','PAUSED','STOPPED','ERROR'].includes(data.status)
       || !text(data.control_token) || !timestamp(data.last_cycle)
       || typeof data.watch_enabled !== 'boolean' || !text(data.watch_directory)
       || !['profiles','outputs','waiting','intake_waiting','autonomy_tasks','dossier_evidence'].every(k => Array.isArray(data[k]))
       || !data.dossier_evidence.every(d=>d && text(d.dossier_id)
-        && ['CURRENT','UNAVAILABLE'].includes(d.status) && Number.isFinite(d.checked_at))
+        && ['CURRENT','UNAVAILABLE'].includes(d.status) && Number.isFinite(d.checked_at) && contextValid(d))
       || !data.profiles.every(p => p && text(p.id) && text(p.label))
       || !data.outputs.every(o => o && text(o.id) && text(o.title) && text(o.profile)
         && ['CURRENT','STALE_OR_REVOKED'].includes(o.availability))
@@ -68,7 +80,15 @@ function operationProjection(data) {
     watch:data.watch_enabled ? 'Activa' : 'Inactiva',
     service:({RUNNING:'Servicio activo',PAUSED:'Servicio pausado',STOPPED:'Servicio detenido',ERROR:'Error · requiere recuperación'})[data.status]};
 }
-if (typeof module !== 'undefined') module.exports={validateOperations,operationProjection};
+function changeContextLabel(context) {
+  if (!context) return '';
+  const labels={SAME_PERIOD_REPORTED_VALUE_CHANGE:'Valor reportado cambiado en el mismo periodo',
+    SAME_PERIOD_STATUS_FLAG_CHANGE:'Bandera de estado cambiada en el mismo periodo',
+    OBSERVATION_COVERAGE_ADDED:'Observación añadida',OBSERVATION_COVERAGE_REMOVED:'Observación retirada',
+    DISTINCT_PERIOD_VALUE_COMPARISON:'Comparación entre periodos distintos'};
+  return [...new Set(context.facts.map(f=>labels[f.kind]))].join(' / ')+' · causa no confirmada';
+}
+if (typeof module !== 'undefined') module.exports={validateOperations,operationProjection,changeContextLabel};
 if (typeof document !== 'undefined') {
   document.addEventListener('telecare:operations', event => {
     const data=event.detail, put=(id,value)=>document.getElementById(id).textContent=value;

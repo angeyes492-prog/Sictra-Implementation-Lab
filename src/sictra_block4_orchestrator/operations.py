@@ -15,6 +15,7 @@ from sictra_block1.evidence_comparison import (
 )
 from sictra_block1.need_classification import classify_data_need
 from sictra_block1.need_assessment import assess_linked_data_need
+from sictra_block1.change_context import ChangeContextViolation, project_change_context
 from sictra_block1.hn_customs_pipeline import (
     HNCustomsPipelineViolation, initialize_hn_customs_pipeline,
     parse_hn_customs_workbook,
@@ -392,6 +393,30 @@ class OperationsService:
             self.store.put("DOSSIER_EVIDENCE_STATE", value["dossier_id"],
                            {**value, "changed_at": evidence["checked_at"]})
 
+    def _current_change_context(self, dossier_id):
+        """Read-only projection, withdrawn if producer input changes mid-read."""
+        now = datetime.fromtimestamp(self.clock(), timezone.utc)
+        package = self.exporter.export(dossier_id, now=now)
+        _validate_package(package, self.package_key, now)
+        matches = [d for d in self.exporter.list_dossiers(now=now) if d.get("dossier_id") == dossier_id]
+        if (len(matches) != 1 or package["dossier_id"] != dossier_id
+                or package["source_hash"] != matches[0]["source"].get("content_sha256")
+                or package["currentness"] != "CURRENT" or package["disposition"] != "REVIEW_REQUIRED"
+                or package["certainty"] in {"CONTRADICTED", "INSUFFICIENT EVIDENCE"}
+                or datetime.fromisoformat(package["expires_at"]) <= now):
+            raise OperationsError("CHANGE_CONTEXT_BINDING_INVALID")
+        context = project_change_context(matches[0])
+        current = datetime.fromtimestamp(self.clock(), timezone.utc)
+        if (self.exporter.export(dossier_id, now=current) != package
+                or [d for d in self.exporter.list_dossiers(now=current) if d.get("dossier_id") == dossier_id] != matches):
+            raise OperationsError("CHANGE_CONTEXT_INPUT_CHANGED")
+        # The producer's calls may advance time; validate at return, not only at entry.
+        final_now = datetime.fromtimestamp(self.clock(), timezone.utc)
+        _validate_package(package, self.package_key, final_now)
+        if datetime.fromisoformat(package["expires_at"]) <= final_now:
+            raise OperationsError("CHANGE_CONTEXT_EXPIRED")
+        return context
+
     def acknowledge_autonomy_task(self, task_id, *, reviewer_id, rationale):
         """Record a human reading of a task without accepting its evidence."""
         if (not isinstance(task_id, str) or not task_id.startswith("TASK-")
@@ -709,7 +734,7 @@ class OperationsService:
                     view["evidence_comparison"] = None
                     view["evidence_assessment"] = None
                 tasks.append(view)
-            return {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
+            result = {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
                     "dossier_evidence": list(evidence.values()),
                     "source_catalogs": self._catalog_snapshot(),
                     "autonomy_tasks": sorted(tasks,
@@ -727,6 +752,19 @@ class OperationsService:
                     "generator": "LOCAL_CONTENT_DESIGN_V1",
                     "orchestration": {"source_monitor": "ACTIVE" if self.store.latest("CONTROL").get("watch", {}).get("enabled", False) else "INACTIVE",
                                       "last_run": latest_run}}
+            # Derive context after every slower task/catalog/intake read.
+            for identity, state in evidence.items():
+                state["change_context"] = None
+                if state["status"] == "CURRENT":
+                    try:
+                        state["change_context"] = self._current_change_context(identity)
+                    except (OperationsError, FederatedContractError, ChangeContextViolation):
+                        pass  # An unavailable projection cannot donate a claim to the view.
+            final_now = datetime.fromtimestamp(self.clock(), timezone.utc)
+            for state in evidence.values():
+                if state["change_context"] is not None and datetime.fromisoformat(state["expires_at"]) <= final_now:
+                    state["change_context"] = None
+            return result
 
     def serve_loop(self, interval=5):
         if type(interval) is not int or not 1 <= interval <= 60:
