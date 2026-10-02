@@ -8,7 +8,7 @@ import time
 from xml.sax.saxutils import escape
 from zipfile import ZipFile, ZIP_DEFLATED
 
-from .operations import initialize
+from .operations import initialize, OperationsService
 from .operations_store import OperationsError
 
 
@@ -53,13 +53,28 @@ def run_pilot(root):
     outputs = service.store.latest("OUTPUT")
     if len(outputs) != 2 or any("12.5" not in x["plain_text"] or "14 miles de toneladas" not in x["plain_text"] for x in outputs.values()):
         raise OperationsError("PILOT_OUTPUT_EXPECTATION_FAILED")
+    research = service.store.latest("RESEARCH_EVALUATION")
+    if len(research) != 3 or any(x["verdict"] != "WAITING_LOCAL_EVIDENCE" or
+                               x["resolution"] != "NOT_RESOLVED" for x in research.values()):
+        raise OperationsError("PILOT_RESEARCH_EXPECTATION_FAILED")
+    service = OperationsService(root)
+    results.append(service.tick())
+    if service.store.latest("RESEARCH_EVALUATION") != research or service.store.latest("OUTPUT") != outputs:
+        raise OperationsError("PILOT_RESTART_REPLAY_FAILED")
+    service.set_paused(True)
+    before = service.store.records()
+    if service.tick()["state"] != "PAUSED" or service.store.records() != before:
+        raise OperationsError("PILOT_PAUSE_FAILED")
+    service.set_paused(False)
     backup = root / "backups" / "pilot-proof"
     service.store.backup(backup)
     restored = service.store.restore(backup, root / "recovery-proof.sqlite")
-    if restored.latest("OUTPUT") != outputs:
+    if restored.latest("OUTPUT") != outputs or restored.latest("RESEARCH_EVALUATION") != research:
         raise OperationsError("PILOT_RESTORE_FAILED")
     report = {"scope": "SYNTHETIC_LOCAL_PILOT", "at": int(time.time()), "cycles": results,
               "outputs": [{"id": x["id"], "title": x["adaptation"]["heading"], "html_sha256": x["html_sha256"]} for x in outputs.values()],
+              "research": {"evaluations": len(research), "state": "WAITING_LOCAL_EVIDENCE",
+                           "restart_replay": "VERIFIED", "pause": "VERIFIED", "resolution": "NOT_RESOLVED"},
               "restore": "VERIFIED", "publication": "BLOCKED", "delivery": "NONE"}
     (root / "pilot-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     return report

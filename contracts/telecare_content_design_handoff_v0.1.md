@@ -38,6 +38,27 @@ or any dossier not publication-blocked. Block 3 rejects an altered, unsupported
 or nonmatching artifact; a no-match geographic filter waits rather than creating
 generic content. Block 4 rechecks source and profile freshness before serving.
 
+Local rejection repair (2026-10-01): a nonempty `geo_codes` filter matches only
+an explicit claim `geo_code`. A customs-point claim without that field is not
+a match: neither its label nor an inferred source country supplies the field.
+If no claim matches, Precision raises `NO_GEOGRAPHIC_MATCH` and B4 records a
+wait while continuing other work. An empty filter preserves the source-bound
+customs view. This repairs an uncaught `KeyError`, not a new geographic mapping
+or schema: successful existing outputs remain byte-identical and replayable.
+Country/customs-point mapping, if later needed, requires explicit producer
+semantics and compatibility review rather than silently relabeling facts.
+
+Local read-side integrity clarification (2026-09-28): Block 4 also re-exports
+the current Block 1 package, reproduces the deterministic Block 2 design from
+that dossier, reproduces the Block 3 adaptation for the current declared
+profile, and compares the saved HTML, text, checksum, identity and blocked
+authority fields before serving. A mismatch is unavailable, including through
+the JSON/text/HTML endpoints. The overview may retain only a generic
+`STALE_OR_REVOKED` placeholder; it must not display the unverified title or
+profile. This is a stricter read check, not a new handoff schema or acceptance
+decision. A future design algorithm change needs an explicit compatibility or
+migration decision rather than treating old outputs as current by implication.
+
 This is version 1. A consumer receiving another version must fail closed as
 `UNSUPPORTED_CONTENT_DESIGN_VERSION` until the MAR records compatibility. The
 legacy source-draft module is not part of this contract and is not called by the

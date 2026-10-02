@@ -36,6 +36,14 @@ El comando antiguo `operations backup` sigue siendo sólo del journal operativo.
 
 ## Iniciar y usar
 
+En el candidato de arquitectura de doce aristas (no instalado por este
+incremento), cada ciclo ejecuta también una búsqueda local automática. Examina
+dossiers de raíces distintas ya admitidos, con presupuesto de hasta ocho
+intentos por defecto y cursor persistente. «Última búsqueda local» informa
+espera, insuficiencia o revisión; no cierra la tarea ni acepta evidencia.
+Un resultado vencido se muestra sin su veredicto anterior. Reiniciar no duplica
+la evaluación; la pausa y STOP suspenden intentos nuevos. No busca en Internet.
+
 Intelligence abre directamente los dossiers retenidos de la operación. Su
 catálogo sintético queda en «Vista de pruebas». En cada boletín vigente de B4,
 «Ficha de trazabilidad» muestra la fuente normalizada, el perfil, las etapas y
@@ -93,7 +101,8 @@ python -m sictra_block4_orchestrator.pilot --state RUTA_NUEVA_PARA_PILOTO
 ```
 
 El piloto crea datos sintéticos etiquetados y verifica dos versiones, dos
-perfiles, contenido numérico y restauración. No descarga ni simula aprobación
+perfiles, tres ciclos, contenido numérico, investigación en espera,
+reinicio sin duplicados, pausa y restauración del journal operativo. No descarga ni simula aprobación
 de una fuente real. No mezcles su carpeta con la operación real.
 
 ## Respaldo, incidentes y alcance

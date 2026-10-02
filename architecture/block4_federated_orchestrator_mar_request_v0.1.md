@@ -22,6 +22,26 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
    production observability.
 6. Conditions under which a human review receipt can be authenticated without
    turning it into publication, delivery or global gate acceptance.
+7. Whether the candidate local evidence-task link/reassessment contract may
+   become a shared cross-block contract. The current local reviewer identifier
+   is self-declared; even a request for Block 1 reassessment cannot close a
+   source gap, accept content, or establish corroboration.
+8. Whether the new Block 1 comparison projection can become a shared
+   measurement contract. It compares only exact typed metric, unit, geography
+   and period without resolving any task. The two currently admitted source
+   types have no shared metric. New metric mapping or tolerance, if needed,
+   requires source-specific evidence and an explicit architectural decision.
+9. Whether Block 1's candidate per-need read-only assessment can become a
+   shared cross-block contract. Its insufficient/disagreement/review verdicts
+   guide research, but never resolve a task or promote a dossier; source-specific
+   acceptance semantics and independently validated comparable inputs are
+   still absent.
+10. Whether the candidate twelve-arista composition and bounded local research
+    cycle may become accepted cross-block interfaces. Block 4 only schedules
+    current admitted dossiers and journals Block 1 comparisons/assessments;
+    its automatic search cannot close a task, mint approval, infer causal
+    intelligence, or activate network acquisition/delivery. Review ownership,
+    budget, retention, migration and source-specific resolution separately.
 
 ## Evidence available
 

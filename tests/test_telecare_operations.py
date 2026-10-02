@@ -18,6 +18,7 @@ from sictra_block4_orchestrator.operations_store import OperationsError, Operati
 from sictra_block4_orchestrator.operations_web import create_operations_server
 from sictra_block4_orchestrator.runtime import FederatedContractError
 from test_block1_eurostat_maritime_mapper import workbook
+from hn_customs_fixture import workbook as hn_workbook
 
 NOW = 1789300800
 
@@ -48,6 +49,19 @@ class OperationsTests(unittest.TestCase):
         self.service.tick()
         return next(iter(self.service.store.latest("OUTPUT").values()))
 
+    def hn_ready_after_eurostat(self):
+        for waiting in self.service.snapshot()["intake_waiting"]:
+            self.service.abstain_intake(waiting["job_id"], "Keep the prior dossier without editorial acceptance")
+        for year in (2024, 2025):
+            data = hn_workbook(year)
+            path = Path(self.temp.name) / f"hn-{year}.xlsx"
+            path.write_bytes(data)
+            self.service.register_file(path, expected_sha256=sha256(data).hexdigest(),
+                                       source_type="HN_CUSTOMS_Q1_V1", geo_level="CUSTOMS_POINT")
+            self.service.tick()
+        return next(value for value in self.service.store.latest("OUTPUT").values()
+                    if value["dossier_id"].startswith("hn-customs:"))
+
     def test_complete_content_design_preserves_numbers_and_has_evidence_first_structure(self):
         output = self.ready()
         self.assertEqual(self.root.absolute(), self.service.root)
@@ -66,6 +80,184 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual("EVIDENCE_FIRST", output["design_artifact"]["design_system"]["hierarchy"])
         self.assertIn("UNCERTAINTY", [block["kind"] for block in output["adaptation"]["content_blocks"]])
         self.assertEqual(output, self.service.output(output["id"]))
+
+    def test_retained_expired_dossier_cannot_create_autonomy_work(self):
+        self.register(workbook())
+        self.service.intake.run()
+        self.register(workbook(last_updated="07/09/2026 06:14", rows=(("BE", "Belgium", "14", None, "15"),)))
+        self.service.intake.run()
+        self.now += 86402
+        self.service.tick()
+        self.assertFalse(self.service.store.latest("AUTONOMY_TASK"))
+        self.assertFalse(self.service.store.latest("OUTPUT"))
+        states = self.service.snapshot()["dossier_evidence"]
+        self.assertEqual(1, len(states))
+        self.assertEqual("UNAVAILABLE", states[0]["status"])
+
+    def test_change_context_is_current_read_only_and_replayable(self):
+        output = self.ready()
+        records = self.service.store.records()
+        view = self.service.snapshot()["dossier_evidence"][0]["change_context"]
+        self.assertEqual(output["dossier_id"], view["dossier_id"])
+        self.assertEqual("SAME_PERIOD_REPORTED_VALUE_CHANGE", view["facts"][0]["kind"])
+        self.assertEqual("UNCONFIRMED", view["cause_certainty"])
+        reopened = OperationsService(self.root, clock=lambda: self.now)
+        self.assertEqual(view, reopened.snapshot()["dossier_evidence"][0]["change_context"])
+        self.assertEqual(records, self.service.store.records())
+        self.now += 86402
+        self.assertIsNone(self.service.snapshot()["dossier_evidence"][0]["change_context"])
+        self.assertEqual(records, self.service.store.records())
+
+    def test_customs_read_classifies_period_difference_not_revision(self):
+        self.ready()
+        output = self.hn_ready_after_eurostat()
+        contexts = {d["dossier_id"]: d["change_context"] for d in self.service.snapshot()["dossier_evidence"]}
+        changes = contexts[output["dossier_id"]]["facts"]
+        self.assertTrue(changes)
+        self.assertTrue(all(c["kind"] == "DISTINCT_PERIOD_VALUE_COMPARISON" and
+                            c["before_period"] == "2024Q1" and c["after_period"] == "2025Q1" for c in changes))
+
+    def test_slow_research_read_cannot_return_an_expired_change_context(self):
+        self.ready()
+        records = self.service.store.records()
+        original = self.service.research.view
+        def slow(task):
+            value = original(task)
+            self.now += 86402
+            return value
+        with patch.object(self.service.research, "view", side_effect=slow):
+            view = self.service.snapshot()
+        self.assertTrue(all(d["change_context"] is None for d in view["dossier_evidence"]))
+        self.assertEqual(records, self.service.store.records())
+
+    def test_slow_catalog_read_cannot_return_an_expired_change_context(self):
+        self.ready()
+        records = self.service.store.records()
+        original = self.service._catalog_snapshot
+        def slow():
+            value = original()
+            self.now += 86402
+            return value
+        with patch.object(self.service, "_catalog_snapshot", side_effect=slow):
+            view = self.service.snapshot()
+        self.assertTrue(all(d["change_context"] is None for d in view["dossier_evidence"]))
+        self.assertEqual(records, self.service.store.records())
+
+    def test_context_is_withdrawn_on_invalid_signature_changed_body_and_midread_expiry(self):
+        output = self.ready()
+        identity = output["dossier_id"]
+        records = self.service.store.records()
+        real_export = self.service.exporter.export
+        real_list = self.service.exporter.list_dossiers
+        def invalid_signature(*args, **kw):
+            result = real_export(*args, **kw)
+            result["signature"] = "0" * 64
+            return result
+        with patch.object(self.service.exporter, "export", side_effect=invalid_signature):
+            self.assertIsNone(self.service.snapshot()["dossier_evidence"][0]["change_context"])
+        calls = 0
+        def changing_list(**kw):
+            nonlocal calls
+            result = real_list(**kw)
+            calls += 1
+            if calls == 2:
+                result[0]["limitations"].append("Unbound alteration during observation")
+            return result
+        with patch.object(self.service.exporter, "list_dossiers", side_effect=changing_list):
+            with self.assertRaisesRegex(OperationsError, "CHANGE_CONTEXT_INPUT_CHANGED"):
+                self.service._current_change_context(identity)
+        calls = 0
+        def expiring_list(**kw):
+            nonlocal calls
+            result = real_list(**kw)
+            calls += 1
+            if calls == 2:
+                self.now += 86402
+            return result
+        with patch.object(self.service.exporter, "list_dossiers", side_effect=expiring_list):
+            with self.assertRaisesRegex(OperationsError, "CHANGE_CONTEXT_EXPIRED"):
+                self.service._current_change_context(identity)
+        self.assertEqual(records, self.service.store.records())
+
+    def test_task_source_expiry_is_observed_without_rewriting_history(self):
+        output = self.ready()
+        original = self.service.store.latest("AUTONOMY_TASK")
+        self.assertTrue(original)
+        self.assertEqual("CURRENT", self.service.snapshot()["dossier_evidence"][0]["status"])
+        self.now += 86402
+        before = self.service.store.records()
+        view = self.service.snapshot()
+        self.assertEqual(before, self.service.store.records())
+        self.assertTrue(all(t["source_evidence_status"] == "UNAVAILABLE" for t in view["autonomy_tasks"]))
+        task_id = next(iter(original))
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_SOURCE_NOT_CURRENT"):
+            self.service.acknowledge_autonomy_task(task_id, reviewer_id="local-operator",
+                rationale="No new action should use the expired source dossier.")
+        self.assertEqual(before, self.service.store.records())
+        self.service.tick()
+        transitions = [r for r in self.service.store.records() if r["kind"] == "DOSSIER_EVIDENCE_STATE"]
+        self.assertEqual(["CURRENT", "UNAVAILABLE"], [r["value"]["status"] for r in transitions])
+        reopened = OperationsService(self.root, clock=lambda: self.now)
+        reopened.tick()
+        self.assertEqual(transitions, [r for r in reopened.store.records() if r["kind"] == "DOSSIER_EVIDENCE_STATE"])
+        self.assertEqual(original, reopened.store.latest("AUTONOMY_TASK"))
+        self.assertEqual([output["id"]], list(reopened.store.latest("OUTPUT")))
+
+    def test_expired_source_does_not_starve_current_other_source(self):
+        original = self.ready()
+        self.now += 86402
+        independent = self.hn_ready_after_eurostat()
+        self.assertIn("2025", independent["plain_text"])
+        view = self.service.snapshot()
+        by_id = {item["dossier_id"]: item["status"] for item in view["dossier_evidence"]}
+        self.assertEqual("UNAVAILABLE", by_id[original["dossier_id"]])
+        self.assertEqual("CURRENT", by_id[independent["dossier_id"]])
+        self.assertTrue(any(t["dossier_id"] == independent["dossier_id"] for t in view["autonomy_tasks"]))
+        self.assertEqual("BLOCKED", self.service.output(independent["id"])["publication"])
+
+    def test_task_generation_rejects_substitution_invalid_attestation_and_midcycle_expiry(self):
+        self.register(workbook())
+        self.service.intake.run()
+        self.register(workbook(last_updated="07/09/2026 06:14", rows=(("BE", "Belgium", "14", None, "15"),)))
+        self.service.intake.run()
+        dossiers = self.service.exporter.list_dossiers()
+        # A real signed export for a different identity must not authorize this dossier.
+        substitute = deepcopy(dossiers[0])
+        substitute["dossier_id"] = "eurostat:substituted"
+        real_export = self.service.exporter.export
+        with patch.object(self.service.exporter, "export", side_effect=lambda identity, **kw:
+                          real_export(dossiers[0]["dossier_id"], **kw)):
+            self.assertEqual([], self.service._ensure_autonomy_tasks([substitute]))
+        altered = deepcopy(dossiers[0])
+        altered["source"]["content_sha256"] = "0" * 64
+        self.assertEqual([], self.service._ensure_autonomy_tasks([altered]))
+        def forged(identity, **kw):
+            result = real_export(identity, **kw)
+            result["signature"] = "0" * 64
+            return result
+        with patch.object(self.service.exporter, "export", side_effect=forged):
+            self.assertEqual([], self.service._ensure_autonomy_tasks(dossiers))
+        def expires_after_export(identity, **kw):
+            result = real_export(identity, **kw)
+            self.now += 86402
+            return result
+        with patch.object(self.service.exporter, "export", side_effect=expires_after_export):
+            self.assertEqual([], self.service._ensure_autonomy_tasks(dossiers))
+        self.assertFalse(self.service.store.latest("AUTONOMY_TASK"))
+        self.assertFalse(self.service.store.latest("OUTPUT"))
+
+    def test_lifecycle_polling_respects_pause_and_stop_without_hidden_transitions(self):
+        self.ready()
+        self.service.set_paused(True)
+        self.now += 86402
+        before = self.service.store.records()
+        self.assertEqual("PAUSED", self.service.tick()["state"])
+        self.assertEqual(before, self.service.store.records())
+        self.service.set_paused(False)
+        (self.root / "STOP").touch()
+        before = self.service.store.records()
+        self.assertEqual("STOPPED", self.service.tick()["state"])
+        self.assertEqual(before, self.service.store.records())
 
     def test_restart_and_repeated_cycles_preserve_single_output(self):
         output = self.ready()
@@ -117,6 +309,68 @@ class OperationsTests(unittest.TestCase):
         missing_provenance["fingerprint"] = fingerprint({k: v for k, v in missing_provenance.items() if k != "fingerprint"})
         with self.assertRaisesRegex(AudiencePolicyError, "REQUIRED_BLOCK_MISSING"):
             adapt_content_design(missing_provenance, output["profile"], now=self.now)
+
+    def test_read_rejects_self_consistent_but_source_unbound_editorial_copy(self):
+        output = self.ready()
+        self.assertIn("14 miles de toneladas", output["plain_text"])
+        forged = deepcopy(output)
+        design = forged["design_artifact"]
+        design["claims"][0]["text"] = design["claims"][0]["text"].replace("14 miles de toneladas", "999 miles de toneladas")
+        design["content_blocks"][1]["body"] = design["claims"][0]["text"]
+        design["fingerprint"] = fingerprint({k: v for k, v in design.items() if k != "fingerprint"})
+        forged["adaptation"] = adapt_content_design(design, forged["profile"], now=self.now)
+        forged["html"], forged["plain_text"] = render_designed_review_artifact(design, forged["adaptation"])
+        forged["html_sha256"] = sha256(forged["html"].encode()).hexdigest()
+        self.assertIn("999 miles de toneladas", forged["plain_text"])
+        self.service.store.put("OUTPUT", output["id"], forged)
+        before = self.service.store.records()
+        with self.assertRaisesRegex(OperationsError, "OUTPUT_DESIGN_MISMATCH"):
+            self.service.output(output["id"])
+        summary = self.service.snapshot()["outputs"][0]
+        self.assertEqual("STALE_OR_REVOKED", summary["availability"])
+        self.assertEqual("Resultado no verificable", summary["title"])
+        self.assertNotIn("999 miles de toneladas", str(summary))
+        self.assertEqual(before, self.service.store.records())
+        server = create_operations_server(self.service, port=0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        client = HTTPConnection("127.0.0.1", server.server_port)
+        try:
+            client.request("GET", "/api/operations/outputs/" + output["id"] + "/text")
+            response = client.getresponse()
+            self.assertEqual(409, response.status)
+            self.assertNotIn(b"999 miles de toneladas", response.read())
+        finally:
+            client.close()
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+    def test_read_rejects_rebound_adaptation_copy_and_authority_fields(self):
+        output = self.ready()
+        variants = []
+        altered_adaptation = deepcopy(output)
+        altered_adaptation["adaptation"]["framing"] = "Conclusión comercial inventada"
+        altered_adaptation["adaptation"]["fingerprint"] = fingerprint({
+            k: v for k, v in altered_adaptation["adaptation"].items() if k != "fingerprint"})
+        altered_adaptation["html"], altered_adaptation["plain_text"] = render_designed_review_artifact(
+            altered_adaptation["design_artifact"], altered_adaptation["adaptation"])
+        altered_adaptation["html_sha256"] = sha256(altered_adaptation["html"].encode()).hexdigest()
+        variants.append((altered_adaptation, "OUTPUT_ADAPTATION_MISMATCH"))
+        altered_copy = deepcopy(output)
+        altered_copy["plain_text"] += "\nConclusión inventada"
+        variants.append((altered_copy, "OUTPUT_CONTENT_MISMATCH"))
+        altered_authority = deepcopy(output)
+        altered_authority["publication"] = "ALLOWED"
+        variants.append((altered_authority, "OUTPUT_BOUNDARY_INVALID"))
+        for forged, reason in variants:
+            self.service.store.put("OUTPUT", output["id"], forged)
+            before = self.service.store.records()
+            with self.assertRaisesRegex(OperationsError, reason):
+                self.service.output(output["id"])
+            self.assertEqual(before, self.service.store.records())
+        self.service.store.put("OUTPUT", output["id"], output)
+        self.assertEqual(output, self.service.output(output["id"]))
 
     def test_legacy_source_draft_output_cannot_be_rendered_as_current_design(self):
         output = self.ready()
@@ -190,6 +444,51 @@ class OperationsTests(unittest.TestCase):
         self.service.add_profile(profile)
         self.service.tick()
         self.assertTrue(any(w["reason"] == "NO_GEOGRAPHIC_MATCH" for w in self.service.snapshot()["waiting"]))
+
+    def test_geographic_filter_rejects_customs_without_stopping_other_work_or_replay(self):
+        euro = self.ready()
+        customs = self.hn_ready_after_eurostat()
+        profile = {**euro["profile"], "id": "belgium-only", "geo_codes": ["BE"]}
+        self.service.add_profile(profile)
+        independent = {**euro["profile"], "id": "independent-unfiltered"}
+        self.service.add_profile(independent)
+        cycle = self.service.tick()
+        self.assertEqual("RUNNING", cycle["state"])
+        filtered = [value for value in self.service.store.latest("OUTPUT").values()
+                    if value["profile"]["id"] == profile["id"]]
+        self.assertEqual(1, len(filtered))
+        self.assertEqual(euro["dossier_id"], filtered[0]["dossier_id"])
+        self.assertEqual({"BE"}, {claim["geo_code"] for claim in filtered[0]["design_artifact"]["claims"]})
+        self.assertEqual(euro["design_artifact"]["claims"], filtered[0]["design_artifact"]["claims"])
+        self.assertIn("UNCERTAINTY", [block["kind"] for block in filtered[0]["adaptation"]["content_blocks"]])
+        self.assertEqual("BLOCKED", filtered[0]["publication"])
+        self.assertEqual("NONE", filtered[0]["delivery"])
+        self.assertTrue(any(value["dossier_id"] == customs["dossier_id"]
+                            and value["reason"] == "NO_GEOGRAPHIC_MATCH"
+                            for value in self.service.store.latest("WAIT").values()))
+        independent_outputs = [value for value in self.service.store.latest("OUTPUT").values()
+                               if value["profile"]["id"] == independent["id"]]
+        self.assertEqual({euro["dossier_id"], customs["dossier_id"]},
+                         {value["dossier_id"] for value in independent_outputs})
+        self.assertEqual(customs, self.service.output(customs["id"]))
+        outputs = self.service.store.latest("OUTPUT")
+        reopened = OperationsService(self.root, clock=lambda: self.now)
+        self.assertEqual("RUNNING", reopened.tick()["state"])
+        self.assertEqual(outputs, reopened.store.latest("OUTPUT"))
+        self.assertEqual(customs, reopened.output(customs["id"]))
+
+    def test_customs_label_and_country_do_not_impersonate_explicit_geo_code(self):
+        self.ready()
+        customs = self.hn_ready_after_eurostat()
+        design = customs["design_artifact"]
+        original = deepcopy(design)
+        for value in ("HN", design["claims"][0]["customs_point"]):
+            with self.subTest(filter=value):
+                profile = {**customs["profile"], "geo_codes": [value]}
+                with self.assertRaisesRegex(AudiencePolicyError, "^NO_GEOGRAPHIC_MATCH$"):
+                    adapt_content_design(design, profile, now=self.now)
+        self.assertEqual(original, design)
+        self.assertEqual(customs["adaptation"], adapt_content_design(design, customs["profile"], now=self.now))
 
     def test_single_writer_lock_and_background_polling(self):
         with process_lock(self.root / "service.lock"):
@@ -269,8 +568,11 @@ class OperationsTests(unittest.TestCase):
         self.assertTrue(tasks)
         self.assertTrue(all(task["dossier_id"] == output["dossier_id"] for task in tasks))
         self.assertTrue(all(task["state"] == "OPEN" for task in tasks))
-        self.assertTrue(all(task["completion_boundary"] == "VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED"
+        self.assertTrue(all(task["completion_boundary"] == "BLOCK1_CONTRACTED_RESOLUTION_REQUIRED"
                             for task in tasks))
+        self.assertTrue(all(task["boundary_status"] == "CURRENT" for task in tasks))
+        self.assertEqual({"INDEPENDENT_CORROBORATION", "SOURCE_METHODOLOGY", "COMPANY_EXPOSURE"},
+                         {task["effective_kind"] for task in tasks})
         acknowledged = self.service.acknowledge_autonomy_task(
             tasks[0]["task_id"], reviewer_id="operator-local",
             rationale="Se requiere una fuente aprobada de raíz independiente antes de interpretar el cambio.",
@@ -281,6 +583,159 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual("BLOCKED", self.service.output(output["id"])["publication"])
         with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_REVIEW_INVALID"):
             self.service.acknowledge_autonomy_task(tasks[0]["task_id"], reviewer_id="", rationale="short")
+
+    def test_legacy_task_boundary_is_preserved_but_never_projected_as_current_authority(self):
+        self.ready()
+        task = self.service.snapshot()["autonomy_tasks"][0]
+        legacy = {key: value for key, value in task.items()
+                  if key not in {"evidence_status", "effective_completion_boundary", "boundary_status"}}
+        legacy["completion_boundary"] = "VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED"
+        legacy["allowed_actions"] = ["REGISTER_APPROVED_LOCAL_SOURCE", "LINK_VERIFIED_EVIDENCE"]
+        self.service.store.put("AUTONOMY_TASK", task["task_id"], legacy)
+        count = len(self.service.store.records())
+        view = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["task_id"] == task["task_id"])
+        self.assertEqual("VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED", view["completion_boundary"])
+        self.assertEqual("BLOCK1_CONTRACTED_RESOLUTION_REQUIRED", view["effective_completion_boundary"])
+        self.assertEqual("LEGACY_SUPERSEDED", view["boundary_status"])
+        self.assertEqual(count, len(self.service.store.records()))
+
+    def test_independent_current_dossier_link_requests_block1_reassessment_without_closing_gap(self):
+        original = self.ready()
+        task = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["dossier_id"] == original["dossier_id"])
+        independent = self.hn_ready_after_eurostat()
+        linked = self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        self.assertEqual("EVIDENCE_LINKED_REVIEW_REQUIRED", linked["status"])
+        self.assertEqual("BLOCKED", linked["publication"])
+        self.assertEqual("NOT_ACCEPTED", linked["acceptance"])
+        self.assertEqual("HN_SARAH", linked["evidence_link"]["source_root"])
+        self.assertEqual("NO_SHARED_MEASUREMENT", linked["evidence_link"]["comparison"]["status"])
+        self.assertEqual("NOT_RESOLVED", linked["evidence_link"]["comparison"]["resolution"])
+        count = len(self.service.store.records())
+        self.assertEqual(linked, self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"]))
+        self.assertEqual(count, len(self.service.store.records()))
+        self.assertEqual("CURRENT", next(t for t in self.service.snapshot()["autonomy_tasks"]
+                                         if t["task_id"] == task["task_id"])["evidence_status"])
+        self.assertEqual("NO_SHARED_MEASUREMENT", next(t for t in self.service.snapshot()["autonomy_tasks"]
+            if t["task_id"] == task["task_id"])["evidence_comparison"]["status"])
+        self.assertEqual("INSUFFICIENT", next(t for t in self.service.snapshot()["autonomy_tasks"]
+            if t["task_id"] == task["task_id"])["evidence_assessment"]["verdict"])
+        legacy_task = deepcopy(self.service.store.latest("AUTONOMY_TASK")[task["task_id"]])
+        legacy_task["evidence_link"].pop("comparison")
+        legacy_task["evidence_link"].pop("assessment")
+        self.service.store.put("AUTONOMY_TASK", task["task_id"], legacy_task)
+        before_legacy_read = self.service.store.records()
+        legacy_view = next(t for t in self.service.snapshot()["autonomy_tasks"]
+                           if t["task_id"] == task["task_id"])
+        self.assertEqual("CURRENT", legacy_view["evidence_status"])
+        self.assertEqual("NO_SHARED_MEASUREMENT", legacy_view["evidence_comparison"]["status"])
+        self.assertEqual("INSUFFICIENT", legacy_view["evidence_assessment"]["verdict"])
+        self.assertEqual(before_legacy_read, self.service.store.records())
+        reassessed = self.service.reassess_autonomy_task(
+            task["task_id"], reviewer_id="local-reviewer",
+            rationale="Solicito reevaluación de Intelligence; esto no valida causalidad ni aprueba el boletín.",
+            decision="REQUEST_BLOCK1_REASSESSMENT")
+        self.assertEqual("BLOCK1_REASSESSMENT_REQUIRED", reassessed["status"])
+        self.assertEqual("NOT_ACCEPTED", reassessed["acceptance"])
+        count = len(self.service.store.records())
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_NOT_LINKABLE"):
+            self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_NOT_REASSESSABLE"):
+            self.service.reassess_autonomy_task(
+                task["task_id"], reviewer_id="local-reviewer",
+                rationale="Un segundo acto local no puede fingir que Intelligence ya concluyó.",
+                decision="REQUEST_BLOCK1_REASSESSMENT")
+        self.assertEqual(count, len(self.service.store.records()))
+        self.assertEqual("BLOCKED", self.service.output(original["id"])["publication"])
+        self.assertEqual("NONE", self.service.output(independent["id"])["delivery"])
+        reopened = OperationsService(self.root, clock=lambda: self.now)
+        self.assertEqual("BLOCK1_REASSESSMENT_REQUIRED", next(t for t in reopened.snapshot()["autonomy_tasks"]
+                                                           if t["task_id"] == task["task_id"])["state"])
+        self.now += 86402
+        historical = next(t for t in reopened.snapshot()["autonomy_tasks"]
+                          if t["task_id"] == task["task_id"])
+        self.assertEqual("STALE_OR_REVOKED", historical["evidence_status"])
+        self.assertEqual("BLOCK1_REASSESSMENT_REQUIRED", historical["state"])
+
+    def test_forged_need_assessment_cannot_be_replayed_as_resolution(self):
+        original = self.ready()
+        task = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["dossier_id"] == original["dossier_id"])
+        independent = self.hn_ready_after_eurostat()
+        self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        altered = deepcopy(self.service.store.latest("AUTONOMY_TASK")[task["task_id"]])
+        altered["evidence_link"]["assessment"]["resolution"] = "RESOLVED"
+        self.service.store.put("AUTONOMY_TASK", task["task_id"], altered)
+        before = self.service.store.records()
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_LINK_CHANGED"):
+            self.service.reassess_autonomy_task(
+                task["task_id"], reviewer_id="local-reviewer",
+                rationale="Un recibo de tarea alterado no puede fabricar resolución de Intelligence.",
+                decision="REQUEST_BLOCK1_REASSESSMENT")
+        view = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["task_id"] == task["task_id"])
+        self.assertEqual("STALE_OR_REVOKED", view["evidence_status"])
+        self.assertIsNone(view["evidence_assessment"])
+        self.assertEqual(before, self.service.store.records())
+
+    def test_task_link_rejects_same_root_replacement_and_stale_or_tampered_evidence(self):
+        original = self.ready()
+        task = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["dossier_id"] == original["dossier_id"])
+        before = len(self.service.store.records())
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_ID_INVALID"):
+            self.service.link_autonomy_task_evidence(task["task_id"], original["dossier_id"])
+        self.assertEqual(before, len(self.service.store.records()))
+        independent = self.hn_ready_after_eurostat()
+        real_export = self.service.exporter.export
+        count = len(self.service.store.records())
+        with patch.object(self.service.exporter, "export", side_effect=lambda identity, **kw:
+                          real_export(independent["dossier_id"], **kw)
+                          if identity == task["dossier_id"] else real_export(identity, **kw)):
+            with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_NOT_CURRENT"):
+                self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        self.assertEqual(count, len(self.service.store.records()))
+        # Challenge the root check independently of the actual exporter.
+        real_dossiers = self.service.exporter.list_dossiers()
+        forged_metadata = [{**item, "source": {**item["source"], "root_source_identity": task["source_root"]}}
+                           if item["dossier_id"] == independent["dossier_id"] else item for item in real_dossiers]
+        count = len(self.service.store.records())
+        with patch.object(self.service.exporter, "list_dossiers", return_value=forged_metadata):
+            with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_ROOT_NOT_INDEPENDENT"):
+                self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        self.assertEqual(count, len(self.service.store.records()))
+        linked = self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_LINK_REPLACEMENT_REQUIRES_REVIEW"):
+            self.service.link_autonomy_task_evidence(task["task_id"], original["dossier_id"])
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_REASSESSMENT_INVALID"):
+            self.service.reassess_autonomy_task(task["task_id"], reviewer_id="x", rationale="too short", decision=[])
+        self.assertEqual("EVIDENCE_LINKED_REVIEW_REQUIRED", linked["status"])
+        retained = next((self.root / "hn-customs" / "sources").glob("*.xlsx"))
+        retained.write_bytes(retained.read_bytes() + b"tamper")
+        count = len(self.service.store.records())
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_NOT_CURRENT"):
+            self.service.reassess_autonomy_task(
+                task["task_id"], reviewer_id="local-reviewer",
+                rationale="No se puede aceptar una fuente retenida cuyo contenido cambió después del enlace.",
+                decision="REQUEST_BLOCK1_REASSESSMENT")
+        self.assertEqual(count, len(self.service.store.records()))
+        view = next(t for t in self.service.snapshot()["autonomy_tasks"] if t["task_id"] == task["task_id"])
+        self.assertEqual("STALE_OR_REVOKED", view["evidence_status"])
+
+    def test_task_link_rejects_superseded_original_dossier_without_writes(self):
+        original = self.ready()
+        task = next(item for item in self.service.snapshot()["autonomy_tasks"]
+                    if item["dossier_id"] == original["dossier_id"])
+        self.service.abstain_intake(self.service.snapshot()["intake_waiting"][0]["job_id"],
+                                    "Keep the prior dossier without editorial acceptance")
+        self.register(workbook(last_updated="08/09/2026 06:14", rows=(("BE", "Belgium", "15", None, "17"),)))
+        self.service.tick()
+        independent = self.hn_ready_after_eurostat()
+        count = len(self.service.store.records())
+        with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_NOT_CURRENT"):
+            self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+        self.assertEqual(count, len(self.service.store.records()))
 
     def test_http_control_requires_same_origin_token_and_artifacts_are_current(self):
         output = self.ready()
@@ -299,6 +754,10 @@ class OperationsTests(unittest.TestCase):
             status, _, body = request("GET", "/api/operations")
             token = json.loads(body)["control_token"]
             self.assertEqual(200, status)
+            self.assertTrue(all(t["research_evaluation"]["verdict"] == "WAITING_LOCAL_EVIDENCE"
+                                for t in json.loads(body)["autonomy_tasks"]))
+            self.assertEqual("SAME_PERIOD_REPORTED_VALUE_CHANGE",
+                             json.loads(body)["dossier_evidence"][0]["change_context"]["facts"][0]["kind"])
             route = "/api/operations/outputs/" + output["id"] + "/html"
             status, headers, body = request("GET", route)
             self.assertEqual(200, status)
@@ -310,11 +769,46 @@ class OperationsTests(unittest.TestCase):
             self.assertEqual(200, status)
             self.assertEqual("ORCHESTRATION_EXECUTED", json.loads(body)["status"])
             self.assertEqual(400, request("POST", "/api/operations/control", {"action": "execute", "extra": True}, trusted)[0])
+            independent = self.hn_ready_after_eurostat()
+            status, _, body = request("GET", "/api/operations")
+            self.assertEqual(200, status)
+            self.assertTrue(all(t["research_evaluation"]["verdict"] == "INSUFFICIENT"
+                                for t in json.loads(body)["autonomy_tasks"]))
+            task = next(t for t in self.service.snapshot()["autonomy_tasks"]
+                        if t["dossier_id"] == output["dossier_id"])
+            link_request = {"task_id": task["task_id"], "evidence_dossier_id": independent["dossier_id"]}
+            self.assertEqual(403, request("POST", "/api/operations/tasks/link")[0])
+            self.assertEqual(400, request("POST", "/api/operations/tasks/link", {**link_request, "approve": True}, trusted)[0])
+            status, _, body = request("POST", "/api/operations/tasks/link", link_request, trusted)
+            self.assertEqual(200, status)
+            self.assertEqual("EVIDENCE_LINKED_REVIEW_REQUIRED", json.loads(body)["status"])
+            review_request = {"task_id": task["task_id"], "reviewer_id": "local-reviewer",
+                              "rationale": "La tarea se evalúa localmente; el dossier y el boletín siguen sin aceptación.",
+                              "decision": "EVIDENCE_INSUFFICIENT"}
+            self.assertEqual(403, request("POST", "/api/operations/tasks/reassess")[0])
+            status, _, body = request("POST", "/api/operations/tasks/reassess", review_request, trusted)
+            self.assertEqual(200, status)
+            self.assertEqual("OPEN", json.loads(body)["status"])
             self.assertEqual(200, request("POST", "/api/operations/control", {"action": "pause"}, trusted)[0])
             self.assertTrue(self.service.is_paused())
             self.assertEqual(403, request("GET", "/api/operations", headers={"Host": "evil.example"})[0])
             self.now += 86402
             self.assertEqual(409, request("GET", route)[0])
+            status, _, body = request("GET", "/api/operations")
+            self.assertEqual(200, status)
+            self.assertTrue(all(t["source_evidence_status"] == "UNAVAILABLE"
+                                for t in json.loads(body)["autonomy_tasks"]))
+            self.assertTrue(all(d["change_context"] is None for d in json.loads(body)["dossier_evidence"]))
+            self.assertTrue(all(t["research_evaluation"]["availability"] == "STALE_OR_REVOKED"
+                                and "verdict" not in t["research_evaluation"]
+                                for t in json.loads(body)["autonomy_tasks"]))
+            before = self.service.store.records()
+            status, _, body = request("POST", "/api/operations/tasks/review", {
+                "task_id": task["task_id"], "reviewer_id": "local-reviewer",
+                "rationale": "Expired evidence must not allow a new workflow action."}, trusted)
+            self.assertEqual(400, status)  # Existing POST contract: rejected commands are 400.
+            self.assertEqual("OperationsError", json.loads(body)["reason"])
+            self.assertEqual(before, self.service.store.records())
         finally:
             server.shutdown(); server.server_close(); thread.join(timeout=2)
 
