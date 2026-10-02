@@ -42,7 +42,7 @@
       $('deferred-reviews').replaceChildren();
       for(const item of data.deferred_reviews || []) {const row=document.createElement('li');row.textContent=item.dossier_id+' · Cerrado por abstención · evidencia pendiente · no aceptado';$('deferred-reviews').append(row);}
       $('autonomy-task-list').replaceChildren();
-      const comparisonLabels={NO_SHARED_MEASUREMENT:'Sin mediciones equivalentes',PARTIAL_COVERAGE_REVIEW_REQUIRED:'Cobertura parcial para revisión',VALUE_DIFFERENCE_REVIEW_REQUIRED:'Valores diferentes para revisión',EXACT_VALUE_AGREEMENT_REVIEW_REQUIRED:'Mismos valores; revisión pendiente'};
+      const comparisonLabels={NO_SHARED_MEASUREMENT:'Sin mediciones equivalentes',PARTIAL_COVERAGE_REVIEW_REQUIRED:'Cobertura parcial para revisión',VALUE_DIFFERENCE_REVIEW_REQUIRED:'Valor posterior discrepante; revisión pendiente',EXACT_VALUE_AGREEMENT_REVIEW_REQUIRED:'Mismo valor posterior; revisión pendiente'};
       for (const item of data.autonomy_tasks) {
         const card=document.createElement('article');card.className='case';
         const text=document.createElement('div'), title=document.createElement('strong'), body=document.createElement('p');

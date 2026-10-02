@@ -42,13 +42,23 @@ class EvidenceComparisonTests(unittest.TestCase):
     def test_different_values_and_partial_coverage_preserve_ambiguity(self):
         result = compare_dossier_measurements(maritime("publisher-a"), maritime("publisher-b", 15.0))
         self.assertEqual("VALUE_DIFFERENCE_REVIEW_REQUIRED", result["status"])
-        self.assertEqual("DIFFERENT_VALUE", result["matched"][0]["comparison"])
+        self.assertEqual("DIFFERENT_AFTER_VALUE", result["matched"][0]["comparison"])
         primary = maritime("publisher-a")
         primary["facts"].append({"fact_id": "FACT-002", "observed_change": {
             "geo_code": "DE", "time_period": 2025, "after_value_thousand_tonnes": 6.0}})
         result = compare_dossier_measurements(primary, maritime("publisher-b"))
         self.assertEqual("PARTIAL_COVERAGE_REVIEW_REQUIRED", result["status"])
         self.assertEqual(["FACT-002"], result["unmatched_primary_fact_ids"])
+        self.assertEqual([], result["unmatched_candidate_fact_ids"])
+        candidate = maritime("publisher-b")
+        candidate["facts"].append({"fact_id": "FACT-002", "observed_change": {
+            "geo_code": "FR", "time_period": 2025, "after_value_thousand_tonnes": 6.0}})
+        result = compare_dossier_measurements(maritime("publisher-a"), candidate)
+        self.assertEqual("PARTIAL_COVERAGE_REVIEW_REQUIRED", result["status"])
+        self.assertEqual(["FACT-002"], result["unmatched_candidate_fact_ids"])
+        result = compare_dossier_measurements(maritime("publisher-a", 12.0), candidate)
+        self.assertEqual("VALUE_DIFFERENCE_REVIEW_REQUIRED", result["status"])
+        self.assertEqual(["FACT-002"], result["unmatched_candidate_fact_ids"])
 
     def test_metric_geography_and_period_mismatch_cannot_corroborate(self):
         primary = maritime("publisher-a")

@@ -25,13 +25,26 @@ source-specific need classification now distinguishes corroboration,
 methodology, company exposure and granularity; unknown wording stays
 `UNCLASSIFIED`, including for legacy tasks projected without journal rewrite.
 Local verification on 2026-09-29: 790/790 Python tests, 14/14 JavaScript
-tests, Python compileall and launcher-path validation passed. The exact-SHA
-hosted CI result remains pending until this increment is pushed. Certainty:
+tests, Python compileall and launcher-path validation passed. Exact SHA
+`9af7a9a6a3d8ad46ecee7edf41b818776a4a4124` passed hosted push run
+`36662583832` and PR run `36662586844`. Certainty:
 VERIFIED / confidence B for local behavior only; cross-source semantic
 acceptance remains INSUFFICIENT EVIDENCE. Next technical dependency: a
 versioned Block 1 per-need resolution contract and approved comparable source
 fixtures; current Eurostat and HN customs observations cannot resolve one
 another's corroboration need.
+Follow-up red-team check: partial coverage previously masked a value
+disagreement in the headline status. The candidate now prioritizes the
+disagreement, retains unmatched fact IDs from both dossiers, and labels only
+agreement or difference in the reported after-value, not in causal change.
+The isolated candidate pilot produced two synthetic blocked drafts over two
+cycles and verified local restore; it did not touch the installed service.
+Follow-up verification on 2026-10-01: 790 Python and 14 JavaScript tests,
+compileall and launcher-path validation passed locally. The exact-SHA CI for
+this refinement remains pending. Wolfram exhaustively checked the 16 Boolean
+cases for shared measurement, two-sided full coverage and value difference;
+none classified an incomplete or differing case as exact agreement. That model
+check is not runtime evidence or source acceptance.
 
 
 ### Integrated autonomy cycle — 2026-09-29

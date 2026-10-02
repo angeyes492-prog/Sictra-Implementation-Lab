@@ -21,10 +21,13 @@ inference, keyword matching or tolerance are assumed. Duplicate measurement
 keys, missing provenance, unsupported or nonfinite values reject.
 
 The output retains dossier IDs, source roots, matched fact IDs and literal
-after-values, unmatched primary facts, explicit scope status and boundaries:
+after-values, unmatched facts from both dossiers, explicit scope status and boundaries:
 `NO_SHARED_MEASUREMENT`, `PARTIAL_COVERAGE_REVIEW_REQUIRED`,
 `VALUE_DIFFERENCE_REVIEW_REQUIRED`, or `EXACT_VALUE_AGREEMENT_REVIEW_REQUIRED`.
 Equality of two reported values is a comparison result, not independent truth.
+It refers only to the reported after-value, not agreement about the magnitude
+or cause of the change. A differing after-value takes precedence over partial
+coverage in the status; both facts remain visible in the structured result.
 Different values require review; they are not automatically a causal or source
 contradiction. Every result is `NOT_RESOLVED`, `BLOCKED`, and `NOT_ACCEPTED`.
 

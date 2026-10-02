@@ -72,13 +72,13 @@ def compare_dossier_measurements(primary, candidate):
                         "period": key[3], "primary_fact_id": left_id,
                         "candidate_fact_id": right_id, "primary_value": left_value,
                         "candidate_value": right_value,
-                        "comparison": "EXACT_VALUE" if left_value == right_value else "DIFFERENT_VALUE"})
+                        "comparison": "EXACT_AFTER_VALUE" if left_value == right_value else "DIFFERENT_AFTER_VALUE"})
     if not matched:
         status = "NO_SHARED_MEASUREMENT"
-    elif len(matched) < len(left):
-        status = "PARTIAL_COVERAGE_REVIEW_REQUIRED"
-    elif any(item["comparison"] == "DIFFERENT_VALUE" for item in matched):
+    elif any(item["comparison"] == "DIFFERENT_AFTER_VALUE" for item in matched):
         status = "VALUE_DIFFERENCE_REVIEW_REQUIRED"
+    elif len(matched) < len(left) or len(matched) < len(right):
+        status = "PARTIAL_COVERAGE_REVIEW_REQUIRED"
     else:
         status = "EXACT_VALUE_AGREEMENT_REVIEW_REQUIRED"
     return {"version": "0.1.0", "primary_dossier_id": primary["dossier_id"],
@@ -86,5 +86,6 @@ def compare_dossier_measurements(primary, candidate):
             "source_roots": [left_root, right_root], "status": status,
             "matched": matched,
             "unmatched_primary_fact_ids": [left[key][0] for key in sorted(left.keys() - right.keys())],
+            "unmatched_candidate_fact_ids": [right[key][0] for key in sorted(right.keys() - left.keys())],
             "resolution": "NOT_RESOLVED", "acceptance": "NOT_ACCEPTED",
             "publication": "BLOCKED"}
