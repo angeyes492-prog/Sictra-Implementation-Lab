@@ -1,10 +1,11 @@
 from copy import deepcopy
 from contextlib import closing
 from hashlib import sha256
-from http.client import HTTPConnection
+from http.client import HTTPConnection, HTTPResponse
 import json
 from pathlib import Path
 import sqlite3
+import socket
 import tempfile
 import threading
 import time
@@ -809,6 +810,44 @@ class OperationsTests(unittest.TestCase):
             self.assertEqual(400, status)  # Existing POST contract: rejected commands are 400.
             self.assertEqual("OperationsError", json.loads(body)["reason"])
             self.assertEqual(before, self.service.store.records())
+        finally:
+            server.shutdown(); server.server_close(); thread.join(timeout=2)
+
+    def test_forbidden_split_body_returns_403_without_mutation_and_trusted_control_still_works(self):
+        server = create_operations_server(self.service, port=0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        records = self.service.store.records()
+        try:
+            for _ in range(5):
+                wire = socket.create_connection(('127.0.0.1', server.server_port), timeout=3)
+                try:
+                    body = b'{"action":"pause"}'
+                    wire.sendall((f"POST /api/operations/control HTTP/1.1\r\nHost: 127.0.0.1:{server.server_port}\r\n"
+                                  f"Content-Length: {len(body)}\r\n\r\n").encode())
+                    # Keep the same raw socket: HTTPConnection can auto-open a
+                    # new socket after getresponse sees a closing HTTP/1.0 reply.
+                    response = HTTPResponse(wire)
+                    response.begin()
+                    self.assertEqual(403, response.status)
+                    wire.sendall(body)  # Body arrives on the SAME socket after 403 headers.
+                    self.assertIn("error", json.loads(response.read()))
+                    response.close()
+                finally:
+                    wire.close()
+            self.assertEqual(records, self.service.store.records())
+            self.assertFalse(self.service.is_paused())
+            connection = HTTPConnection('127.0.0.1', server.server_port, timeout=3)
+            try:
+                connection.request("POST", "/api/operations/control", body=json.dumps({"action": "pause"}),
+                    headers={"Content-Type": "application/json", "Origin": f"http://127.0.0.1:{server.server_port}",
+                             "X-Telecare-Control": server.control_token})
+                response = connection.getresponse()
+                self.assertEqual(200, response.status)
+                response.read()
+            finally:
+                connection.close()
+            self.assertTrue(self.service.is_paused())
         finally:
             server.shutdown(); server.server_close(); thread.join(timeout=2)
 

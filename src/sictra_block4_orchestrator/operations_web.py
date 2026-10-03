@@ -4,8 +4,10 @@ import binascii
 from hashlib import sha256
 from http import HTTPStatus
 import json
+import re
 import secrets
 import tempfile
+import time
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -15,6 +17,45 @@ from .factsheet import build_factsheet, render_factsheet
 
 
 class OperationsHandler(CommandCenterHandler):
+    def _discard_rejected_body(self):
+        lengths = self.headers.get_all("Content-Length", [])
+        if (len(lengths) != 1 or self.headers.get("Transfer-Encoding") is not None
+                or not re.fullmatch(r"[0-9]{1,5}", lengths[0]) or int(lengths[0]) > 16000):
+            return
+        remaining = int(lengths[0])
+        deadline = time.monotonic() + 1
+        previous_timeout = self.connection.gettimeout()
+        try:
+            while remaining:
+                allowance = deadline - time.monotonic()
+                if allowance <= 0:
+                    break
+                self.connection.settimeout(allowance)
+                chunk = self.rfile.read1(min(4096, remaining))
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+        except OSError:
+            pass  # Denied/cancelled body: no parsing, retry or second response.
+        finally:
+            try:
+                self.connection.settimeout(previous_timeout)
+            except OSError:
+                pass  # The denied peer may have already closed the socket.
+
+    def _json(self, status, payload):
+        if self.command != "POST" or status != HTTPStatus.FORBIDDEN:
+            return super()._json(status, payload)
+        self.close_connection = True
+        try:
+            super()._json(status, payload)
+            self.wfile.flush()
+            # Closing with unread incoming bytes can reset TCP before the
+            # client receives 403. Discard a small framed body, never execute it.
+            self._discard_rejected_body()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            return
+
     def do_GET(self):
         path = urlsplit(self.path).path
         if path not in {"/api/operations", "/health"} and not path.startswith("/api/operations/outputs/"):

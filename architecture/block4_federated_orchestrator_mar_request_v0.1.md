@@ -42,6 +42,15 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
     its automatic search cannot close a task, mint approval, infer causal
     intelligence, or activate network acquisition/delivery. Review ownership,
     budget, retention, migration and source-specific resolution separately.
+11. Owner exception dated 2026-10-03 permits agent-assisted official public
+    research collection. The standalone candidate acquisition/quarantine and
+    exact methodology-review contracts do not activate B4 networking or source
+    admission. Before a runtime consumer adopts them, review recipe ownership,
+    verified endpoints/terms, per-cycle budgets, DNS/TLS isolation, quarantine
+    retention/recovery, approval/binding lineage and compatibility. A collected
+    metadata document is not an attested measurement or a resolved need. No
+    installed activation or shared-contract acceptance is inferred from the
+    owner research exception or local tests.
 
 ## Evidence available
 

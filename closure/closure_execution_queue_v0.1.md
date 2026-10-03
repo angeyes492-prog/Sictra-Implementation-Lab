@@ -26,8 +26,18 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    candidate local mechanism only, not resolved need or accepted architecture.
 2. `COMPARABLE-APPROVED-INPUT` (aristas 1/2/4/5): INSUFFICIENT EVIDENCE.
    Eurostat maritime tonnes and HN customs CIF USD do not measure the same
-   phenomenon. Registry candidates are not approvals; no network source
-   acquisition is authorized by root AGENTS.md. Owner: source authority.
+   phenomenon. Registry candidates are not approvals. Owner authorization
+   changed 2026-10-03: agent-assisted public official research acquisition is
+   now permitted by root AGENTS.md, not installed-runtime networking or source
+   admission. Owner: source authority for approval; agent for collection.
+   New technical route IMPLEMENTED / EXECUTED: fixed Eurostat terms/metadata
+   recipes, pinned public-address TLS, budgets, content-addressed quarantine,
+   terms lineage, replay/tamper/expiry checks and read-only exact-section
+   methodology review. Two real official documents were retained; eight
+   methodology sections were extracted, not resolved or attested. Evidence:
+   evidence/telecare_official_research_acquisition_2026-10-03.md. Next independent
+   technical item: bounded official data recipe and strict normalization,
+   preserving original bytes and existing source-admission requirements.
    Next action: approve a bounded comparable source with rights, scope, binding,
    refresh/revision policy and admissible retained cases; continue local work
    while this decision remains pending. No corroboration or resolution follows.
@@ -180,8 +190,43 @@ contradictory evidence identifies a safe technical repair. No automatic resume.
 
 ### Proactive execution control — separate from gates/backlog
 
-Consecutive zero-technical-delta runs: `0`. Last real delta: geographic no-match
-rejection repair with retained-pipeline independent progress and replay tests.
+Continuation 2026-10-03: the first full new regression executed 851 tests and
+failed on the retained Windows 10053 unauthorized POST vector (138.503s).
+This is new contradictory transport evidence, not a reason to weaken/retry the
+assertion until green. A deterministic unit attack proved the existing handler
+left the forbidden body unread; two unit vectors failed before repair. The
+candidate now flushes 403 and discards only a small correctly framed body under
+a one-second deadline without parsing/dispatch or connection reuse. Five new
+unit tests cover framing, no parsing, deadline/cancellation and unchanged
+non-rejection paths; one loopback same-socket delayed-body test proves 403,
+no journal mutation and subsequent trusted control. An initial integration
+fixture used HTTPConnection.send after a closing response, risking auto-opening
+a different socket; raw HTTPResponse over the same retained socket repaired
+that oracle. The original failing HTTP assertion is unchanged and passes in
+the seven-test focused run. This repairs a demonstrated unread-body path;
+not all possible Windows transport failures are declared explained. Final full
+regression and exact-SHA CI follow before accepting commit evidence.
+Intermediate full regression after that transport repair: 857/857 tests in
+140.470 seconds. A later staggered metadata/terms acquisition attack exposed
+an overlong report expiry; the new test failed before repair. Methodology now
+binds both hashes/expiries, rechecks both inputs and uses the earliest expiry.
+Focused acquisition/methodology/transport: 30/30 unique tests after repair.
+The final full regression includes that new vector, not just the intermediate run.
+Final local regression after all repairs: 858/858 Python tests in 142.500s,
+17/17 JavaScript tests, compileall, launcher-path validation and diff checks
+passed. This is 31 new Python vectors over c528205: 17 acquisition, eight
+methodology and six transport. Final checkout preflight and hosted exact-SHA
+CI are separately recorded in PR #18, not inferred from local test counts.
+
+Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-03): agent
+official acquisition/quarantine and exact methodology extraction, 25 new tests,
+two actual downloads, rejection/deadline/Unicode repairs, plus bounded denied
+HTTP body handling with six new transport vectors. This is a manual
+owner-requested continuation, not a scheduled heartbeat or gate promotion.
+The earlier no-safe-next-item diagnosis above is historical: the new owner
+research authorization changed an input and created the explicit route in
+item 2. Automated installed-runtime acquisition remains disabled; the paused
+heartbeat has not been silently resumed or duplicated.
 Automation construcci-n-proactiva-de-telecare-os: PAUSED by the app on
 2026-10-01 local under the authorized immediate-no-safe-next-item rule; name,
 prompt, hourly schedule and target thread were preserved. A material delta
