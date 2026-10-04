@@ -72,6 +72,10 @@ def _record(control, review, now):
     _check(isinstance(control, SourceControlStore), "ADMISSION_CONTROL_INVALID")
     record = control.active_record("eurostat", now=now)
     _check(record is not None, "ADMISSION_APPROVAL_MISSING_OR_EXPIRED")
+    history = [item for item in control.list_records(now=now)
+               if item["source_id"] == "eurostat" and item["issued_at"] <= now]
+    _check(history and history[-1]["binding_id"] == record["binding_id"],
+           "ADMISSION_APPROVAL_SUPERSEDED")
     registration, approval, binding = record["registration"], record["approval"], record["binding"]
     _check(registration["scope"] == SCOPE and registration["publisher"] == "Eurostat / European Commission"
            and registration["allowed_hosts"] == ["ec.europa.eu"] and registration["claim_keys"] == [CLAIM]

@@ -51,6 +51,9 @@ alteration, expiry, superseded approval, scope/terms substitution, signature
 mutation, forged self-consistent content, future/rollback time and changed reads.
 Effective expiry is the earliest data/metadata/terms/binding boundary; this
 candidate enforces the binding end exclusively, a stricter local boundary.
+Among bindings already issued at the verification time, only the newest may
+authorize this candidate. An expired newer binding does not reinstate an older
+still-live grant; history is retained without implicit rollback of authority.
 
 All functions are read-only. Restart repeats the same result while dependencies
 remain current; no ledger migration or automatic replay promotion. The legacy

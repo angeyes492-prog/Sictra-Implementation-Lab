@@ -67,6 +67,16 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
     PENDING / NOT_ADMITTED; fixture authority is not a real reviewer decision.
     No accepted shared contract, existing pipeline migration or installed
     runtime effect follows from this candidate port.
+    The subsequent dedicated statistical retention facade reuses the existing
+    evidence-store HMAC/atomic-write primitive without relaxing XLSX validation.
+    Review its publisher-time head/ambiguity policy, format-specific history,
+    full current consumer verification, memoized historical reconstruction and
+    external checkpoint custody. It requires a trusted control-head checkpoint
+    and an external history checkpoint on reopening. Known signed heads cannot
+    be rolled back, but authentic custody cannot be inferred from a hash read
+    from the restored file itself. Original keys/quarantine/control are required
+    for data-only recovery. No installed backup/scheduler adoption, independent
+    custody validation or acceptance follows from the fixture tests.
 
 ## Evidence available
 

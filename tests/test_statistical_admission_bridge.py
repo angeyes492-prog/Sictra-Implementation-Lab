@@ -236,3 +236,15 @@ class StatisticalAdmissionTests(unittest.TestCase):
         with patch.object(self.issuer, "attest", side_effect=expire):
             with self.assertRaisesRegex(StatisticalAdmissionViolation, "NOT_CURRENT"):
                 self.attest()
+
+    def test_expired_rotation_cannot_resurrect_prior_still_live_grant(self):
+        self.approve_fixture(ttl=100)
+        prior = self.attest()
+        self.now = NOW + 1
+        self.approve_fixture(ttl=1)
+        self.now = NOW + 3
+        # The generic control lookup falls back to the older live token.
+        # The statistical contract forbids reinstating superseded authority.
+        self.assertIsNotNone(self.control.active_record("eurostat", now=self.now))
+        with self.assertRaisesRegex(StatisticalAdmissionViolation, "SUPERSEDED"):
+            self.verify(prior)

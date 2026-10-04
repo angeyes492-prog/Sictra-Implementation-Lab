@@ -51,9 +51,22 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    reviewer remains null, PENDING / NOT_ADMITTED. Evidence:
    evidence/telecare_statistical_admission_bridge_2026-10-03.md. No source
    approval, retained statistical pipeline or installed activation was created.
-   Next technical route: candidate format-specific retention/recovery with
-   current control/dependency enforcement; do not weaken the existing XLSX
-   validator. Admission and independent comparable input remain separate.
+   Candidate format-specific retention/recovery is now IMPLEMENTED / EXECUTED;
+   exact new-SHA CI remains separate evidence. Full local regression passed
+   907 unique Python tests in 719.006s and 17 JavaScript tests. Focused 42/42 passed,
+   including 21 new retention cases, 15 admission and six legacy-store cases.
+   It reuses the original
+   HMAC/atomic-write primitive, reconstructs historical packets and selects
+   only current unambiguous publisher-release heads with exact identity.
+   New adversarial evidence reproduced expired-authority fallback and valid
+   older signed history/control rollback; newest-issued authorization and
+   trusted/observed chain checkpoints reject those paths after repair.
+   Checkpoint custody, accepted runtime consumer and actual reviewed source
+   admission remain open; a restored file cannot authenticate its own head.
+   Evidence: evidence/telecare_statistical_retention_2026-10-03.md.
+   Next technical route: integrate the statistical selection with candidate
+   same-period watchlist/fact production, preserving the distinct format and
+   currentness boundary. Admission and independent comparable input remain separate.
    Next authority action: approve a bounded comparable source with rights, scope, binding,
    refresh/revision policy and admissible retained cases; continue local work
    while this decision remains pending. No corroboration or resolution follows.
@@ -235,8 +248,9 @@ methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
 Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-03 local /
-2026-10-04 UTC): format-specific statistical admission bridge, actual pending
-review packet and fourteen new positive/adversarial tests. Persistent owner
+2026-10-04 UTC): format-specific statistical retention/recovery, three reproduced
+authority/rollback failures and repairs, external checkpoint guard and current
+selection without stale fallback. Persistent owner
 goal now covers the seven remaining processes and twelve-arista verification;
 it does not resume the paused heartbeat or alter source/MAR authority.
 Earlier real delta (2026-10-03): agent
