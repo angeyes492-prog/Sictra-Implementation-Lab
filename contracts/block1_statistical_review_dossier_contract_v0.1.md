@@ -18,6 +18,10 @@ NOT_RESOLVED, editorial RESEARCH_NEEDED, runtime NONE, publication BLOCKED,
 acceptance NOT_ACCEPTED. Missing observations remain uncertainties. Existing
 admission rejects an all-missing release before it can produce a dossier.
 Storage changes no source truth or substantive interpretation semantics.
+Producer reads capture trusted time before composition and reject a final
+time earlier than that start, including rollback after source verification.
+The editorial view applies the same start/final monotonicity fence after its
+last dossier verification; an expiry-only comparison is insufficient.
 
 editorial_candidate() rechecks the dossier before and after the existing
 editorial engine assessment. It preserves literal current publisher measurements

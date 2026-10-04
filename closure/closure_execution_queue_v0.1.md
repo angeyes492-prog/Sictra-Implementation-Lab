@@ -134,6 +134,22 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    adoption. Final full regression passed 958/958 unique Python tests in
    865.441s and 17/17 JavaScript tests, compileall and launcher checks. Committed
    clean preflight/new exact-SHA CI remain separate requirements.
+   Dossier SHA b9d4412d5512615a1556329174fa79a5d0eff4a4 now passed exact
+   hosted push 37230772767 and PR 37230775793; clean 24/24 preflight passed,
+   product NOT_DEMONSTRATED. Chained native-backup compatibility verification:
+   three new focused tests passed in 98.309s using OperationsStore.backup/
+   restore, including identical recovered candidate/blocked editorial/replay,
+   operations-only file/key/source boundary and rejection of absent/expired
+   source, wrong key, tamper or overwriting. This is additional executable
+   integration evidence, not source/custody approval or a new recovery scope.
+   A new final-clock rollback test reproduced a producer returning a future
+   observation after source verification. The producer now fences final time
+   against its captured start, as does editorial after its last verification.
+   The combined rejection vector and two positive paths pass 3/3 in 94.945s.
+   Prior 961/intermediate 962 runs were interrupted and are not final evidence.
+   Final full regression after both temporal repairs passed 962/962 unique
+   Python tests in 861.773s and 17/17 JavaScript tests, compileall and launcher
+   paths. New clean committed preflight/exact-SHA hosted CI remain separate.
    Evidence: evidence/telecare_statistical_review_dossier_2026-10-04.md;
    shared adoption boundary OPEN MAR item 14. Next action: source-specific
    resolution semantics, independent reference
@@ -307,7 +323,10 @@ CI are separately recorded in PR #18, not inferred from local test counts.
 Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-04 local):
 candidate durable statistical dossier/editorial integration, transactional
 failure/STOP rollback, source-dependent restart/recovery and signed-content/
-currentness rejection. Prior real delta (2026-10-03 local / 2026-10-04 UTC):
+currentness rejection, followed by native operations-backup/restore positive
+and rejection integration vectors. This does not reset the counter for
+documentation or repeat an unchanged previously closed vector.
+Prior real delta (2026-10-03 local / 2026-10-04 UTC):
 one actual official national-methodology acquisition and
 sixteen-section origin/scope review, publisher-time separation, exact recipe/
 legacy-substitution rejection and positive/adversarial/recovery execution.

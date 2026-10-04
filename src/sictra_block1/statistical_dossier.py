@@ -44,10 +44,13 @@ class StatisticalDossierProducer:
         return dossier
 
     def read(self):
+        started = _time(self.clock)
         projection = self.watchlist.read()
         dossier = self._compose(projection)
         self.watchlist.verify_projection(projection)
-        _require(_time(self.clock) < dossier["expires_at"], "DOSSIER_READ_EXPIRED")
+        finished = _time(self.clock)
+        _require(finished >= started, "DOSSIER_READ_TIME_INVALID")
+        _require(finished < dossier["expires_at"], "DOSSIER_READ_EXPIRED")
         return deepcopy(dossier)
 
     def verify_dossier(self, value):
@@ -62,6 +65,7 @@ class StatisticalDossierProducer:
                 "runtime_effect": "NONE", "acceptance": "NOT_ACCEPTED"}
 
     def editorial_candidate(self, dossier):
+        started = _time(self.clock)
         self.verify_dossier(dossier)
         candidate = {
             "candidate_id": "ED-" + dossier["dossier_id"], "event_id": dossier["dossier_id"],
@@ -98,7 +102,9 @@ class StatisticalDossierProducer:
         _require(assessment["disposition"] == "RESEARCH_NEEDED" and assessment["editorial_readiness"] == "BLOCKED",
                  "DOSSIER_EDITORIAL_BOUNDARY_VIOLATION")
         self.verify_dossier(dossier)
-        _require(_time(self.clock) < dossier["expires_at"], "DOSSIER_EDITORIAL_EXPIRED")
+        finished = _time(self.clock)
+        _require(finished >= started, "DOSSIER_EDITORIAL_TIME_INVALID")
+        _require(finished < dossier["expires_at"], "DOSSIER_EDITORIAL_EXPIRED")
         return {"candidate": candidate, "assessment": assessment, "dossier_id": dossier["dossier_id"],
                 "evidence_refs": deepcopy(dossier["evidence_refs"]), "expires_at": dossier["expires_at"],
                 "publication_state": "BLOCKED", "handoff": None}

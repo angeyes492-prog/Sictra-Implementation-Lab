@@ -220,6 +220,86 @@ class StatisticalReviewDossierTests(unittest.TestCase):
             with self.assertRaises(OperationsError):
                 OperationsStore(restored / self.ops.path.name, b"wrong" * 8)
 
+    def test_native_operations_backup_restore_preserves_candidate_and_replay(self):
+        self.first()
+        receipt = self.archive.record()
+        expected = self.archive.read(receipt["dossier_id"])
+        records = self.ops.records()
+        with TemporaryDirectory() as folder:
+            backup = Path(folder) / "backup"
+            manifest = self.ops.backup(backup)
+            self.assertEqual({"manifest.json", "operations.sqlite"}, {p.name for p in backup.iterdir()})
+            self.assertEqual("OPERATIONS_ONLY", manifest["scope"])
+            self.assertIs(False, manifest["keys_included"])
+            self.assertIs(False, manifest["source_pipeline_included"])
+            self.assertEqual(sha256((backup / "operations.sqlite").read_bytes()).hexdigest(), manifest["sha256"])
+            restored = self.ops.restore(backup, Path(folder) / "restored.sqlite")
+            recovered = self.open_archive(store=restored)
+            self.assertEqual(records, restored.records())
+            self.assertEqual(expected, recovered.read(receipt["dossier_id"]))
+            self.assertEqual("BLOCKED", recovered.editorial_candidate(receipt["dossier_id"])["publication_state"])
+            self.assertTrue(recovered.record()["replay"])
+            self.assertEqual(records, restored.records())
+            self.assertEqual(records, self.ops.records())
+
+    def test_native_operations_restore_alone_cannot_revive_missing_or_expired_source(self):
+        self.first()
+        receipt = self.archive.record()
+        with TemporaryDirectory() as folder:
+            backup = Path(folder) / "backup"
+            self.ops.backup(backup)
+            restored = self.ops.restore(backup, Path(folder) / "restored.sqlite")
+            before = restored.records()
+            absent = self.f.open_store(path=Path(folder) / "absent-source-history.json", history_checkpoint=None)
+            missing = self.open_archive(store=restored,
+                producer=StatisticalDossierProducer(StatisticalWatchlist(absent)))
+            with self.assertRaises(ContractViolation):
+                missing.read(receipt["dossier_id"])
+            self.assertEqual(before, restored.records())
+            recovered = self.open_archive(store=restored)
+            self.f.fixture.now = NOW + 86400
+            for action in (lambda: recovered.read(receipt["dossier_id"]),
+                           lambda: recovered.editorial_candidate(receipt["dossier_id"]), recovered.record):
+                with self.assertRaises(ContractViolation):
+                    action()
+            self.assertEqual(before, restored.records())
+
+    def test_native_backup_tamper_wrong_key_and_overwrite_reject_before_restore(self):
+        self.first()
+        self.archive.record()
+        records = self.ops.records()
+        with TemporaryDirectory() as folder:
+            backup = Path(folder) / "backup"
+            self.ops.backup(backup)
+            destination = Path(folder) / "restored.sqlite"
+            wrong = OperationsStore(Path(folder) / "wrong-key.sqlite", b"wrong" * 8)
+            with self.assertRaisesRegex(OperationsError, "BACKUP_INTEGRITY"):
+                wrong.restore(backup, destination)
+            self.assertFalse(destination.exists())
+            manifest = backup / "manifest.json"
+            raw = manifest.read_bytes()
+            manifest.write_bytes(raw.replace(b"OPERATIONS_ONLY", b"COMPLETE_SYSTEM"))
+            with self.assertRaisesRegex(OperationsError, "BACKUP_INTEGRITY"):
+                self.ops.restore(backup, destination)
+            self.assertFalse(destination.exists())
+            manifest.write_bytes(raw)
+            database = backup / "operations.sqlite"
+            database_raw = database.read_bytes()
+            database.write_bytes(database_raw + b"tamper")
+            with self.assertRaisesRegex(OperationsError, "BACKUP_INTEGRITY"):
+                self.ops.restore(backup, destination)
+            self.assertFalse(destination.exists())
+            database.write_bytes(database_raw)
+            restored = self.ops.restore(backup, destination)
+            unchanged = destination.read_bytes()
+            with self.assertRaisesRegex(OperationsError, "RESTORE_TARGET_EXISTS"):
+                self.ops.restore(backup, destination)
+            with self.assertRaisesRegex(OperationsError, "BACKUP_TARGET_EXISTS"):
+                self.ops.backup(backup)
+            self.assertEqual(unchanged, destination.read_bytes())
+            self.assertEqual(records, restored.records())
+            self.assertEqual(records, self.ops.records())
+
     def test_configuration_selection_and_caller_payload_override_reject(self):
         for identity in (None, "", "other"):
             with self.assertRaises(OperationsError):
@@ -279,6 +359,34 @@ class StatisticalReviewDossierTests(unittest.TestCase):
         with patch.object(self.producer, "verify_dossier", side_effect=expire):
             with self.assertRaisesRegex(OperationsError, "READ_EXPIRED"):
                 self.archive.read(receipt["dossier_id"])
+        self.assertEqual(before, self.ops.records())
+
+    def test_producer_final_clock_rollback_withholds_future_observation(self):
+        self.first()
+        verify = self.producer.watchlist.verify_projection
+        def regress(value):
+            result = verify(value)
+            self.f.fixture.now = NOW - 1
+            return result
+        before = self.ops.records()
+        with patch.object(self.producer.watchlist, "verify_projection", side_effect=regress):
+            with self.assertRaisesRegex(ContractViolation, "DOSSIER_READ_TIME_INVALID"):
+                self.producer.read()
+        self.assertEqual(before, self.ops.records())
+        self.f.fixture.now = NOW
+        dossier = self.producer.read()
+        verify_dossier = self.producer.verify_dossier
+        checks = 0
+        def regress_after_editorial_check(value):
+            nonlocal checks
+            result = verify_dossier(value)
+            checks += 1
+            if checks == 2:
+                self.f.fixture.now = NOW - 1
+            return result
+        with patch.object(self.producer, "verify_dossier", side_effect=regress_after_editorial_check):
+            with self.assertRaisesRegex(ContractViolation, "DOSSIER_EDITORIAL_TIME_INVALID"):
+                self.producer.editorial_candidate(dossier)
         self.assertEqual(before, self.ops.records())
 
     def test_archived_dossier_composes_only_blocked_editorial_candidate_with_one_current_root(self):

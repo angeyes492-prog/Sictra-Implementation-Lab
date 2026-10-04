@@ -113,3 +113,65 @@ audience/exposure, delivery/outcomes and sustained operation remain requirements
 No remote source collection occurred; fixture transports are not downloads.
 Paused heartbeat stays paused. Rollback ignores the additive kind and removes
 these consumers, preserving source and operations history.
+
+## Chained native-backup integration verification
+
+The dossier implementation SHA b9d4412d5512615a1556329174fa79a5d0eff4a4 passed
+exact hosted push 37230772767 and PR 37230775793, both completed/success with
+that head_sha independently checked. Its clean preflight executed 24/24,
+unchanged/valid checkout, source-tree SHA-256
+edad2da6a556283edcb2aacc19d0f9cbd56590df6315f397041e2ec35e61d521.
+Product remains NOT_DEMONSTRATED / NOT_ACCEPTED.
+
+Next observable closure: exercise the existing native OperationsStore backup/
+restore APIs, rather than infer their compatibility from the earlier raw
+data-copy recovery. This is a new integration evidence vector, not a new
+backup implementation or expansion of its scope.
+
+Three additional tests passed in 98.309s. The native backup contains exactly
+operations.sqlite and manifest.json; its signed manifest is OPERATIONS_ONLY,
+keys_included false and source_pipeline_included false. A restored journal
+recovers the exact dossier and blocked editorial candidate with original live
+source dependencies; replay preserves both original and restored records.
+An absent source history or expired source prevents current dossier/editorial
+reads and record attempts without changing the recovered history. Wrong key,
+altered manifest, altered database and occupied restore/backup destinations
+reject; invalid restore attempts create no destination or overwrite. Oracles
+are declared file inventory, independent SHA-256, unchanged records/bytes and
+existing rejection boundaries. These temporary fixture backups contain no
+real source admission or organizational key-custody evidence.
+
+Wolfram's four-predicate recovery model (correct key, verified archive, current
+source, current time) resolves all 16 cases: one allowed, zero allowed without
+current source or after expiry. This conjunction excludes runtime execution,
+concurrent writes and acceptance. The actual native-API tests above are the
+integration evidence. Notion/Slack context remains the dated reconciliation
+above; neither supplied a new approval. The original owner checkout and
+paused heartbeat remain outside this test-only increment.
+
+Additional adversarial review reproduced a final clock-rollback gap in the
+standalone producer: after its last watchlist verification, trusted time was
+set to one second before the observation. The new rejection test failed
+before repair (one test, 5.392s): a future-observation dossier was returned.
+Producer read now captures its starting trusted time and checks final time
+against it as well as expiry. The unchanged test passed after repair
+(one test, 1.618s). The in-progress 961-test regression was interrupted because
+it preceded this repair; it supplies no final pass. No authority or source
+freshness interval was relaxed. This extends the existing current-input
+boundary, not substantive dossier semantics or shared acceptance.
+The same vector was then extended to the final editorial check: it failed
+there before repair (one test, 16.094s), demonstrating the same expiry-only
+gap in that public view. Editorial now applies the same trusted start/final
+monotonicity fence. The intermediate 962-test regression was interrupted before
+that final repair and supplies no final pass. All final code is re-executed
+below; interrupted executions are not counted as successful regressions.
+The combined final rollback vector and two unchanged positive dossier/replay/
+editorial paths passed 3/3 in 94.945s after both repairs. Wolfram resolved ten
+declared start/final/expiry cases: expiry-only allowed three clock rollbacks;
+the start-and-expiry fence allowed none. This finite model is not runtime proof.
+
+Discovery counts 962 unique Python tests. Final full regression after both
+temporal repairs passed 962/962 in 861.773s; 17/17 JavaScript tests, compileall
+and launcher paths also passed. New clean committed preflight and hosted
+exact-SHA CI remain separately bound in PR #18/workflow history. No product
+acceptance or source approval follows from these bounded execution results.
