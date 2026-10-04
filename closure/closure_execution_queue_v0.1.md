@@ -64,9 +64,25 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    Checkpoint custody, accepted runtime consumer and actual reviewed source
    admission remain open; a restored file cannot authenticate its own head.
    Evidence: evidence/telecare_statistical_retention_2026-10-03.md.
-   Next technical route: integrate the statistical selection with candidate
-   same-period watchlist/fact production, preserving the distinct format and
-   currentness boundary. Admission and independent comparable input remain separate.
+   Current retention SHA 931854dbd28698c500323eadf1af2ef40b01e815 passed exact
+   GitHub push 37168100441 and PR 37168102987 (rechecked this cycle).
+   Candidate same-period statistical watchlist/fact production is now
+   IMPLEMENTED / EXECUTED in focused fixtures. It consumes that retained
+   history, compares publisher releases rather than two different years,
+   distinguishes value, flag and missingness/coverage change and exposes
+   literal current publisher measurements separately from interpretation.
+   Current snapshot/checkpoint/expiry rechecks reject changed inputs; old
+   baseline is HISTORICAL_CONTEXT_ONLY, never an engine input/current root.
+   Twenty-one new vectors include actual data-only fixture recovery and
+   legacy dossier rejection. Red-team reproduced Python numeric/custom
+   equality accepting altered projections; canonical JSON verification now
+   rejects both. Final local regression passed 928 unique Python tests in
+   328.051s and 17 JavaScript tests; new exact-SHA CI remains separate evidence.
+   Evidence: evidence/telecare_statistical_watchlist_2026-10-03.md.
+   Next technical route: an explicitly candidate bounded consumer, if its
+   specification is sufficiently defined; no legacy format substitution or
+   runtime adoption without MAR item 13. Admission and independent comparable
+   input remain separate, and no actual unapproved statistical source was admitted.
    Next authority action: approve a bounded comparable source with rights, scope, binding,
    refresh/revision policy and admissible retained cases; continue local work
    while this decision remains pending. No corroboration or resolution follows.
@@ -79,6 +95,10 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    after signed-package/hash/body/expiry rechecks. History is not rewritten;
    cause remains UNCONFIRMED, resolution NOT_RESOLVED. Source metadata and
    accepted substantive interpretation remain pending, not replaced by this classifier.
+   New distinct statistical projection retains the same epistemic boundary:
+   current facts, comparison, historical evidence, uncertainties, limitations,
+   executive questions and unresolved needs are separate. No accepted durable
+   dossier, causal explanation or resolution is inferred from recomputation.
    Next action: source-specific resolution semantics, independent reference
    cases and interpretation/hypothesis acceptance; technical deltas stay literal.
 4. `DESIGN-PRECISION-EFFECTS` (aristas 8/9/11): INSUFFICIENT EVIDENCE.
@@ -248,9 +268,12 @@ methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
 Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-03 local /
-2026-10-04 UTC): format-specific statistical retention/recovery, three reproduced
-authority/rollback failures and repairs, external checkpoint guard and current
-selection without stale fallback. Persistent owner
+2026-10-04 UTC): statistical release comparison/literal-fact projection,
+positive/rejection/recovery fixtures and reproduced numeric/custom-equality
+verification failure repaired with exact canonical JSON. Prior real delta:
+format-specific statistical retention/recovery, three reproduced authority/
+rollback failures and repairs, external checkpoint guard and current selection
+without stale fallback. Persistent owner
 goal now covers the seven remaining processes and twelve-arista verification;
 it does not resume the paused heartbeat or alter source/MAR authority.
 Earlier real delta (2026-10-03): agent

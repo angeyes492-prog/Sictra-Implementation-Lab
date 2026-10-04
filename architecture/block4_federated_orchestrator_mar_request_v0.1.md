@@ -78,6 +78,21 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
     for data-only recovery. No installed backup/scheduler adoption, independent
     custody validation or acceptance follows from the fixture tests.
 
+13. Candidate statistical watchlist v0.1 consumes checkpoint-verified retained
+    statistical releases without pretending JSON-stat is a legacy XLSX input.
+    It adds a read-only deterministic same-period comparison and literal-fact
+    projection, not another journal/key/approval plane or an accepted dossier.
+    Review the baseline policy: uniquely identified prior publisher release
+    verified at its original admission time is HISTORICAL_CONTEXT_ONLY, even
+    when now expired/superseded. It is never a current root or engine input.
+    Current source/dependencies must pass the full retention verifier, and
+    snapshot/checkpoint rechecks plus the final expiry fence must hold.
+    Missingness/flag changes are distinct from value changes; arithmetic cannot
+    impute missing values or compare different years. No interpretation,
+    need resolution, editorial readiness, installed activation or shared
+    format acceptance follows. Downstream E01-E08/B4/UI adoption is separate;
+    rollback removes this consumer and preserves retained inputs unchanged.
+
 ## Evidence available
 
 The bounded SUT has positive progression/recovery coverage and adversarial
