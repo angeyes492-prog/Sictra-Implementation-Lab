@@ -56,6 +56,18 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
     category position, missingness, flags and publisher update parsing are
     technical inputs, not runtime adoption, corroboration or source approval.
 
+12. Candidate statistical admission bridge v0.1 introduces the explicit scope
+    BLOCK1_EUROSTAT_STATISTICS_BE_2023_2024 and a distinct statistical media
+    type. It requires exact current terms/methodology lineage and separately
+    supplied signed source control; the legacy XLSX approval cannot authorize
+    it. Consumer verification recomputes content/lineage independently of the
+    producer signature, with read-time expiry/rotation checks. Review scope,
+    format compatibility, exclusive binding expiry, retention and the required
+    dedicated consumer before adoption. The actual prepared review remains
+    PENDING / NOT_ADMITTED; fixture authority is not a real reviewer decision.
+    No accepted shared contract, existing pipeline migration or installed
+    runtime effect follows from this candidate port.
+
 ## Evidence available
 
 The bounded SUT has positive progression/recovery coverage and adversarial

@@ -42,7 +42,19 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    One real 2647-byte API response is retained and inspected; 13 new vectors
    cover mapping, currentness/replay, malformed/sparse scope, query and media.
    It is the same Eurostat root, not independent corroboration or source admission.
-   Next action: approve a bounded comparable source with rights, scope, binding,
+   Chained admission port IMPLEMENTED / EXECUTED in fixtures: standalone
+   research_admission prepares the actual pending statistical review and only
+   attests/verifies with exact format-specific signed source control. Fourteen
+   new vectors cover authority, lineage, currentness, forged signed values,
+   rotation, restart and legacy-consumer rejection. Actual review fingerprint
+   3080fe3a8ba9cd59f07ad5a25cdf6c5fca7e574c7b07ffdfd980bf7fd7f95c98;
+   reviewer remains null, PENDING / NOT_ADMITTED. Evidence:
+   evidence/telecare_statistical_admission_bridge_2026-10-03.md. No source
+   approval, retained statistical pipeline or installed activation was created.
+   Next technical route: candidate format-specific retention/recovery with
+   current control/dependency enforcement; do not weaken the existing XLSX
+   validator. Admission and independent comparable input remain separate.
+   Next authority action: approve a bounded comparable source with rights, scope, binding,
    refresh/revision policy and admissible retained cases; continue local work
    while this decision remains pending. No corroboration or resolution follows.
 3. `RESOLUTION-INTELLIGENCE-EDITORIAL` (aristas 3/5/6/7): ARCHITECTURE_DECISION_REQUIRED
@@ -222,7 +234,12 @@ passed. This is 31 new Python vectors over c528205: 17 acquisition, eight
 methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
-Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-03): agent
+Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-03 local /
+2026-10-04 UTC): format-specific statistical admission bridge, actual pending
+review packet and fourteen new positive/adversarial tests. Persistent owner
+goal now covers the seven remaining processes and twelve-arista verification;
+it does not resume the paused heartbeat or alter source/MAR authority.
+Earlier real delta (2026-10-03): agent
 official acquisition/quarantine, exact methodology extraction and statistical
 normalization, 38 new research tests, three actual downloads,
 rejection/deadline/Unicode/timezone/query repairs, plus bounded denied
