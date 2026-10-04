@@ -100,6 +100,19 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
     format acceptance follows. Downstream E01-E08/B4/UI adoption is separate;
     rollback removes this consumer and preserves retained inputs unchanged.
 
+14. Candidate statistical review dossier/archive keeps B1 literal composition
+    and B4 durable recording on the existing operations HMAC/SQLite plane.
+    Review the distinct schema, canonical identity, expiry/current-input read
+    rechecks, transactional STOP/failure rollback, capacity and source-dependent
+    backup boundary before adoption. It does not change legacy dossiers or
+    enable installed scheduler/UI, E01-E08, signed federation or editorial
+    acceptance. Source files and the journal are not one atomic transaction;
+    current reads must revalidate any historical candidate after commit.
+    Its explicit editorial view uses the existing engine and must remain
+    RESEARCH_NEEDED/BLOCKED with one current root and no measured quality,
+    substantive interpretation, selection or handoff authority. Recheck source
+    validity after assessment; historical context adds no independent root.
+
 ## Evidence available
 
 The bounded SUT has positive progression/recovery coverage and adversarial

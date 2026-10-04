@@ -118,7 +118,25 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    current facts, comparison, historical evidence, uncertainties, limitations,
    executive questions and unresolved needs are separate. No accepted durable
    dossier, causal explanation or resolution is inferred from recomputation.
-   Next action: source-specific resolution semantics, independent reference
+   New candidate technical connection IMPLEMENTED / EXECUTED in fixtures:
+   B1 statistical review dossier composition, B4 archival on the existing
+   operations journal, canonical/current-input verification and blocked
+   editorial-engine assessment with one current root. Eighteen new focused
+   vectors pass (14 archive + three editorial + null-identity repair), including source-dependent
+   recovery, signed forgery/types, STOP/partial-write rollback, changed source,
+   expiry, rotation and complete 7/30/90 contract compatibility. All-missing
+   admission stays rejected. Red-team reproduced a signed null record treated
+   as absent and repaired row-presence/payload separation; the unchanged test
+   now rejects without replacing it. The pre-repair full run was interrupted
+   and provides no final pass evidence. Real source admission, accepted dossier semantics,
+   substantive interpretation and editorial quality remain unproven. Owner:
+   B1/B4 implementation agent for candidate; architecture/source authority for
+   adoption. Final full regression passed 958/958 unique Python tests in
+   865.441s and 17/17 JavaScript tests, compileall and launcher checks. Committed
+   clean preflight/new exact-SHA CI remain separate requirements.
+   Evidence: evidence/telecare_statistical_review_dossier_2026-10-04.md;
+   shared adoption boundary OPEN MAR item 14. Next action: source-specific
+   resolution semantics, independent reference
    cases and interpretation/hypothesis acceptance; technical deltas stay literal.
 4. `DESIGN-PRECISION-EFFECTS` (aristas 8/9/11): INSUFFICIENT EVIDENCE.
    Current local rendering and generic profiles do not demonstrate user
@@ -286,8 +304,11 @@ passed. This is 31 new Python vectors over c528205: 17 acquisition, eight
 methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
-Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-03 local /
-2026-10-04 UTC): one actual official national-methodology acquisition and
+Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-04 local):
+candidate durable statistical dossier/editorial integration, transactional
+failure/STOP rollback, source-dependent restart/recovery and signed-content/
+currentness rejection. Prior real delta (2026-10-03 local / 2026-10-04 UTC):
+one actual official national-methodology acquisition and
 sixteen-section origin/scope review, publisher-time separation, exact recipe/
 legacy-substitution rejection and positive/adversarial/recovery execution.
 Prior real delta: statistical release comparison/literal-fact projection,
