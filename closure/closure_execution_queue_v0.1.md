@@ -79,6 +79,25 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    rejects both. Final local regression passed 928 unique Python tests in
    328.051s and 17 JavaScript tests; new exact-SHA CI remains separate evidence.
    Evidence: evidence/telecare_statistical_watchlist_2026-10-03.md.
+   Watchlist SHA 4c9cf7a6c6963b988b92331cae5ddb711142b78f passed exact push
+   37169904811 and PR 37169907204; clean preflight 24/24, unchanged checkout.
+   New actual research found Belgian ESMS metadata declaring port-origin
+   collection, Statistics Belgium compilation and transmission to Eurostat.
+   These claims require origin-overlap review, not a second independent root.
+   Statbel's direct page required human verification; access was not bypassed.
+   One publicly linked Eurostat national document (192526 bytes) was retained
+   under current reuse-notice lineage and NOT_ADMITTED. A candidate fixed
+   recipe/reader now extracts sixteen origin/scope/revision sections, preserving
+   19 February 2021 as the publisher update and unavailable compilation as
+   unavailable. Generic admission rejects this national recipe as substitution.
+   Thirty-seven focused acquisition/generic/national tests passed. Final full
+   regression passed 940 unique Python tests in 1890.746s and 17 JavaScript
+   tests, revalidated at resumed handoff 2026-10-04 local; new exact-SHA CI
+   remains separate. Evidence:
+   evidence/telecare_national_methodology_research_2026-10-03.md.
+   Next research route: release-specific revision explanation and genuinely
+   same-scope, independently acquired observation; no repeated access attempt
+   on the challenged Statbel page without an access-state change.
    Next technical route: an explicitly candidate bounded consumer, if its
    specification is sufficiently defined; no legacy format substitution or
    runtime adoption without MAR item 13. Admission and independent comparable
@@ -268,7 +287,10 @@ methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
 Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-03 local /
-2026-10-04 UTC): statistical release comparison/literal-fact projection,
+2026-10-04 UTC): one actual official national-methodology acquisition and
+sixteen-section origin/scope review, publisher-time separation, exact recipe/
+legacy-substitution rejection and positive/adversarial/recovery execution.
+Prior real delta: statistical release comparison/literal-fact projection,
 positive/rejection/recovery fixtures and reproduced numeric/custom-equality
 verification failure repaired with exact canonical JSON. Prior real delta:
 format-specific statistical retention/recovery, three reproduced authority/

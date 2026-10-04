@@ -55,6 +55,13 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
     inspection preserves the same quarantine boundary. Query validation,
     category position, missingness, flags and publisher update parsing are
     technical inputs, not runtime adoption, corroboration or source approval.
+    The national-methodology extension adds only the exact Belgian ESMS page
+    publicly linked from Eurostat. It preserves hosting identity separately
+    from the raw compiling-agency claim and original metadata update. Review
+    country-specific coverage, upstream-origin overlap and publisher age
+    before adoption; distinct organisations/URLs do not prove independent
+    evidence. Paragraph/list extraction of sixteen fixed anchors cannot
+    establish a particular release's cause or approve/migrate a source.
 
 12. Candidate statistical admission bridge v0.1 introduces the explicit scope
     BLOCK1_EUROSTAT_STATISTICS_BE_2023_2024 and a distinct statistical media

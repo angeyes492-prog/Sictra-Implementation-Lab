@@ -26,14 +26,19 @@ class ResearchAcquisitionError(ContractViolation):
 
 TERMS_URL = "https://ec.europa.eu/eurostat/help/copyright-notice"
 METADATA_URL = "https://ec.europa.eu/eurostat/cache/metadata/EN/mar_esms.htm"
+NATIONAL_METADATA_RECIPE = "EUROSTAT_BE_MAR_METADATA"
+NATIONAL_METADATA_URL = "https://ec.europa.eu/eurostat/cache/metadata/EN/mar_esms_be.htm"
 STATISTICS_RECIPE = "EUROSTAT_MAR_BE_2023_2024"
 STATISTICS_URL = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/tran_r_mago_nm"
                   "?lang=EN&freq=A&tra_meas=FR_LD_NLD&unit=THS_T&geo=BE&sinceTimePeriod=2023&untilTimePeriod=2024")
 RECIPES = {"EUROSTAT_REUSE_NOTICE": TERMS_URL, "EUROSTAT_MAR_METADATA": METADATA_URL,
+           NATIONAL_METADATA_RECIPE: NATIONAL_METADATA_URL,
            STATISTICS_RECIPE: STATISTICS_URL}
 RECIPE_CONTENT = {
     "EUROSTAT_REUSE_NOTICE": ("text/html", "TERMS_REVIEW", "Eurostat reuse notice."),
     "EUROSTAT_MAR_METADATA": ("text/html", "SOURCE_METHODOLOGY", "Source metadata explaining revisions and coverage changes."),
+    NATIONAL_METADATA_RECIPE: ("text/html", "NATIONAL_METHODOLOGY_REVIEW",
+        "Belgian maritime source origin, coverage and revision methodology; not independent measurement evidence."),
     STATISTICS_RECIPE: ("application/json", "STATISTICAL_SCOPE_REVIEW",
                         "Annual maritime freight loaded and unloaded, Belgium, 2023-2024, thousand tonnes."),
 }
@@ -64,6 +69,7 @@ def validate_recipe(recipe):
     url = RECIPES[recipe]
     p = urlsplit(url)
     if (p.scheme != "https" or p.netloc != "ec.europa.eu" or p.fragment
+            or (recipe == NATIONAL_METADATA_RECIPE and url != NATIONAL_METADATA_URL)
             or (recipe == STATISTICS_RECIPE and url != STATISTICS_URL)
             or (p.query and not (recipe == STATISTICS_RECIPE and url == STATISTICS_URL))
             or any(ord(c) < 33 or c == "\\" for c in url)):

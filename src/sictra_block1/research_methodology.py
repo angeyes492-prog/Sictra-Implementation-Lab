@@ -11,8 +11,12 @@ SECTIONS = ("meta_last_update", "data_descr", "coverage_sector", "coverage_time"
 
 
 class MethodologyParser(HTMLParser):
-    def __init__(self):
+    def __init__(self, section_names=SECTIONS, *, top_sections=(), capture_lists=False):
         super().__init__(convert_charrefs=True)
+        self.section_names = section_names
+        self.top_sections, self.capture_lists = top_sections, capture_lists
+        self.in_button, self.button_section = False, None
+        self.block_tags = []
         self.sections = {}
         self.selected = None
         self.heading = False
@@ -29,20 +33,35 @@ class MethodologyParser(HTMLParser):
                 raise ResearchAcquisitionError("METADATA_PARAGRAPH_UNCLOSED")
             self.selected = None
             self.heading = tag == "h3"
-        if tag == "a" and self.heading:
+        if tag == "button" and self.top_sections:
+            if self.in_button:
+                raise ResearchAcquisitionError("METADATA_BUTTON_NESTED")
+            self.in_button, self.button_section = True, None
+        if tag == "a" and (self.heading or self.in_button):
             names = [value for key, value in attrs if key == "name"]
             if len(names) > 1:
                 raise ResearchAcquisitionError("METADATA_ANCHOR_INVALID")
-            if names and names[0] in SECTIONS:
+            if names and names[0] in self.section_names and (
+                (self.heading and not self.in_button and names[0] not in self.top_sections)
+                or (self.in_button and names[0] in self.top_sections)):
                 name = names[0]
                 if name in self.sections:
                     raise ResearchAcquisitionError("METADATA_ANCHOR_DUPLICATE")
                 self.sections[name] = []
-                self.selected = name
-        if tag == "p" and self.selected and not self.heading:
+                if self.in_button:
+                    if self.button_section is not None:
+                        raise ResearchAcquisitionError("METADATA_BUTTON_AMBIGUOUS")
+                    self.button_section = name
+                else:
+                    self.selected = name
+        if (tag == "p" or (self.capture_lists and tag == "li")) and self.selected and not self.heading:
             if self.paragraph is not None:
-                raise ResearchAcquisitionError("METADATA_PARAGRAPH_INVALID")
-            self.paragraph = []
+                if not self.capture_lists or "p" in self.block_tags:
+                    raise ResearchAcquisitionError("METADATA_PARAGRAPH_INVALID")
+                self.paragraph.append(" ")
+            else:
+                self.paragraph = []
+            self.block_tags.append(tag)
         if tag == "br" and self.paragraph is not None:
             self.paragraph.append(" ")
 
@@ -53,7 +72,16 @@ class MethodologyParser(HTMLParser):
             return
         if tag == "h3":
             self.heading = False
-        if tag == "p" and self.paragraph is not None:
+        if tag == "button" and self.in_button:
+            self.in_button = False
+            self.selected, self.button_section = self.button_section, None
+        if (tag == "p" or (self.capture_lists and tag == "li")) and self.paragraph is not None:
+            if not self.block_tags or self.block_tags[-1] != tag:
+                raise ResearchAcquisitionError("METADATA_BLOCK_MISMATCH")
+            self.block_tags.pop()
+            if self.block_tags:
+                self.paragraph.append(" ")
+                return
             text = " ".join("".join(self.paragraph).split())
             if text:
                 self.sections[self.selected].append(text)
@@ -66,18 +94,24 @@ class MethodologyParser(HTMLParser):
 
 def extract_maritime_methodology(content):
     """Pure text extraction; does not validate source or grant authority."""
+    return _extract_methodology_sections(content, SECTIONS)
+
+
+def _extract_methodology_sections(content, section_names, *, top_sections=(), capture_lists=False):
+    """Shared parser primitive; only fixed consumer tuples carry semantics."""
     if not isinstance(content, bytes) or not 0 < len(content) <= 1024 * 1024:
         raise ResearchAcquisitionError("METADATA_CONTENT_SIZE_INVALID")
     try:
         html = content.decode("utf-8-sig", errors="strict")
     except UnicodeError as error:
         raise ResearchAcquisitionError("METADATA_ENCODING_INVALID") from error
-    parser = MethodologyParser()
+    parser = MethodologyParser(section_names, top_sections=top_sections, capture_lists=capture_lists)
     parser.feed(html)
     parser.close()
-    if parser.paragraph is not None or parser.ignored or parser.heading or set(parser.sections) != set(SECTIONS):
+    if (parser.paragraph is not None or parser.ignored or parser.heading or parser.in_button
+            or set(parser.sections) != set(section_names)):
         raise ResearchAcquisitionError("METADATA_SECTIONS_INCOMPLETE")
-    sections = {key: "\n".join(parser.sections[key]) for key in SECTIONS}
+    sections = {key: "\n".join(parser.sections[key]) for key in section_names}
     if any(not value or len(value) > 16000 for value in sections.values()):
         raise ResearchAcquisitionError("METADATA_SECTION_EMPTY_OR_OVERSIZED")
     return sections

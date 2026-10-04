@@ -24,6 +24,10 @@ The separately specified candidate extension
 `block1_eurostat_statistical_research_contract_v0.1.md` adds one exact fixed
 JSON API recipe. It preserves this receipt schema, old recipe identities and
 all quarantine/non-admission boundaries; it does not permit arbitrary queries.
+The candidate national-methodology contract adds one exact Belgian ESMS URL
+linked by the generic metadata. It uses the same terms/quarantine boundary;
+hosting identity is not statistical origin or an independent root. The new
+recipe cannot replace the generic metadata required by statistical admission.
 
 ## Network and capacity invariants
 
