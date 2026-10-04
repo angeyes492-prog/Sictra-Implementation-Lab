@@ -26,7 +26,17 @@ class ResearchAcquisitionError(ContractViolation):
 
 TERMS_URL = "https://ec.europa.eu/eurostat/help/copyright-notice"
 METADATA_URL = "https://ec.europa.eu/eurostat/cache/metadata/EN/mar_esms.htm"
-RECIPES = {"EUROSTAT_REUSE_NOTICE": TERMS_URL, "EUROSTAT_MAR_METADATA": METADATA_URL}
+STATISTICS_RECIPE = "EUROSTAT_MAR_BE_2023_2024"
+STATISTICS_URL = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/tran_r_mago_nm"
+                  "?lang=EN&freq=A&tra_meas=FR_LD_NLD&unit=THS_T&geo=BE&sinceTimePeriod=2023&untilTimePeriod=2024")
+RECIPES = {"EUROSTAT_REUSE_NOTICE": TERMS_URL, "EUROSTAT_MAR_METADATA": METADATA_URL,
+           STATISTICS_RECIPE: STATISTICS_URL}
+RECIPE_CONTENT = {
+    "EUROSTAT_REUSE_NOTICE": ("text/html", "TERMS_REVIEW", "Eurostat reuse notice."),
+    "EUROSTAT_MAR_METADATA": ("text/html", "SOURCE_METHODOLOGY", "Source metadata explaining revisions and coverage changes."),
+    STATISTICS_RECIPE: ("application/json", "STATISTICAL_SCOPE_REVIEW",
+                        "Annual maritime freight loaded and unloaded, Belgium, 2023-2024, thousand tonnes."),
+}
 MAX_FILE = 8 * 1024 * 1024
 MAX_SESSION = 100 * 1024 * 1024
 AUTHORITY = "AGENTS.md#owner-authorized-public-source-research--2026-10-03"
@@ -53,10 +63,12 @@ def validate_recipe(recipe):
         raise ResearchAcquisitionError("RECIPE_UNSUPPORTED")
     url = RECIPES[recipe]
     p = urlsplit(url)
-    if (p.scheme != "https" or p.netloc != "ec.europa.eu" or p.fragment or p.query
+    if (p.scheme != "https" or p.netloc != "ec.europa.eu" or p.fragment
+            or (recipe == STATISTICS_RECIPE and url != STATISTICS_URL)
+            or (p.query and not (recipe == STATISTICS_RECIPE and url == STATISTICS_URL))
             or any(ord(c) < 33 or c == "\\" for c in url)):
         raise ResearchAcquisitionError("RECIPE_URL_INVALID")
-    return url, p.hostname, p.path
+    return url, p.hostname, p.path + ("?" + p.query if p.query else "")
 
 
 def public_addresses(host, resolver=socket.getaddrinfo):
@@ -154,7 +166,6 @@ class ResearchQuarantine:
                 or descriptor.get("collection_authority") != AUTHORITY
                 or descriptor.get("publisher") != "Eurostat / European Commission"
                 or descriptor.get("source_id") != "eurostat"
-                or descriptor.get("media_type") != "text/html"
                 or type(descriptor.get("byte_length")) is not int
                 or descriptor["byte_length"] != len(content) or not content
                 or descriptor.get("content_sha256") != sha256(content).hexdigest()):
@@ -162,6 +173,10 @@ class ResearchQuarantine:
         if expected_recipe is not None and descriptor["recipe"] != expected_recipe:
             raise ResearchAcquisitionError("CANDIDATE_TERMS_INVALID")
         url, _, _ = validate_recipe(descriptor["recipe"])
+        media_type, need_type, requirement = RECIPE_CONTENT[descriptor["recipe"]]
+        if (descriptor["media_type"] != media_type or descriptor["need_type"] != need_type
+                or descriptor["requirement"] != requirement):
+            raise ResearchAcquisitionError("CANDIDATE_NEED_OR_MEDIA_INVALID")
         if descriptor["original_url"] != url or descriptor["final_url"] != url:
             raise ResearchAcquisitionError("CANDIDATE_URL_INVALID")
         acquired, expiry = descriptor["acquired_at"], descriptor["expires_at"]
@@ -173,9 +188,6 @@ class ResearchQuarantine:
             if descriptor["terms_candidate_id"] is not None or descriptor["need_type"] != "TERMS_REVIEW" or descriptor["requirement"] != "Eurostat reuse notice.":
                 raise ResearchAcquisitionError("CANDIDATE_TERMS_INVALID")
         else:
-            if (descriptor["need_type"] != "SOURCE_METHODOLOGY"
-                    or descriptor["requirement"] != "Source metadata explaining revisions and coverage changes."):
-                raise ResearchAcquisitionError("CANDIDATE_NEED_INVALID")
             self.read(descriptor["terms_candidate_id"], now=now, expected_recipe="EUROSTAT_REUSE_NOTICE")
 
     def retain(self, descriptor, content):
@@ -221,7 +233,8 @@ class ResearchAcquirer:
         now = int(self.clock())
         if now < 0:
             raise ResearchAcquisitionError("CLOCK_INVALID")
-        if recipe == "EUROSTAT_MAR_METADATA":
+        media_type, need_type, requirement = RECIPE_CONTENT[recipe]
+        if recipe != "EUROSTAT_REUSE_NOTICE":
             self.quarantine.read(terms_candidate_id, now=now, expected_recipe="EUROSTAT_REUSE_NOTICE")
         elif terms_candidate_id is not None:
             raise ResearchAcquisitionError("CANDIDATE_TERMS_INVALID")
@@ -241,7 +254,7 @@ class ResearchAcquirer:
                 raise ResearchAcquisitionError("RESPONSE_STATUS_REJECTED")
             if headers.get("content-encoding", "identity").lower() != "identity":
                 raise ResearchAcquisitionError("RESPONSE_ENCODING_REJECTED")
-            if headers.get("content-type", "").split(";", 1)[0].lower() != "text/html":
+            if headers.get("content-type", "").split(";", 1)[0].lower() != media_type:
                 raise ResearchAcquisitionError("RESPONSE_MEDIA_REJECTED")
             length, transfer = headers.get("content-length"), headers.get("transfer-encoding")
             if transfer is not None and (transfer.lower() != "chunked" or length is not None):
@@ -277,11 +290,9 @@ class ResearchAcquirer:
             self.quarantine.read(terms_candidate_id, now=finished)
         descriptor = {"version": "0.1.0", "recipe": recipe, "publisher": "Eurostat / European Commission",
             "source_id": "eurostat", "original_url": url, "final_url": url,
-            "need_type": "TERMS_REVIEW" if recipe == "EUROSTAT_REUSE_NOTICE" else "SOURCE_METHODOLOGY",
-            "requirement": "Eurostat reuse notice." if recipe == "EUROSTAT_REUSE_NOTICE" else
-                "Source metadata explaining revisions and coverage changes.",
+            "need_type": need_type, "requirement": requirement,
             "acquired_at": now, "expires_at": now + 86400,
-            "acquired_utc": datetime.fromtimestamp(now, timezone.utc).isoformat(), "media_type": "text/html",
+            "acquired_utc": datetime.fromtimestamp(now, timezone.utc).isoformat(), "media_type": media_type,
             "byte_length": size, "content_sha256": sha256(content).hexdigest(),
             "terms_candidate_id": terms_candidate_id, "collection_authority": AUTHORITY, **BOUNDARY}
         identity = self.quarantine.retain(descriptor, content)

@@ -100,3 +100,56 @@ define JSON-stat 2.0 and bounded time filters; this research is not implementati
 of that data route. Owner source approval and release-specific explanation
 remain separate. No automated installed-runtime network acquisition, effects,
 gate promotion or background restart occurred.
+
+## Chained statistical-data increment
+
+After exact-SHA bae06bd CI succeeded (push 37163119366, PR 37163123177), the
+next specified item added fixed official API acquisition/JSON-stat inspection.
+Same quarantined root, no runtime/approval imports or effects. Retained receipt:
+`c2650baf62a4c8f86b5a639f78e28c9954760cc6f879dfc074cc13a1ad1fd39d`;
+content SHA-256 `5525b2ac0f59d6439f62829ecda9a2bc7727d91486e6a3475fbda3965c8a6175`,
+2647 bytes, acquired 2026-10-03T23:59:00Z (1791071940), data expiry 1791158340.
+It binds the earlier terms receipt; effective report expiry is 1791155970.
+This increment used one successful GET/no retries; cumulative direct downloads
+this work cycle: three requests, 443795 bytes. Additional discovery opened the
+official API guide and JSON-stat format specification; web preview of the
+exact API URL was unavailable, not an endpoint access denial. The verified,
+pinned direct official acquisition succeeded without any bypass.
+
+Actual report fingerprint:
+`46d6159d311674d818665dc9ac3bf40842cce06f36b2285945423ccfc30916e0`.
+Exact selected scope: tran_r_mago_nm / A / FR_LD_NLD / THS_T / BE / 2023-2024.
+The retained publisher reports 272698.25 thousand tonnes for 2023 and
+274369.05 for 2024, no missing cells or flags in this subset. Publisher update
+raw `2026-03-17T23:00:00+0100`, distinct from acquisition time. These are
+quarantined publisher observations, not attested conclusions, source admission,
+two versions of one observation or independent corroboration. No numeric
+comparison is promoted to revision cause or strategic Intelligence.
+
+The actual compact +0100 publisher offset initially rejected; its independent
+regression case also failed. Valid compact and colon offsets now parse with
+bounded hours/minutes; impossible/garbage offsets still reject. A red-team
+query-removal mutation initially reached transport; it now rejects before
+network by requiring the exact fixed statistical URL. Thirteen new tests cover
+dense/sparse/reordered categories, missing versus zero, raw flags, malformed
+scope/labels/indexes/JSON, errors/asynchronous warnings, media/query isolation,
+exact retained bytes, restart/no writes, terms expiry, tamper and slow reads.
+Focused combined acquisition/methodology/statistics/transport: 43/43 passed.
+Wolfram checked 240 declared row-major positions across all 120 dimension
+permutations for this singleton/two-year cube. It validates that bounded index
+model only, not parsing, access, source truth, runtime or gate acceptance.
+The earlier dated Notion/Slack context supplies no new admission authority.
+
+Reproduction: `python -m sictra_block1.research_statistics --root .runtime/research-quarantine-2026-10-03 --candidate-id c2650baf62a4c8f86b5a639f78e28c9954760cc6f879dfc074cc13a1ad1fd39d`.
+After expiry, reacquire bounded current candidates; never rewrite timestamps.
+Remaining promotion boundary: exact reviewed source/API-format scope, approval
+and binding lineage plus an accepted consumer before runtime ingestion.
+Same-root retrieval cannot close the independent-input or causal-resolution
+gap; those need genuinely comparable separately rooted evidence and contracted
+semantics. Neither installed app nor paused heartbeat was activated.
+Final statistical-increment local regression: 871/871 Python tests in 141.050s,
+17/17 JavaScript tests, compileall, launcher paths and diff checks passed.
+Forty-four new Python tests across both increments; final unchanged-tree
+24-test preflight and exact-SHA GitHub CI are separately bound in PR #18.
+VERIFIED / confidence B for this executed local boundary, not source truth,
+product acceptance, independent review or complete autonomous operation.

@@ -51,6 +51,10 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
     metadata document is not an attested measurement or a resolved need. No
     installed activation or shared-contract acceptance is inferred from the
     owner research exception or local tests.
+    The subsequent fixed Belgium 2023-2024 statistical recipe/JSON-stat
+    inspection preserves the same quarantine boundary. Query validation,
+    category position, missingness, flags and publisher update parsing are
+    technical inputs, not runtime adoption, corroboration or source approval.
 
 ## Evidence available
 

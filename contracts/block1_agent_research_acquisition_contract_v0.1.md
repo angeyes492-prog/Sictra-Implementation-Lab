@@ -14,12 +14,16 @@ with a hash-bound NOT_ADMITTED candidate, or a specific rejection without a
 partial candidate. Select the known Eurostat maritime SOURCE_METHODOLOGY need;
 metadata does not explain the cause of a particular numeric change.
 
-Version 0.1 has two reviewed, fixed HTTPS recipes on `ec.europa.eu`: the reuse
+The initial version 0.1 has two reviewed, fixed HTTPS recipes on `ec.europa.eu`: the reuse
 notice and maritime metadata. They are not arbitrary URLs or source admission
 approvals. Eurostat's public notice permits attributed reuse of its content,
 subject to exceptions. Metadata acquisition requires a current retained reuse
 notice receipt; this binds a terms reference, not a legal/independent review.
 No credentials, cookies, private payload, environment proxy or authentication.
+The separately specified candidate extension
+`block1_eurostat_statistical_research_contract_v0.1.md` adds one exact fixed
+JSON API recipe. It preserves this receipt schema, old recipe identities and
+all quarantine/non-admission boundaries; it does not permit arbitrary queries.
 
 ## Network and capacity invariants
 

@@ -35,9 +35,13 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    terms lineage, replay/tamper/expiry checks and read-only exact-section
    methodology review. Two real official documents were retained; eight
    methodology sections were extracted, not resolved or attested. Evidence:
-   evidence/telecare_official_research_acquisition_2026-10-03.md. Next independent
-   technical item: bounded official data recipe and strict normalization,
-   preserving original bytes and existing source-admission requirements.
+   evidence/telecare_official_research_acquisition_2026-10-03.md. Chained technical
+   increment IMPLEMENTED / EXECUTED: exact tran_r_mago_nm Belgium 2023-2024
+   JSON-stat acquisition/inspection, independent category-position decoding,
+   raw publisher update, missingness/flags and earliest terms/data expiry.
+   One real 2647-byte API response is retained and inspected; 13 new vectors
+   cover mapping, currentness/replay, malformed/sparse scope, query and media.
+   It is the same Eurostat root, not independent corroboration or source admission.
    Next action: approve a bounded comparable source with rights, scope, binding,
    refresh/revision policy and admissible retained cases; continue local work
    while this decision remains pending. No corroboration or resolution follows.
@@ -219,14 +223,31 @@ methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
 Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-03): agent
-official acquisition/quarantine and exact methodology extraction, 25 new tests,
-two actual downloads, rejection/deadline/Unicode repairs, plus bounded denied
+official acquisition/quarantine, exact methodology extraction and statistical
+normalization, 38 new research tests, three actual downloads,
+rejection/deadline/Unicode/timezone/query repairs, plus bounded denied
 HTTP body handling with six new transport vectors. This is a manual
 owner-requested continuation, not a scheduled heartbeat or gate promotion.
 The earlier no-safe-next-item diagnosis above is historical: the new owner
 research authorization changed an input and created the explicit route in
 item 2. Automated installed-runtime acquisition remains disabled; the paused
 heartbeat has not been silently resumed or duplicated.
+Chained statistical increment: same base scope, fixed official API only; no
+runtime network/import/approval effects. Compact publisher +0100 timezone
+initially failed inspection and a new independently stated publisher case;
+valid compact offsets now parse while invalid offsets reject. A stripped
+query mutation initially reached transport instead of URL rejection; exact
+statistical URL validation now rejects before DNS/transport. Focused 43/43
+acquisition/methodology/statistics/transport tests passed. The first increment
+bae06bde4ecf71dfe14ba14a0e739ca80a92ecf0 has successful exact-SHA push
+37163119366 and PR 37163123177, and clean 24-test local preflight. Full
+regression and new final-SHA CI are required for the statistical increment.
+Final chained local regression: 871/871 Python tests in 141.050 seconds,
+17/17 JavaScript tests, compileall, launcher paths and diff checks passed.
+This is 44 new Python vectors over c528205; the final unchanged-checkout
+24-test preflight and hosted CI on the exact statistical SHA remain separately
+bound via PR #18/workflow history. Reviewer: implementation agent, not
+independent; certainty VERIFIED / confidence B for executed bounded mechanisms.
 Automation construcci-n-proactiva-de-telecare-os: PAUSED by the app on
 2026-10-01 local under the authorized immediate-no-safe-next-item rule; name,
 prompt, hourly schedule and target thread were preserved. A material delta
