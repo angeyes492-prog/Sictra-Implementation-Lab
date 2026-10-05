@@ -14,6 +14,7 @@ from urllib.parse import urlsplit
 from .web import CommandCenterHandler, CommandCenterServer
 from .operations_store import OperationsError
 from .factsheet import build_factsheet, render_factsheet
+from sictra_block1.research_review import ResearchReview, render_research_review
 
 
 class OperationsHandler(CommandCenterHandler):
@@ -58,6 +59,33 @@ class OperationsHandler(CommandCenterHandler):
 
     def do_GET(self):
         path = urlsplit(self.path).path
+        if path in {"/research", "/api/research"}:
+            if not self._allowed():
+                return
+            try:
+                review = self.server.research_review
+                if review is None:
+                    self._json(HTTPStatus.NOT_FOUND, {"availability": "NOT_CONFIGURED",
+                        "message": "No hay una selección de investigación oficial configurada."})
+                    return
+                report = review.read()
+                if path == "/api/research":
+                    review.verify_current(report)
+                    self._json(HTTPStatus.OK, report)
+                else:
+                    body = render_research_review(report).encode("utf-8")
+                    review.verify_current(report)
+                    self.send_response(HTTPStatus.OK)
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'; sandbox")
+                    self._headers(); self.end_headers(); self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                return
+            except Exception:
+                self._json(HTTPStatus.CONFLICT, {"availability": "UNAVAILABLE",
+                    "message": "La selección no está vigente o no se pudo verificar; sus datos se retiraron."})
+            return
         if path not in {"/api/operations", "/health"} and not path.startswith("/api/operations/outputs/"):
             return super().do_GET()
         if not self._allowed():
@@ -195,10 +223,13 @@ class OperationsHandler(CommandCenterHandler):
             self._json(HTTPStatus.BAD_REQUEST, {"error": "No se admitió la solicitud.", "reason": type(error).__name__})
 
 
-def create_operations_server(service, *, port=8768):
+def create_operations_server(service, *, port=8768, research_review=None):
+    if research_review is not None and not isinstance(research_review, ResearchReview):
+        raise OperationsError("RESEARCH_REVIEW_CONFIGURATION_INVALID")
     server = CommandCenterServer(("127.0.0.1", port), OperationsHandler)
     server.operations = service
     server.store = service.cases
     server.worker = service.intake
     server.control_token = secrets.token_urlsafe(32)
+    server.research_review = research_review
     return server

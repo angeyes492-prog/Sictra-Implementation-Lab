@@ -13,7 +13,7 @@ from sictra_block1.operator_pipeline import initialize_operator_pipeline, load_o
 from sictra_block1.evidence_comparison import (
     EvidenceComparisonViolation, compare_dossier_measurements,
 )
-from sictra_block1.need_classification import classify_data_need
+from sictra_block1.need_classification import classify_data_need, route_data_need
 from sictra_block1.need_assessment import assess_linked_data_need
 from sictra_block1.change_context import ChangeContextViolation, project_change_context
 from sictra_block1.hn_customs_pipeline import (
@@ -37,6 +37,11 @@ from .operations_store import OperationsError, OperationsStore, process_lock
 from .research_cycle import LocalResearchCycle
 
 AUTONOMY_TASK_RESOLUTION_BOUNDARY = "BLOCK1_CONTRACTED_RESOLUTION_REQUIRED"
+
+
+def _evidence_route(source_id, requirement):
+    """Consume Block 1 routing without adding Block 4 evidence semantics."""
+    return route_data_need(source_id, requirement)
 
 
 def _design_for_dossier(dossier, package, *, synthetic):
@@ -346,14 +351,18 @@ class OperationsService:
                 if latest["status"] != "CURRENT":
                     current_dossiers.remove(dossier)
                     break
-                kind = classify_data_need(source["source_id"], need)
+                route = _evidence_route(source["source_id"], need)
+                required_root = (route["required_evidence_root"] + ":" + root
+                                 if route["id"] == "INDEPENDENT_DOSSIER"
+                                 else route["required_evidence_root"] + ":" + source["source_id"])
                 task = {
                     "task_id": identity, "dossier_id": dossier["dossier_id"],
                     "source_id": source["source_id"], "source_root": root,
-                    "ordinal": ordinal, "kind": kind, "priority": "HIGH",
+                    "ordinal": ordinal, "kind": route["kind"], "priority": "HIGH",
                     "state": "OPEN", "requirement": need.strip(), "created_at": now,
-                    "required_evidence_root": "MUST_DIFFER_FROM:" + root,
-                    "allowed_actions": ["REGISTER_APPROVED_LOCAL_SOURCE", "LINK_CURRENT_CANDIDATE_DOSSIER"],
+                    "evidence_route": route["id"], "required_evidence_root": required_root,
+                    "allowed_actions": route["allowed_actions"],
+                    "next_action": route["next_action"],
                     "forbidden_actions": ["NETWORK_ACQUISITION", "CAUSAL_CONCLUSION", "PUBLICATION", "DELIVERY"],
                     "completion_boundary": AUTONOMY_TASK_RESOLUTION_BOUNDARY,
                     "last_human_review": None,
@@ -449,6 +458,8 @@ class OperationsService:
 
     def _current_task_evidence(self, task, evidence_dossier_id):
         """Recheck both Block 1 stores; a saved link is never proof of currency."""
+        if _evidence_route(task["source_id"], task["requirement"])["id"] != "INDEPENDENT_DOSSIER":
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_ROUTE_NOT_LINKABLE")
         if (not isinstance(evidence_dossier_id, str) or not evidence_dossier_id.strip()
                 or evidence_dossier_id == task["dossier_id"]):
             raise OperationsError("AUTONOMY_TASK_EVIDENCE_ID_INVALID")
@@ -598,7 +609,12 @@ class OperationsService:
             # history must pass a fresh producer export before deriving work.
             dossiers = self.exporter.list_dossiers(now=datetime.fromtimestamp(now, timezone.utc))
             dossiers = self._ensure_autonomy_tasks(dossiers)
-            research = self.research.run(list(self.store.latest("AUTONOMY_TASK").values()),
+            research_tasks = []
+            for task in self.store.latest("AUTONOMY_TASK").values():
+                route = _evidence_route(task["source_id"], task["requirement"])
+                research_tasks.append({**task, "evidence_route": route["id"],
+                                       "next_action": route["next_action"]})
+            research = self.research.run(research_tasks,
                                          dossiers, budget=max_research_attempts)
             profiles = self.store.latest("PROFILE")
             outputs = self.store.latest("OUTPUT")
@@ -715,8 +731,17 @@ class OperationsService:
                 view = dict(task)
                 view["source_evidence_status"] = evidence[task["dossier_id"]]["status"]
                 view["effective_completion_boundary"] = AUTONOMY_TASK_RESOLUTION_BOUNDARY
-                view["effective_kind"] = classify_data_need(task["source_id"], task["requirement"])
-                view["research_evaluation"] = self.research.view(task)
+                route = _evidence_route(task["source_id"], task["requirement"])
+                view["effective_kind"] = route["kind"]
+                view["effective_evidence_route"] = route["id"]
+                view["effective_required_evidence_root"] = (
+                    route["required_evidence_root"] + ":" + task["source_root"]
+                    if route["id"] == "INDEPENDENT_DOSSIER"
+                    else route["required_evidence_root"] + ":" + task["source_id"])
+                view["effective_allowed_actions"] = route["allowed_actions"]
+                research_task = {**task, "evidence_route": route["id"],
+                                 "next_action": route["next_action"]}
+                view["research_evaluation"] = self.research.view(research_task)
                 view["boundary_status"] = ("CURRENT" if task.get("completion_boundary") ==
                                            AUTONOMY_TASK_RESOLUTION_BOUNDARY else "LEGACY_SUPERSEDED")
                 if view.get("evidence_link"):
@@ -827,12 +852,26 @@ def main():
     serve = commands.add_parser("serve")
     serve.add_argument("--port", type=int, default=8768)
     serve.add_argument("--interval", type=int, default=5)
+    serve.add_argument("--research-root", type=Path)
+    serve.add_argument("--research-data-id")
+    serve.add_argument("--research-metadata-id")
+    serve.add_argument("--research-national-id")
     args = parser.parse_args()
     service = initialize(args.state) if args.command == "init" else OperationsService(args.state)
     if args.command == "serve":
         from .operations_web import create_operations_server
+        review = None
+        selected = (args.research_root, args.research_data_id, args.research_metadata_id)
+        if any(value is not None for value in (*selected, args.research_national_id)):
+            if not all(value is not None for value in selected) or not args.research_root.is_dir():
+                parser.error("research requires an existing root and exact data and methodology candidate IDs")
+            from sictra_block1.research_acquisition import ResearchQuarantine
+            from sictra_block1.research_review import ResearchReview
+            review = ResearchReview(ResearchQuarantine(args.research_root),
+                args.research_data_id, args.research_metadata_id, national_id=args.research_national_id)
+            review.read()  # Reject an invalid initial selection before starting a worker.
         with process_lock(service.root / "service.lock"):
-            server = create_operations_server(service, port=args.port)
+            server = create_operations_server(service, port=args.port, research_review=review)
             service.start(args.interval)
             print(f"Telecare OS: http://127.0.0.1:{server.server_port}/", flush=True)
             try:

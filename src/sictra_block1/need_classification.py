@@ -28,3 +28,31 @@ def classify_data_need(source_id: str, requirement: str) -> str:
             or len(requirement) > 1000):
         raise NeedClassificationViolation("NEED_INPUT_INVALID")
     return _KNOWN_NEEDS.get(source_id, {}).get(requirement, "UNCLASSIFIED")
+
+
+def route_data_need(source_id: str, requirement: str) -> dict:
+    """Describe evidence type and next action without accepting or resolving it."""
+    kind = classify_data_need(source_id, requirement)
+    routes = {
+        "INDEPENDENT_CORROBORATION": (
+            "INDEPENDENT_DOSSIER", "MUST_DIFFER_FROM",
+            ["REGISTER_APPROVED_LOCAL_SOURCE", "LINK_CURRENT_CANDIDATE_DOSSIER"],
+            "REQUEST_COMPARABLE_APPROVED_SOURCE"),
+        "SOURCE_METHODOLOGY": (
+            "OFFICIAL_SOURCE_METHODOLOGY", "OFFICIAL_METADATA_FOR_SOURCE",
+            ["RETAIN_QUARANTINED_OFFICIAL_METADATA", "REQUEST_BLOCK1_REASSESSMENT"],
+            "REQUEST_SOURCE_SPECIFIC_METHODOLOGY"),
+        "COMPANY_EXPOSURE": (
+            "AUTHORIZED_ACCOUNT_CONTEXT", "AUTHORIZED_ACCOUNT_CONTEXT_REQUIRED",
+            ["REGISTER_AUTHORIZED_ACCOUNT_CONTEXT", "REQUEST_BLOCK1_REASSESSMENT"],
+            "REQUEST_AUTHORIZED_COMPANY_EXPOSURE"),
+        "SOURCE_GRANULARITY": (
+            "SOURCE_SCOPE_DETAIL", "APPROVED_DETAIL_FOR_SOURCE",
+            ["REGISTER_APPROVED_SOURCE_DETAIL", "REQUEST_BLOCK1_REASSESSMENT"],
+            "REQUEST_SAME_PERIOD_PRODUCT_ORIGIN_REGIME_DETAIL"),
+    }
+    route, root, actions, next_action = routes.get(kind, (
+        "MANUAL_CLASSIFICATION", "MANUAL_EVIDENCE_ROUTE_REQUIRED",
+        ["CLASSIFY_NEED_MANUALLY"], "CLASSIFY_NEED_MANUALLY"))
+    return {"kind": kind, "id": route, "required_evidence_root": root,
+            "allowed_actions": actions, "next_action": next_action}

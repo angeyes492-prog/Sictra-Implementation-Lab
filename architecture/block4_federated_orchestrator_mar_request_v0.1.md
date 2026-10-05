@@ -113,6 +113,23 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
     substantive interpretation, selection or handoff authority. Recheck source
     validity after assessment; historical context adds no independent root.
 
+15. Candidate official-research review console v0.1 is a separately configured,
+    read-only B4 loopback view over B1 quarantine/admission-review readers.
+    Review explicit candidate IDs, same current reuse-notice lineage, escaped
+    HTML, double canonical input reads and final post-render expiry/integrity
+    fence. Missing/expired/tampered inputs withdraw the measurements; default
+    configuration selects nothing. This consumer creates no source approval,
+    attestation, task transition, engine input, delivery or new authority plane.
+    It does not consume the statistical dossier facade under item 14 or migrate
+    installed services. Rollback removes the explicit research configuration,
+    preserving original bytes and operations history. Candidate task routing
+    now consumes B1 type-specific routes: only independent corroboration may
+    link another dossier; methodology, exposure and granularity require their
+    own evidence types. Legacy history remains unchanged and incompatible
+    research observations become unavailable pending a new bounded evaluation.
+    Acceptance, installed adoption and contracted need-resolution semantics
+    remain separate decisions; fixture success cannot approve any of them.
+
 ## Evidence available
 
 The bounded SUT has positive progression/recovery coverage and adversarial

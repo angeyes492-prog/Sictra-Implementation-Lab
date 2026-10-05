@@ -3,6 +3,8 @@
 function validateOperations(data) {
   const text = x => typeof x === 'string' && x.length > 0;
   const timestamp = x => x === null || (Number.isFinite(x) && x >= 0);
+  const routes={INDEPENDENT_CORROBORATION:'INDEPENDENT_DOSSIER',SOURCE_METHODOLOGY:'OFFICIAL_SOURCE_METHODOLOGY',
+    COMPANY_EXPOSURE:'AUTHORIZED_ACCOUNT_CONTEXT',SOURCE_GRANULARITY:'SOURCE_SCOPE_DETAIL',UNCLASSIFIED:'MANUAL_CLASSIFICATION'};
   const contextValid = d => d.change_context === undefined || d.change_context === null ||
     d.status === 'CURRENT' && d.change_context.dossier_id === d.dossier_id &&
     d.change_context.scope === 'LOCAL_LITERAL_CHANGE_CONTEXT' && d.change_context.version === '0.1.0' &&
@@ -33,6 +35,7 @@ function validateOperations(data) {
         && text(t.state) && text(t.requirement) && text(t.required_evidence_root)
         && ['INDEPENDENT_CORROBORATION','SOURCE_METHODOLOGY','COMPANY_EXPOSURE',
             'SOURCE_GRANULARITY','UNCLASSIFIED'].includes(t.effective_kind)
+        && (t.effective_evidence_route===undefined || t.effective_evidence_route===routes[t.effective_kind])
         && t.effective_completion_boundary==='BLOCK1_CONTRACTED_RESOLUTION_REQUIRED'
         && ['CURRENT','LEGACY_SUPERSEDED'].includes(t.boundary_status)
         && ['NOT_LINKED','CURRENT','STALE_OR_REVOKED'].includes(t.evidence_status)
@@ -40,7 +43,10 @@ function validateOperations(data) {
           t.research_evaluation.task_id===t.task_id && text(t.research_evaluation.id) &&
           (t.research_evaluation.availability==='STALE_OR_REVOKED' && !('verdict' in t.research_evaluation)
            || t.research_evaluation.availability==='CURRENT_INPUTS'
-           && ['WAITING_LOCAL_EVIDENCE','INSUFFICIENT','MEASUREMENT_DISAGREEMENT','REVIEW_REQUIRED'].includes(t.research_evaluation.verdict)
+           && ['WAITING_LOCAL_EVIDENCE','WAITING_TASK_SPECIFIC_EVIDENCE','INSUFFICIENT','MEASUREMENT_DISAGREEMENT','REVIEW_REQUIRED'].includes(t.research_evaluation.verdict)
+           && (t.research_evaluation.verdict!=='WAITING_TASK_SPECIFIC_EVIDENCE'
+               || ['OFFICIAL_SOURCE_METHODOLOGY','AUTHORIZED_ACCOUNT_CONTEXT','SOURCE_SCOPE_DETAIL','MANUAL_CLASSIFICATION'].includes(t.effective_evidence_route)
+               && t.research_evaluation.candidate===null)
            && t.research_evaluation.scope==='ADMITTED_LOCAL_DOSSIERS_ONLY'
            && t.research_evaluation.resolution==='NOT_RESOLVED'
            && t.research_evaluation.acceptance==='NOT_ACCEPTED'

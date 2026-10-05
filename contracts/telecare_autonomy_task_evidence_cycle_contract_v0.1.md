@@ -57,6 +57,26 @@ granularity. Unknown or changed wording is `UNCLASSIFIED`, never guessed from
 keywords. A read-side `effective_kind` safely reclassifies legacy task metadata
 without rewriting history. This is routing metadata, not a resolution verdict.
 
+Only `INDEPENDENT_CORROBORATION` has the `INDEPENDENT_DOSSIER` route: it
+requires a different evidence root and may use the candidate-dossier link.
+`SOURCE_METHODOLOGY` uses `OFFICIAL_SOURCE_METHODOLOGY`: it requires retained
+official metadata for the source, not an unrelated second root, and Block 4
+does not link it through the cross-source comparison. `COMPANY_EXPOSURE` uses
+`AUTHORIZED_ACCOUNT_CONTEXT`: it requires separately authorized account
+context and likewise cannot be fulfilled by a generic dossier link. These two
+routes are visible as task-specific waits, never as failed searches for another
+root. Legacy records retain their historical fields; snapshots expose the
+effective route and reject a link that conflicts with it. None of these routes
+resolves a task or changes publication/acceptance.
+
+`SOURCE_GRANULARITY` has the `SOURCE_SCOPE_DETAIL` route and asks for approved
+product/origin/regime detail for the same periods, rather than another root.
+Block 1 owns `route_data_need`; B4 consumes the returned route. Unknown wording
+uses `MANUAL_CLASSIFICATION`. New evaluations bind the effective next action;
+legacy task fields cannot override it. Prior research evaluations incompatible
+with the new route become unavailable on read and a subsequent running cycle
+appends the correct observation. No history is rewritten.
+
 ## Failure, recovery, and compatibility
 
 Local currentness clarification (2026-09-29): retention does not authorize new

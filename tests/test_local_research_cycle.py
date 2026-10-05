@@ -65,6 +65,28 @@ class ResearchSchedulerTests(unittest.TestCase):
         self.assertEqual("OBSERVED_CYCLE_SNAPSHOT", view["inventory_boundary"])
         self.assertEqual(before, self.store.records())
 
+    def test_legacy_wait_is_withdrawn_then_reassessed_without_rewriting_history(self):
+        task = self.tasks[0]
+        self.cycle.run([task], self.dossiers)
+        original = self.store.latest("RESEARCH_EVALUATION")
+        routed = {**task, "evidence_route": "OFFICIAL_SOURCE_METHODOLOGY",
+                  "next_action": "REQUEST_SOURCE_SPECIFIC_METHODOLOGY"}
+        before = self.store.records()
+        with patch.object(self.cycle, "candidate_check", side_effect=OperationsError("AUTONOMY_TASK_EVIDENCE_ROUTE_NOT_LINKABLE")):
+            self.assertEqual("STALE_OR_REVOKED", self.cycle.view(routed)["availability"])
+            self.assertEqual(before, self.store.records())
+            self.cycle.run([routed], self.dossiers)
+            result = self.cycle.view(routed)
+        self.assertEqual("WAITING_TASK_SPECIFIC_EVIDENCE", result["verdict"])
+        self.assertEqual("REQUEST_SOURCE_SPECIFIC_METHODOLOGY", result["next_action"])
+        self.assertIsNone(result["candidate"])
+        for identity, value in original.items():
+            self.assertEqual(value, self.store.latest("RESEARCH_EVALUATION")[identity])
+        records = self.store.records()
+        self.cycle.run([routed], self.dossiers)
+        self.assertEqual(2, len(self.store.latest("RESEARCH_EVALUATION")))
+        self.assertEqual(records, self.store.records())
+
     def test_unavailable_candidate_does_not_starve_later_task(self):
         def reject_first(task, identity):
             if task["task_id"] == "TASK-0":
@@ -228,15 +250,22 @@ class ResearchPipelineIntegrationTests(unittest.TestCase):
     def test_new_admitted_source_triggers_assessment_without_manual_evidence_link(self):
         initial = self.service.snapshot()["autonomy_tasks"]
         self.assertEqual(3, len(initial))
-        self.assertTrue(all(t["research_evaluation"]["verdict"] == "WAITING_LOCAL_EVIDENCE" for t in initial))
+        self.assertEqual("WAITING_LOCAL_EVIDENCE", next(t for t in initial
+                         if t["effective_kind"] == "INDEPENDENT_CORROBORATION")["research_evaluation"]["verdict"])
+        self.assertTrue(all(t["research_evaluation"]["verdict"] == "WAITING_TASK_SPECIFIC_EVIDENCE"
+                            for t in initial if t["effective_kind"] != "INDEPENDENT_CORROBORATION"))
         self.add_hn()
         view = self.service.snapshot()
         self.assertEqual(6, len(view["autonomy_tasks"]))
         self.assertTrue(all(t["state"] == "OPEN" and not t.get("evidence_link") for t in view["autonomy_tasks"]))
+        corroboration = [t for t in view["autonomy_tasks"] if t["effective_kind"] == "INDEPENDENT_CORROBORATION"]
         self.assertTrue(all(t["research_evaluation"]["availability"] == "CURRENT_INPUTS" and
-                            t["research_evaluation"]["verdict"] == "INSUFFICIENT" for t in view["autonomy_tasks"]))
+                            t["research_evaluation"]["verdict"] == "INSUFFICIENT" for t in corroboration))
         self.assertTrue(all(t["research_evaluation"]["candidate"]["comparison"]["status"] == "NO_SHARED_MEASUREMENT"
-                            for t in view["autonomy_tasks"]))
+                            for t in corroboration))
+        self.assertTrue(all(t["research_evaluation"]["verdict"] == "WAITING_TASK_SPECIFIC_EVIDENCE"
+                            and t["research_evaluation"]["candidate"] is None
+                            for t in view["autonomy_tasks"] if t["effective_kind"] != "INDEPENDENT_CORROBORATION"))
         self.assertEqual("BLOCKED", view["publication"])
 
     def test_restart_expiry_pause_and_stop_preserve_history_and_revalidate_inputs(self):
@@ -262,8 +291,11 @@ class ResearchPipelineIntegrationTests(unittest.TestCase):
         current = [t for t in reopened.snapshot()["autonomy_tasks"]
                    if t["source_evidence_status"] == "CURRENT"]
         self.assertEqual(3, len(current))
-        self.assertTrue(all(t["source_id"] == "HN_ADUANAS_BULLETINS" and
-                            t["research_evaluation"]["verdict"] == "WAITING_LOCAL_EVIDENCE" for t in current))
+        self.assertTrue(all(t["source_id"] == "HN_ADUANAS_BULLETINS" for t in current))
+        self.assertEqual("WAITING_LOCAL_EVIDENCE", next(t for t in current
+                         if t["effective_kind"] == "INDEPENDENT_CORROBORATION")["research_evaluation"]["verdict"])
+        self.assertTrue(all(t["research_evaluation"]["verdict"] == "WAITING_TASK_SPECIFIC_EVIDENCE"
+                            for t in current if t["effective_kind"] != "INDEPENDENT_CORROBORATION"))
         (self.root / "STOP").touch()
         before = reopened.store.records()
         self.assertEqual("STOPPED", reopened.tick()["state"])

@@ -44,12 +44,12 @@
       $('autonomy-task-list').replaceChildren();
       const comparisonLabels={NO_SHARED_MEASUREMENT:'Sin mediciones equivalentes',PARTIAL_COVERAGE_REVIEW_REQUIRED:'Cobertura parcial para revisión',VALUE_DIFFERENCE_REVIEW_REQUIRED:'Valor posterior discrepante; revisión pendiente',EXACT_VALUE_AGREEMENT_REVIEW_REQUIRED:'Mismo valor posterior; revisión pendiente'};
       const assessmentLabels={INSUFFICIENT:'Necesidad aún insuficiente',MEASUREMENT_DISAGREEMENT:'Mediciones discrepantes; investigar revisiones',REVIEW_REQUIRED:'Comparación pendiente de evaluación de Intelligence'};
-      const researchLabels={WAITING_LOCAL_EVIDENCE:'espera evidencia local de otra raíz',INSUFFICIENT:'evidencia examinada insuficiente',MEASUREMENT_DISAGREEMENT:'mediciones discrepantes',REVIEW_REQUIRED:'evidencia candidata para revisión'};
+      const researchLabels={WAITING_LOCAL_EVIDENCE:'espera evidencia local de otra raíz',WAITING_TASK_SPECIFIC_EVIDENCE:'espera el tipo de evidencia específico de esta tarea',INSUFFICIENT:'evidencia examinada insuficiente',MEASUREMENT_DISAGREEMENT:'mediciones discrepantes',REVIEW_REQUIRED:'evidencia candidata para revisión'};
       for (const item of data.autonomy_tasks) {
         const card=document.createElement('article');card.className='case';
         const text=document.createElement('div'), title=document.createElement('strong'), body=document.createElement('p');
         title.textContent=item.effective_kind+' · '+item.state;
-        body.textContent=item.requirement+' · raíz requerida: '+item.required_evidence_root+
+        body.textContent=item.requirement+' · evidencia requerida: '+(item.effective_required_evidence_root || item.required_evidence_root)+
           (item.source_evidence_status==='CURRENT' ? ' · fuente vigente' : ' · fuente no vigente: tarea histórica, acciones suspendidas')+
           (item.evidence_link ? ' · dossier candidato: '+item.evidence_link.dossier_id+' · '+item.evidence_status : '')+
           (item.evidence_comparison ? ' · '+comparisonLabels[item.evidence_comparison.status]+' · mediciones comparadas: '+item.evidence_comparison.matched.length : '')+
@@ -68,7 +68,7 @@
             if(reviewer&&rationale) post('/api/operations/tasks/review',{task_id:item.task_id,reviewer_id:reviewer,rationale}).catch(error=>$('operations-feedback').textContent=error.message);
           });card.append(button);
         }
-        if (['OPEN','HUMAN_ACKNOWLEDGED'].includes(item.state) && item.source_evidence_status==='CURRENT') {
+        if (item.effective_evidence_route==='INDEPENDENT_DOSSIER' && ['OPEN','HUMAN_ACKNOWLEDGED'].includes(item.state) && item.source_evidence_status==='CURRENT') {
           const link=document.createElement('button');link.type='button';link.textContent='Vincular dossier independiente vigente';
           link.addEventListener('click',()=>{
             const dossier=prompt('ID exacto del dossier de otra raíz actualmente exportable (solo candidato):');

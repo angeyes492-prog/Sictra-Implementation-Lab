@@ -574,6 +574,13 @@ class OperationsTests(unittest.TestCase):
         self.assertTrue(all(task["boundary_status"] == "CURRENT" for task in tasks))
         self.assertEqual({"INDEPENDENT_CORROBORATION", "SOURCE_METHODOLOGY", "COMPANY_EXPOSURE"},
                          {task["effective_kind"] for task in tasks})
+        routes = {task["effective_kind"]: task for task in tasks}
+        self.assertEqual("INDEPENDENT_DOSSIER", routes["INDEPENDENT_CORROBORATION"]["effective_evidence_route"])
+        self.assertTrue(routes["INDEPENDENT_CORROBORATION"]["effective_required_evidence_root"].startswith("MUST_DIFFER_FROM:"))
+        self.assertEqual("OFFICIAL_SOURCE_METHODOLOGY", routes["SOURCE_METHODOLOGY"]["effective_evidence_route"])
+        self.assertEqual("OFFICIAL_METADATA_FOR_SOURCE:eurostat", routes["SOURCE_METHODOLOGY"]["effective_required_evidence_root"])
+        self.assertEqual("AUTHORIZED_ACCOUNT_CONTEXT", routes["COMPANY_EXPOSURE"]["effective_evidence_route"])
+        self.assertNotIn("LINK_CURRENT_CANDIDATE_DOSSIER", routes["COMPANY_EXPOSURE"]["effective_allowed_actions"])
         acknowledged = self.service.acknowledge_autonomy_task(
             tasks[0]["task_id"], reviewer_id="operator-local",
             rationale="Se requiere una fuente aprobada de raíz independiente antes de interpretar el cambio.",
@@ -584,6 +591,24 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual("BLOCKED", self.service.output(output["id"])["publication"])
         with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_REVIEW_INVALID"):
             self.service.acknowledge_autonomy_task(tasks[0]["task_id"], reviewer_id="", rationale="short")
+
+    def test_non_corroboration_tasks_do_not_search_or_accept_an_independent_dossier_link(self):
+        original = self.ready()
+        tasks = {task["effective_kind"]: task for task in self.service.snapshot()["autonomy_tasks"]}
+        methodology = tasks["SOURCE_METHODOLOGY"]
+        exposure = tasks["COMPANY_EXPOSURE"]
+        self.assertEqual("WAITING_TASK_SPECIFIC_EVIDENCE", methodology["research_evaluation"]["verdict"])
+        self.assertEqual("OFFICIAL_SOURCE_METHODOLOGY_NOT_LINKABLE", methodology["research_evaluation"]["reason_code"])
+        independent = self.hn_ready_after_eurostat()
+        for task in (methodology, exposure):
+            before = self.service.store.records()
+            with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_ROUTE_NOT_LINKABLE"):
+                self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
+            self.assertEqual(before, self.service.store.records())
+        current = {task["effective_kind"]: task for task in self.service.snapshot()["autonomy_tasks"]
+                   if task["dossier_id"] == original["dossier_id"]}
+        self.assertEqual("WAITING_TASK_SPECIFIC_EVIDENCE", current["SOURCE_METHODOLOGY"]["research_evaluation"]["verdict"])
+        self.assertEqual("WAITING_TASK_SPECIFIC_EVIDENCE", current["COMPANY_EXPOSURE"]["research_evaluation"]["verdict"])
 
     def test_legacy_task_boundary_is_preserved_but_never_projected_as_current_authority(self):
         self.ready()
@@ -604,7 +629,7 @@ class OperationsTests(unittest.TestCase):
     def test_independent_current_dossier_link_requests_block1_reassessment_without_closing_gap(self):
         original = self.ready()
         task = next(item for item in self.service.snapshot()["autonomy_tasks"]
-                    if item["dossier_id"] == original["dossier_id"])
+                    if item["dossier_id"] == original["dossier_id"] and item["effective_kind"] == "INDEPENDENT_CORROBORATION")
         independent = self.hn_ready_after_eurostat()
         linked = self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
         self.assertEqual("EVIDENCE_LINKED_REVIEW_REQUIRED", linked["status"])
@@ -662,7 +687,7 @@ class OperationsTests(unittest.TestCase):
     def test_forged_need_assessment_cannot_be_replayed_as_resolution(self):
         original = self.ready()
         task = next(item for item in self.service.snapshot()["autonomy_tasks"]
-                    if item["dossier_id"] == original["dossier_id"])
+                    if item["dossier_id"] == original["dossier_id"] and item["effective_kind"] == "INDEPENDENT_CORROBORATION")
         independent = self.hn_ready_after_eurostat()
         self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
         altered = deepcopy(self.service.store.latest("AUTONOMY_TASK")[task["task_id"]])
@@ -683,7 +708,7 @@ class OperationsTests(unittest.TestCase):
     def test_task_link_rejects_same_root_replacement_and_stale_or_tampered_evidence(self):
         original = self.ready()
         task = next(item for item in self.service.snapshot()["autonomy_tasks"]
-                    if item["dossier_id"] == original["dossier_id"])
+                    if item["dossier_id"] == original["dossier_id"] and item["effective_kind"] == "INDEPENDENT_CORROBORATION")
         before = len(self.service.store.records())
         with self.assertRaisesRegex(OperationsError, "AUTONOMY_TASK_EVIDENCE_ID_INVALID"):
             self.service.link_autonomy_task_evidence(task["task_id"], original["dossier_id"])
@@ -727,7 +752,7 @@ class OperationsTests(unittest.TestCase):
     def test_task_link_rejects_superseded_original_dossier_without_writes(self):
         original = self.ready()
         task = next(item for item in self.service.snapshot()["autonomy_tasks"]
-                    if item["dossier_id"] == original["dossier_id"])
+                    if item["dossier_id"] == original["dossier_id"] and item["effective_kind"] == "INDEPENDENT_CORROBORATION")
         self.service.abstain_intake(self.service.snapshot()["intake_waiting"][0]["job_id"],
                                     "Keep the prior dossier without editorial acceptance")
         self.register(workbook(last_updated="08/09/2026 06:14", rows=(("BE", "Belgium", "15", None, "17"),)))
@@ -755,8 +780,11 @@ class OperationsTests(unittest.TestCase):
             status, _, body = request("GET", "/api/operations")
             token = json.loads(body)["control_token"]
             self.assertEqual(200, status)
-            self.assertTrue(all(t["research_evaluation"]["verdict"] == "WAITING_LOCAL_EVIDENCE"
-                                for t in json.loads(body)["autonomy_tasks"]))
+            self.assertEqual({"INDEPENDENT_CORROBORATION": "WAITING_LOCAL_EVIDENCE",
+                              "SOURCE_METHODOLOGY": "WAITING_TASK_SPECIFIC_EVIDENCE",
+                              "COMPANY_EXPOSURE": "WAITING_TASK_SPECIFIC_EVIDENCE"},
+                             {t["effective_kind"]: t["research_evaluation"]["verdict"]
+                              for t in json.loads(body)["autonomy_tasks"]})
             self.assertEqual("SAME_PERIOD_REPORTED_VALUE_CHANGE",
                              json.loads(body)["dossier_evidence"][0]["change_context"]["facts"][0]["kind"])
             route = "/api/operations/outputs/" + output["id"] + "/html"
@@ -773,10 +801,12 @@ class OperationsTests(unittest.TestCase):
             independent = self.hn_ready_after_eurostat()
             status, _, body = request("GET", "/api/operations")
             self.assertEqual(200, status)
-            self.assertTrue(all(t["research_evaluation"]["verdict"] == "INSUFFICIENT"
-                                for t in json.loads(body)["autonomy_tasks"]))
+            self.assertTrue(all(t["research_evaluation"]["verdict"] == (
+                "INSUFFICIENT" if t["effective_kind"] == "INDEPENDENT_CORROBORATION"
+                else "WAITING_TASK_SPECIFIC_EVIDENCE")
+                for t in json.loads(body)["autonomy_tasks"]))
             task = next(t for t in self.service.snapshot()["autonomy_tasks"]
-                        if t["dossier_id"] == output["dossier_id"])
+                        if t["dossier_id"] == output["dossier_id"] and t["effective_kind"] == "INDEPENDENT_CORROBORATION")
             link_request = {"task_id": task["task_id"], "evidence_dossier_id": independent["dossier_id"]}
             self.assertEqual(403, request("POST", "/api/operations/tasks/link")[0])
             self.assertEqual(400, request("POST", "/api/operations/tasks/link", {**link_request, "approve": True}, trusted)[0])

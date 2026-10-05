@@ -54,8 +54,10 @@ def run_pilot(root):
     if len(outputs) != 2 or any("12.5" not in x["plain_text"] or "14 miles de toneladas" not in x["plain_text"] for x in outputs.values()):
         raise OperationsError("PILOT_OUTPUT_EXPECTATION_FAILED")
     research = service.store.latest("RESEARCH_EVALUATION")
-    if len(research) != 3 or any(x["verdict"] != "WAITING_LOCAL_EVIDENCE" or
-                               x["resolution"] != "NOT_RESOLVED" for x in research.values()):
+    verdicts = [x["verdict"] for x in research.values()]
+    if (len(research) != 3 or verdicts.count("WAITING_LOCAL_EVIDENCE") != 1
+            or verdicts.count("WAITING_TASK_SPECIFIC_EVIDENCE") != 2
+            or any(x["resolution"] != "NOT_RESOLVED" for x in research.values())):
         raise OperationsError("PILOT_RESEARCH_EXPECTATION_FAILED")
     service = OperationsService(root)
     results.append(service.tick())
@@ -73,7 +75,7 @@ def run_pilot(root):
         raise OperationsError("PILOT_RESTORE_FAILED")
     report = {"scope": "SYNTHETIC_LOCAL_PILOT", "at": int(time.time()), "cycles": results,
               "outputs": [{"id": x["id"], "title": x["adaptation"]["heading"], "html_sha256": x["html_sha256"]} for x in outputs.values()],
-              "research": {"evaluations": len(research), "state": "WAITING_LOCAL_EVIDENCE",
+              "research": {"evaluations": len(research), "state": "TASK_SPECIFIC_WAITS_ENFORCED",
                            "restart_replay": "VERIFIED", "pause": "VERIFIED", "resolution": "NOT_RESOLVED"},
               "restore": "VERIFIED", "publication": "BLOCKED", "delivery": "NONE"}
     (root / "pilot-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

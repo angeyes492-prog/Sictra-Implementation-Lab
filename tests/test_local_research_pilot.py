@@ -14,7 +14,7 @@ class LocalResearchPilotTests(unittest.TestCase):
             self.assertEqual("SYNTHETIC_LOCAL_PILOT", report["scope"])
             self.assertEqual(3, len(report["cycles"]))
             self.assertEqual(2, len(report["outputs"]))
-            self.assertEqual({"evaluations": 3, "state": "WAITING_LOCAL_EVIDENCE",
+            self.assertEqual({"evaluations": 3, "state": "TASK_SPECIFIC_WAITS_ENFORCED",
                               "restart_replay": "VERIFIED", "pause": "VERIFIED",
                               "resolution": "NOT_RESOLVED"}, report["research"])
             self.assertEqual("VERIFIED", report["restore"])

@@ -81,6 +81,19 @@ test('automatic research remains an unresolved local observation and stale verdi
  assert.equal(validateOperations(input).autonomy_tasks[0].research_evaluation.availability,'STALE_OR_REVOKED');
  task.research_evaluation.verdict='INSUFFICIENT';assert.throws(()=>validateOperations(input));
 });
+
+test('task-specific waits render without creating an independent-root action or resolution',()=>{
+ const input=fixture(),task=input.autonomy_tasks[0];
+ task.effective_kind='SOURCE_METHODOLOGY';task.effective_evidence_route='OFFICIAL_SOURCE_METHODOLOGY';
+ task.research_evaluation={id:'RESEARCH-1',task_id:'TASK-1',availability:'CURRENT_INPUTS',scope:'ADMITTED_LOCAL_DOSSIERS_ONLY',
+  verdict:'WAITING_TASK_SPECIFIC_EVIDENCE',candidate:null,resolution:'NOT_RESOLVED',acceptance:'NOT_ACCEPTED',publication:'BLOCKED'};
+ assert.equal(validateOperations(input),input);
+ assert.equal(operationProjection(input).alerts,3);
+ task.effective_evidence_route='AUTHORIZED_ACCOUNT_CONTEXT';assert.throws(()=>validateOperations(input));
+ task.effective_evidence_route='INDEPENDENT_DOSSIER';assert.throws(()=>validateOperations(input));
+ task.effective_evidence_route='OFFICIAL_SOURCE_METHODOLOGY';task.research_evaluation.candidate={dossier_id:'other'};
+ assert.throws(()=>validateOperations(input));
+});
 test('Intelligence does not infer numeric uncertainty from counts or fabricate source age',()=>{
  const source=fs.readFileSync(require.resolve('../src/sictra_block1/web/app.js'),'utf8');
  const sandbox={URLSearchParams,document:{addEventListener(){}}};vm.createContext(sandbox);vm.runInContext(source,sandbox);

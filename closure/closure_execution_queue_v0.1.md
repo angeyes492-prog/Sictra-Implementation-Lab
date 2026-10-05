@@ -105,6 +105,25 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    Next authority action: approve a bounded comparable source with rights, scope, binding,
    refresh/revision policy and admissible retained cases; continue local work
    while this decision remains pending. No corroboration or resolution follows.
+   Chained candidate official-research console IMPLEMENTED / EXECUTED locally
+   2026-10-04 local / 2026-10-05 UTC: explicit exact candidate IDs, B1 review
+   ownership, same rights lineage, canonical original-byte rechecks, post-render
+   expiry fence and read-only B4 /research and /api/research. Ten new vectors
+   execute values/lineage/reopen/no-writes, substitution, tamper, expiry during
+   rendering, clock rollback, escaped remote text, Host guard and unconfigured
+   withdrawal. Four bounded official acquisitions renewed expired candidates
+   (4 requests / 636323 bytes); visible browser inspection confirmed the actual
+   2023/2024 measurements separately from the labelled synthetic operational
+   pilot. Admission stays PENDING / NOT_ADMITTED, all needs NOT_RESOLVED,
+   engines untouched and MAR item 15 pending. Evidence:
+   evidence/telecare_research_console_2026-10-04.md. Full regression and new
+   exact-SHA hosted CI remain separate final checks for this increment.
+   Final local regression passed 975/975 Python tests in 294.681s, 18/18
+   JavaScript tests, compileall, preserved launcher paths and exact 24-vector
+   twelve-arista mechanism preflight. This adds 13 unique Python vectors over
+   011db31, not duplicate imported test classes. Final hosted status is bound
+   to the new immutable commit and PR #18 workflow record; no completed arista
+   or source/architecture gate is inferred from these checks.
 3. `RESOLUTION-INTELLIGENCE-EDITORIAL` (aristas 3/5/6/7): ARCHITECTURE_DECISION_REQUIRED
    and INSUFFICIENT EVIDENCE. Current triage is not causal interpretation or
    accepted editorial quality. Owner: B1 architecture/business authority.
@@ -321,6 +340,13 @@ methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
 Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-04 local):
+type-specific B1 research routes integrated with persistent B4 evaluation,
+legacy observation withdrawal/reassessment without history edits, repaired
+console validation, and the actual official-candidate read-only console with
+positive/tamper/expiry/Host/recovery vectors. The renewed downloads alone are
+not the reset justification: the new executable consumer and routing repair
+are. The paused heartbeat remains PAUSED; no gate changed.
+Prior real delta (2026-10-04 local):
 candidate durable statistical dossier/editorial integration, transactional
 failure/STOP rollback, source-dependent restart/recovery and signed-content/
 currentness rejection, followed by native operations-backup/restore positive

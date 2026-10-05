@@ -35,15 +35,17 @@ class LocalResearchCycle:
 
     def _body(self, task, source, candidate, inventory):
         assessment = candidate["assessment"] if candidate else None
+        route = task.get("evidence_route")
+        route_wait = route not in {None, "INDEPENDENT_DOSSIER"}
         return {
             "version": "0.1.0", "scope": "ADMITTED_LOCAL_DOSSIERS_ONLY",
             "task_id": task["task_id"], "requirement_sha256": _digest([task["source_id"], task["requirement"]]),
             "source": _source(source), "candidate": candidate,
             "inventory_sha256": None if candidate else inventory,
             "inventory_boundary": "OBSERVED_CYCLE_SNAPSHOT",
-            "verdict": assessment["verdict"] if assessment else "WAITING_LOCAL_EVIDENCE",
-            "reason_code": assessment["reason_code"] if assessment else "NO_DISTINCT_ROOT_LOCAL_CANDIDATE",
-            "next_action": assessment["next_action"] if assessment else "PROVIDE_APPROVED_LOCAL_EVIDENCE",
+            "verdict": assessment["verdict"] if assessment else ("WAITING_TASK_SPECIFIC_EVIDENCE" if route_wait else "WAITING_LOCAL_EVIDENCE"),
+            "reason_code": assessment["reason_code"] if assessment else (route + "_NOT_LINKABLE" if route_wait else "NO_DISTINCT_ROOT_LOCAL_CANDIDATE"),
+            "next_action": assessment["next_action"] if assessment else (task.get("next_action", "REQUEST_TASK_SPECIFIC_EVIDENCE") if route_wait else "PROVIDE_APPROVED_LOCAL_EVIDENCE"),
             "resolution": "NOT_RESOLVED", "acceptance": "NOT_ACCEPTED", "publication": "BLOCKED",
         }
 
@@ -57,6 +59,9 @@ class LocalResearchCycle:
         work = []
         for task in sorted(tasks, key=lambda item: item["task_id"]):
             if task["dossier_id"] not in current_ids:
+                continue
+            if task.get("evidence_route") not in {None, "INDEPENDENT_DOSSIER"}:
+                work.append((task, None))
                 continue
             candidates = sorted((d for d in dossiers
                 if d["dossier_id"] != task["dossier_id"] and
