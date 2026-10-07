@@ -218,6 +218,22 @@ class ResearchSchedulerTests(unittest.TestCase):
         self.assertNotIn("verdict", view)
         self.assertEqual(before, self.store.records())
 
+    def test_candidate_changed_during_read_withdraws_current_verdict(self):
+        self.cycle.run(self.tasks[:1], self.dossiers)
+        before = self.store.records()
+        calls = [0]
+        def substituting_candidate(task, identity):
+            calls[0] += 1
+            value = self.candidate(task, identity)
+            if calls[0] > 1:
+                value["evidence_id"] = "replacement-evidence"
+            return value
+        with patch.object(self.cycle, "candidate_check", side_effect=substituting_candidate):
+            view = self.cycle.view(self.tasks[0])
+        self.assertEqual("STALE_OR_REVOKED", view["availability"])
+        self.assertNotIn("verdict", view)
+        self.assertEqual(before, self.store.records())
+
 
 class ResearchPipelineIntegrationTests(unittest.TestCase):
     def setUp(self):

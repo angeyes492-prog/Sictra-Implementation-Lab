@@ -199,6 +199,51 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    or architecture acceptance authority. Next action: exact-final-SHA CI and
    retained diagnostic; installed app/live state remain untouched.
 
+### Closure delta — 2026-10-07 local / 2026-10-07 UTC
+
+On the isolated `codex/telecare-integrated-autonomy` candidate, three bounded
+read-side integrity failures were reproduced before repair. B1 cross-source
+comparison now rejects blank dossier/fact/scope identities and whitespace-padded
+root identities that could falsely appear independent. B2 review rendering now
+rechecks its own design fingerprint and blocked authority, retains mandatory
+uncertainty/limits/provenance blocks, and refuses a resealed adaptation that
+deletes or rewrites every observation; valid geographic selection remains
+supported. B4 research reads now recheck the candidate after the initial read
+before exposing a current verdict. Each change preserves no-effect and
+NOT_RESOLVED boundaries. The code and tests are a local candidate, not an
+accepted shared contract or completed product arista.
+
+New official-source research found a directly readable Statbel Belgian maritime
+table. Its displayed loaded-plus-unloaded totals are 272,987 (2023) and
+274,894 (2024) thousand tonnes, versus 272,698.25 / 274,369.05 in the now
+expired retained Eurostat research response. The dated Belgian ESMS and Statbel
+metadata identify the same port-administration/Statistics Belgium upstream
+chain, so Statbel is NOT an independent corroborating root. The discrepancy
+requires release/scope review; its cause is UNCONFIRMED. No new original bytes,
+hash, rights receipt, approval, binding or admission were created. Candidate
+matrix, official URLs, limited excerpt claims and next fixed-recipe experiment:
+`evidence/telecare_comparable_source_research_2026-10-07.md`.
+
+Verification before material commit: the new candidate-substitution test failed
+against the prior read path and passed after repair; the B1 and B2 agents also
+recorded failing adversarial cases before fixes. Full local discovery passed
+985/985 Python tests in 290.095 seconds; both JavaScript suites passed 18/18,
+compileall and preserved launcher paths passed, and the 24/24 mechanism
+preflight passed with the changed checkout unchanged during execution. This
+precommit run is not exact-final-SHA CI; hosted CI remains pending after push.
+Certainty VERIFIED / confidence B for the exercised local mechanisms only.
+
+Remaining boundaries: COMPARABLE-APPROVED-INPUT stays INSUFFICIENT EVIDENCE;
+owner: source authority for approval, agent for the bounded Statbel/Eurostat
+version experiment. RESOLUTION-INTELLIGENCE-EDITORIAL still needs source-specific
+semantics and real reference cases; owner: B1 architecture/business authority,
+promotion through MAR. DESIGN-PRECISION-EFFECTS still needs user comprehension,
+authorized account data and channel/outcome evidence; owner: product/data/channel
+authorities. INTEGRATED-ACTIVATION still needs MAR, identity/key custody and a
+sustained authorized pilot; owner: architecture/operator authority. No gate is
+promoted. The next safe technical experiment is retained, version-bound
+same-chain Statbel/Eurostat review; it does not replace an independent root.
+
 ### Continuation evidence — literal context and finite closure checks
 
 Date: 2026-10-01 local / 2026-10-02 UTC. Base d40901b, candidate isolated

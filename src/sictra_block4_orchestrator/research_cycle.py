@@ -134,6 +134,9 @@ class LocalResearchCycle:
                 return rejected
             candidate = (self.candidate_check(task, result["candidate"]["dossier_id"])
                          if result.get("candidate") else None)
+            if candidate is not None and self.candidate_check(
+                    task, result["candidate"]["dossier_id"]) != candidate:
+                return rejected
             final_source = self.source_check(task["dossier_id"])
             if final_source["status"] != "CURRENT" or _source(final_source) != _source(source):
                 return rejected

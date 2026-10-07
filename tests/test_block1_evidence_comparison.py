@@ -84,6 +84,39 @@ class EvidenceComparisonTests(unittest.TestCase):
         with self.assertRaisesRegex(EvidenceComparisonViolation, "DOSSIER_BOUNDARY_INVALID"):
             compare_dossier_measurements(maritime("publisher-a"), bad)
 
+    def test_missing_dossier_identity_rejects_before_comparison(self):
+        for missing_id in ("", "   "):
+            with self.subTest(dossier_id=missing_id):
+                bad = maritime("publisher-b")
+                bad["dossier_id"] = missing_id
+                with self.assertRaisesRegex(EvidenceComparisonViolation, "DOSSIER_BOUNDARY_INVALID"):
+                    compare_dossier_measurements(maritime("publisher-a"), bad)
+        bad = maritime("publisher-b")
+        bad["facts"][0]["fact_id"] = "  "
+        with self.assertRaisesRegex(EvidenceComparisonViolation, "MEASUREMENT_INVALID_OR_DUPLICATED"):
+            compare_dossier_measurements(maritime("publisher-a"), bad)
+        bad = maritime("publisher-b")
+        bad["source"]["root_source_identity"] = "  "
+        with self.assertRaisesRegex(EvidenceComparisonViolation, "INDEPENDENT_ROOT_REQUIRED"):
+            compare_dossier_measurements(maritime("publisher-a"), bad)
+
+    def test_whitespace_only_measurement_scope_rejects(self):
+        blank_customs_point = customs()
+        blank_customs_point["facts"][0]["observed_change"]["customs_point"] = "  "
+        blank_customs_period = customs()
+        blank_customs_period["facts"][0]["observed_change"]["after_period"] = "  "
+        for candidate in (maritime("publisher-b", geography="   "),
+                          blank_customs_point, blank_customs_period):
+            with self.subTest(change=candidate["facts"][0]["observed_change"]):
+                with self.assertRaisesRegex(EvidenceComparisonViolation, "MEASUREMENT_SCOPE_INVALID"):
+                    compare_dossier_measurements(maritime("publisher-a"), candidate)
+
+    def test_padded_root_cannot_appear_independent_from_same_root(self):
+        for root in (" publisher-a", "publisher-a ", " publisher-b "):
+            with self.subTest(root=root):
+                with self.assertRaisesRegex(EvidenceComparisonViolation, "INDEPENDENT_ROOT_REQUIRED"):
+                    compare_dossier_measurements(maritime("publisher-a"), maritime(root))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -14,6 +14,7 @@ class EvidenceComparisonViolation(ContractViolation):
 
 def _observations(dossier):
     if (not isinstance(dossier, dict) or not isinstance(dossier.get("dossier_id"), str)
+            or not dossier["dossier_id"].strip()
             or not isinstance(dossier.get("source"), dict)
             or not isinstance(dossier.get("facts"), list) or not dossier["facts"]
             or dossier.get("publication_state") != "BLOCKED"
@@ -31,23 +32,23 @@ def _observations(dossier):
         if "after_value_thousand_tonnes" in change:
             if (source.get("source_id") != "eurostat"
                     or not isinstance(change.get("geo_code"), str)
-                    or not change["geo_code"] or type(change.get("time_period")) is not int):
+                    or not change["geo_code"].strip() or type(change.get("time_period")) is not int):
                 raise EvidenceComparisonViolation("MEASUREMENT_SCOPE_INVALID")
             key = ("MARITIME_FREIGHT", "THOUSAND_TONNES", change["geo_code"], str(change["time_period"]))
             value = change["after_value_thousand_tonnes"]
         elif "after_value_usd_million" in change:
             if (source.get("source_id") != "HN_ADUANAS_BULLETINS"
                     or not isinstance(change.get("customs_point"), str)
-                    or not change["customs_point"]
+                    or not change["customs_point"].strip()
                     or not isinstance(change.get("after_period"), str)
-                    or not change["after_period"]):
+                    or not change["after_period"].strip()):
                 raise EvidenceComparisonViolation("MEASUREMENT_SCOPE_INVALID")
             key = ("CUSTOMS_CIF_IMPORT", "USD_MILLION", change["customs_point"], change["after_period"])
             value = change["after_value_usd_million"]
         else:
             raise EvidenceComparisonViolation("MEASUREMENT_UNSUPPORTED")
         if (type(value) not in (int, float) or not isfinite(value)
-                or not isinstance(fact.get("fact_id"), str) or not fact["fact_id"]
+                or not isinstance(fact.get("fact_id"), str) or not fact["fact_id"].strip()
                 or key in result):
             raise EvidenceComparisonViolation("MEASUREMENT_INVALID_OR_DUPLICATED")
         result[key] = (fact["fact_id"], value)
@@ -60,8 +61,10 @@ def compare_dossier_measurements(primary, candidate):
     first, second = primary["source"], candidate["source"]
     left_root = first.get("root_source_identity", first.get("source_id"))
     right_root = second.get("root_source_identity", second.get("source_id"))
-    if (not isinstance(left_root, str) or not left_root
-            or not isinstance(right_root, str) or not right_root
+    if (not isinstance(left_root, str) or not left_root.strip()
+            or left_root != left_root.strip()
+            or not isinstance(right_root, str) or not right_root.strip()
+            or right_root != right_root.strip()
             or left_root == right_root or primary["dossier_id"] == candidate["dossier_id"]):
         raise EvidenceComparisonViolation("INDEPENDENT_ROOT_REQUIRED")
     matched = []
