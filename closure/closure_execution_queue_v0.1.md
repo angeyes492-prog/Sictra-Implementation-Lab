@@ -230,8 +230,23 @@ recorded failing adversarial cases before fixes. Full local discovery passed
 985/985 Python tests in 290.095 seconds; both JavaScript suites passed 18/18,
 compileall and preserved launcher paths passed, and the 24/24 mechanism
 preflight passed with the changed checkout unchanged during execution. This
-precommit run is not exact-final-SHA CI; hosted CI remains pending after push.
-Certainty VERIFIED / confidence B for the exercised local mechanisms only.
+precommit run was not exact-final-SHA CI. First implementation SHA
+`053b616df3388d87b6a123e72ca9dcd7a1373daa` subsequently passed exact PR
+workflow `37655674603`; clean 24/24 preflight on that SHA remained
+`product_completion=NOT_DEMONSTRATED`. Certainty VERIFIED / confidence B for
+the exercised local mechanisms only.
+
+Subsequent independent Block 1 read-only repair: a forged comparison status
+previously could contradict its reported after-values, missing-fact lists or
+per-row equality label and still produce a need verdict. The assessment port
+now derives the expected comparison status from those bounded fields and
+rejects inconsistency before routing the need. Five contradictory variants
+were reproduced before repair; valid agreement, difference, partial and
+no-shared cases retain their unresolved outcomes. Full local regression after
+this second code change passed 986/986 Python tests in 314.948 seconds;
+JavaScript 18/18, compileall and launcher checks passed. Its exact SHA and CI
+remain separate until committed/published. This validates internal result
+consistency, not independent corroboration or a contracted RESOLVED outcome.
 
 Remaining boundaries: COMPARABLE-APPROVED-INPUT stays INSUFFICIENT EVIDENCE;
 owner: source authority for approval, agent for the bounded Statbel/Eurostat
