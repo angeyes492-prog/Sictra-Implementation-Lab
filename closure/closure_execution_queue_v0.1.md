@@ -298,6 +298,39 @@ passed 24/24 with unchanged checkout during execution, while reporting
 `product_completion=NOT_DEMONSTRATED`. Published SHA and exact CI remain
 separate until push/workflow completion; no gate is promoted by test count.
 
+### Closure delta — reproducible same-chain diagnostic and final HTTP fence, 2026-10-08 UTC
+
+Two bounded follow-ons to the preceding retained-source/output-currentness
+increment are implemented in the changed local tree. The new standalone B1
+reader consumes exact current Statbel and Eurostat candidate IDs and both
+rights receipts; it reopens original bytes, rechecks identity/expiry, and
+emits separate publisher values and decimal numeric gaps (+288.75 and +524.95
+thousand tonnes for the retained 2023/2024 pair). The real four-receipt CLI
+run succeeded while current. It fixes no causal or scope comparability claim:
+independence NOT_ESTABLISHED, comparability/cause UNCONFIRMED, admission
+NOT_ADMITTED, resolution NOT_RESOLVED and runtime NONE. Candidate contract:
+`contracts/block1_same_chain_research_comparison_contract_v0.1.md`.
+
+B4 HTTP now fences `/api/operations`, direct HTML/text/JSON outputs and
+HTML/JSON factsheets after serialization and before success headers. Injected
+expiry previously yielded 200 for direct output, factsheet and snapshot;
+the new adversarial cases reject with 409 without response-body observation
+leakage. Reviewer-discovered mutable factsheet metadata also yielded 200
+before a full-projection final fence and now rejects with 409. Exact Eurostat
+decimals are reparsed from original bytes with a bounded 64-digit/exponent
+contract and 256-digit gap arithmetic; >28-digit rounding and extreme
+underflow cases failed before repair and now pass. Existing positive routes
+and cancelled-browser compatibility still pass. The guarantee ends at
+success-header emission; this is not a permanent lock on outside source
+state. Focused 20/20 Python tests, JavaScript 18/18, compileall and
+launcher checks passed. Final changed-tree full Python discovery passed
+1013/1013 in 258.051 seconds. Changed-tree twelve-arista preflight passed
+24/24 with `product_completion=NOT_DEMONSTRATED`. Exact-final-SHA hosted CI
+remains a separate evidence requirement before counting the commit as closure.
+Detailed inputs, failure-before-repair and limits:
+`evidence/telecare_same_chain_http_currency_2026-10-08.md`. Neither source
+admission nor installed-runtime research activation was performed.
+
 Remaining boundaries: COMPARABLE-APPROVED-INPUT stays INSUFFICIENT EVIDENCE;
 owner: source authority for approval, agent for the bounded Statbel/Eurostat
 version experiment. RESOLUTION-INTELLIGENCE-EDITORIAL still needs source-specific

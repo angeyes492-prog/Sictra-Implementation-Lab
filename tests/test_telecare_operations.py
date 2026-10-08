@@ -850,6 +850,72 @@ class OperationsTests(unittest.TestCase):
             self.service.link_autonomy_task_evidence(task["task_id"], independent["dossier_id"])
         self.assertEqual(count, len(self.service.store.records()))
 
+    def test_http_output_rejects_expiry_after_initial_service_read(self):
+        output = self.ready()
+        before = self.service.store.records()
+        server = create_operations_server(self.service, port=0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            for suffix in ("html", "text", "json"):
+                with self.subTest(suffix=suffix):
+                    self.now = NOW
+                    original = self.service.output
+                    calls = 0
+
+                    def expiring_read(identity):
+                        nonlocal calls
+                        calls += 1
+                        value = original(identity)
+                        if calls == 1:
+                            self.now += 86402
+                        return value
+
+                    client = HTTPConnection("127.0.0.1", server.server_port, timeout=5)
+                    try:
+                        with patch.object(self.service, "output", side_effect=expiring_read):
+                            client.request("GET", "/api/operations/outputs/" + output["id"] + "/" + suffix)
+                            response = client.getresponse()
+                            body = response.read()
+                        self.assertEqual(409, response.status)
+                        self.assertNotIn(b"14 miles de toneladas", body)
+                        self.assertGreaterEqual(calls, 2)
+                    finally:
+                        client.close()
+            self.assertEqual(before, self.service.store.records())
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+    def test_http_snapshot_rejects_expiry_after_initial_snapshot(self):
+        self.ready()
+        original = self.service.snapshot
+        calls = 0
+
+        def expiring_snapshot():
+            nonlocal calls
+            calls += 1
+            value = original()
+            if calls == 1:
+                self.now += 86402
+            return value
+
+        server = create_operations_server(self.service, port=0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        client = HTTPConnection("127.0.0.1", server.server_port, timeout=5)
+        try:
+            with patch.object(self.service, "snapshot", side_effect=expiring_snapshot):
+                client.request("GET", "/api/operations")
+                response = client.getresponse()
+                body = response.read()
+            self.assertEqual(409, response.status)
+            self.assertNotIn(b"14 miles de toneladas", body)
+            self.assertGreaterEqual(calls, 2)
+        finally:
+            client.close(); server.shutdown(); server.server_close(); thread.join(timeout=2)
+
     def test_http_control_requires_same_origin_token_and_artifacts_are_current(self):
         output = self.ready()
         server = create_operations_server(self.service, port=0)

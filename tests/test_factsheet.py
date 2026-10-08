@@ -7,6 +7,7 @@ from contextlib import closing
 from hashlib import sha256
 from http.client import HTTPConnection
 from pathlib import Path
+from unittest.mock import patch
 
 from sictra_block4_orchestrator.operations import initialize
 from sictra_block4_orchestrator.operations_store import OperationsError
@@ -100,3 +101,71 @@ class FactsheetTests(unittest.TestCase):
             self.assertEqual(403,read('factsheet',{'Origin':'https://evil.example'})[0])
             self.now+=86402;self.assertEqual(409,read('factsheet.json')[0])
         finally:server.shutdown();server.server_close();thread.join(timeout=2)
+
+    def test_http_factsheet_rejects_expiry_after_rendering(self):
+        server = create_operations_server(self.service, port=0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        original = render_factsheet
+
+        def expiring_render(sheet):
+            body = original(sheet)
+            self.now += 86402
+            return body
+
+        client = HTTPConnection('127.0.0.1', server.server_port, timeout=5)
+        try:
+            with patch('sictra_block4_orchestrator.operations_web.render_factsheet', side_effect=expiring_render):
+                client.request('GET', f'/api/operations/outputs/{self.identity}/factsheet')
+                response = client.getresponse()
+                body = response.read()
+            self.assertEqual(409, response.status)
+            self.assertNotIn(b'Ficha de trazabilidad', body)
+        finally:
+            client.close(); server.shutdown(); server.server_close(); thread.join(timeout=2)
+
+    def test_http_factsheet_json_rejects_expiry_after_build(self):
+        server = create_operations_server(self.service, port=0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        original = build_factsheet
+
+        def expiring_build(service, identity):
+            sheet = original(service, identity)
+            self.now += 86402
+            return sheet
+
+        client = HTTPConnection('127.0.0.1', server.server_port, timeout=5)
+        try:
+            with patch('sictra_block4_orchestrator.operations_web.build_factsheet', side_effect=expiring_build):
+                client.request('GET', f'/api/operations/outputs/{self.identity}/factsheet.json')
+                response = client.getresponse()
+                body = response.read()
+            self.assertEqual(409, response.status)
+            self.assertNotIn(self.identity.encode(), body)
+        finally:
+            client.close(); server.shutdown(); server.server_close(); thread.join(timeout=2)
+
+    def test_http_factsheet_rejects_review_metadata_changed_during_render(self):
+        dossier_id = self.service.output(self.identity)['dossier_id']
+        server = create_operations_server(self.service, port=0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        original = render_factsheet
+
+        def mutating_render(sheet):
+            body = original(sheet)
+            self.service.store.put('DEFERRED_REVIEW', 'late-review', {
+                'dossier_id': dossier_id, 'acceptance': 'NOT_ACCEPTED'})
+            return body
+
+        client = HTTPConnection('127.0.0.1', server.server_port, timeout=5)
+        try:
+            with patch('sictra_block4_orchestrator.operations_web.render_factsheet', side_effect=mutating_render):
+                client.request('GET', f'/api/operations/outputs/{self.identity}/factsheet')
+                response = client.getresponse()
+                body = response.read()
+            self.assertEqual(409, response.status)
+            self.assertNotIn(b'Ficha de trazabilidad', body)
+        finally:
+            client.close(); server.shutdown(); server.server_close(); thread.join(timeout=2)

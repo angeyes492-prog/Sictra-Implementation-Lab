@@ -44,7 +44,15 @@ class OperationsHandler(CommandCenterHandler):
             except OSError:
                 pass  # The denied peer may have already closed the socket.
 
-    def _json(self, status, payload):
+    def _json(self, status, payload, *, before_send=None):
+        if before_send is not None:
+            body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            before_send()  # Final fence after serialization, before success headers.
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self._headers(); self.end_headers(); self.wfile.write(body)
+            return
         if self.command != "POST" or status != HTTPStatus.FORBIDDEN:
             return super()._json(status, payload)
         self.close_connection = True
@@ -93,7 +101,12 @@ class OperationsHandler(CommandCenterHandler):
         try:
             service = self.server.operations
             if path == "/api/operations":
-                self._json(HTTPStatus.OK, {**service.snapshot(), "control_token": self.server.control_token})
+                snapshot = service.snapshot()
+                def verify_snapshot():
+                    if service.snapshot() != snapshot:
+                        raise OperationsError("OPERATIONS_SNAPSHOT_CHANGED_DURING_RENDER")
+                self._json(HTTPStatus.OK, {**snapshot, "control_token": self.server.control_token},
+                           before_send=verify_snapshot)
                 return
             if path == "/health":
                 status = service.snapshot()
@@ -108,6 +121,13 @@ class OperationsHandler(CommandCenterHandler):
                 sheet = build_factsheet(service, suffix[0])
                 is_json = suffix[1] == 'factsheet.json'
                 body = (json.dumps(sheet, ensure_ascii=False, indent=2) if is_json else render_factsheet(sheet)).encode()
+                # Rendering is not a validity lease. Recheck after the bytes
+                # exist and before a success status/header can escape.
+                current = build_factsheet(service, suffix[0])
+                stable = lambda value: {key: item for key, item in value.items()
+                                        if key not in {"observed_at", "sha256"}}
+                if stable(current) != stable(sheet):
+                    raise OperationsError("FACTSHEET_CHANGED_DURING_RENDER")
                 self.send_response(HTTPStatus.OK)
                 self.send_header('Content-Type', ('application/json' if is_json else 'text/html') + '; charset=utf-8')
                 self.send_header('Content-Length', str(len(body)))
@@ -118,9 +138,14 @@ class OperationsHandler(CommandCenterHandler):
                 return
             output = service.output(suffix[0])
             if suffix[1] == "json":
-                self._json(HTTPStatus.OK, output)
+                def verify_output():
+                    if service.output(suffix[0]) != output:
+                        raise OperationsError("OUTPUT_CHANGED_DURING_RENDER")
+                self._json(HTTPStatus.OK, output, before_send=verify_output)
                 return
             body = output["html" if suffix[1] == "html" else "plain_text"].encode()
+            if service.output(suffix[0]) != output:
+                raise OperationsError("OUTPUT_CHANGED_DURING_RENDER")
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "text/" + ("html" if suffix[1] == "html" else "plain") + "; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
