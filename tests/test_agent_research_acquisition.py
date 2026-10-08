@@ -75,6 +75,25 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(("ec.europa.eu", "93.184.216.34", "/eurostat/cache/metadata/EN/mar_esms.htm"),
                          self.connections[-1])
 
+    def test_regional_methodology_uses_exact_official_path_and_current_rights(self):
+        terms = self.terms()
+        body = b"<html>regional method source bytes</html>"
+        self.response = Response(body)
+        receipt = self.session.acquire("EUROSTAT_REGIONAL_MAR_METADATA", terms_candidate_id=terms)
+        descriptor, reopened = self.session.quarantine.read(receipt["candidate_id"], now=NOW,
+            expected_recipe="EUROSTAT_REGIONAL_MAR_METADATA")
+        self.assertEqual(body, reopened)
+        self.assertEqual(terms, descriptor["terms_candidate_id"])
+        self.assertEqual("NOT_ADMITTED", descriptor["admission"])
+        self.assertEqual("NONE", descriptor["runtime_effect"])
+        self.assertEqual(("ec.europa.eu", "93.184.216.34",
+            "/eurostat/cache/metadata/en/tran_r_esms.htm"), self.connections[-1])
+        before = len(self.connections)
+        self.now = NOW + 86400
+        with self.assertRaisesRegex(ResearchAcquisitionError, "NOT_CURRENT"):
+            self.session.acquire("EUROSTAT_REGIONAL_MAR_METADATA", terms_candidate_id=terms)
+        self.assertEqual(before, len(self.connections))
+
     def test_replay_same_bytes_same_time_is_idempotent(self):
         original = self.terms()
         self.assertEqual(original, self.terms())

@@ -346,6 +346,61 @@ sustained authorized pilot; owner: architecture/operator authority. No gate is
 promoted. The next safe technical experiment is retained, version-bound
 same-chain Statbel/Eurostat review; it does not replace an independent root.
 
+### Closure delta — retained regional maritime scope, 2026-10-08 UTC
+
+The first ordered `LOCAL-RESEARCH-CYCLE` remains closed only as a supervised
+local mechanism on its prior exact-SHA evidence; no runtime source/admission
+boundary was changed here. The second item, `COMPARABLE-APPROVED-INPUT`, gains a
+specific source-scope finding but remains INSUFFICIENT EVIDENCE for admission
+and independent corroboration. A new exact, agent-only Eurostat regional
+methodology recipe and reader retain official original bytes under current
+reuse-notice lineage. Two successful GETs retained 408,613 bytes. The selected
+`data_descr` section, SHA-256
+`ade168da5116dcc6d40ca6bc20adefeb9b03161951bef6c673a5e41bc6ce7d77`,
+explicitly describes `tran_r_mago_nm` regional maritime aggregation using main
+ports only and exclusion of double counting. A fresh same-chain CLI read
+reproduced the 2023/2024 numeric gaps, but this general methodology does not
+establish Statbel scope equivalence or either gap's release-specific cause.
+Source state remains NOT_ADMITTED / NOT_RESOLVED, with no runtime effect.
+
+The initial actual-data review selected the wrong named section and returned
+UNCONFIRMED; inspecting the retained original identified `data_descr`, and a
+test drove its correction. A second adversarial test reproduced a false
+positive from negated wording; requiring the full publisher sentence repaired
+it. Read-only review found a remaining prefixed-denial/strikeout false
+positive; a failing adversarial test drove the standalone-paragraph and
+retraction guard. Focused regional 7/7 and acquisition 18/18 passed. Final
+full regression passed 1021/1021 Python in 917.531 seconds, 18/18 JavaScript,
+`compileall` and 24/24 changed-tree preflight with
+`product_completion=NOT_DEMONSTRATED`. Exact new-SHA hosted CI remains to be verified after
+push. Candidate contract, original IDs/hashes, source links,
+rights, errors, limits and test vectors:
+`contracts/block1_regional_maritime_scope_research_contract_v0.1.md` and
+`evidence/telecare_regional_maritime_scope_2026-10-08.md`.
+
+Owner: source authority for admission; agent for bounded official research;
+architecture authority for any runtime connection. Next technical route:
+release/version-specific source documentation or an independently rooted,
+same-scope official observation. Promotion boundary: this is a candidate
+agent-only scope review, not accepted comparability, gap explanation, source
+approval, independent review or any completed product gate.
+
+The second of the seven strategic fronts (versions/watchlist) received a
+bounded real recapture, not a gate closure. Eurostat's fixed 2023/2024 data
+bytes remained identical (SHA-256
+`5525b2ac0f59d6439f62829ecda9a2bc7727d91486e6a3475fbda3965c8a6175`;
+publisher update still `2026-03-17T23:00:00+0100`). Statbel's HTML bytes
+changed, but independent extraction returned identical 2023/2024 numerical
+rows and gaps; a publisher release identity was unavailable. Therefore the
+page-byte delta is not classified as a statistical revision, and no changed
+phenomenon or insight is asserted. Five GET attempts (one failed local atomic
+rename, one bounded successful retry) retained four files totalling 385,629
+bytes. The receipts and hashes are in the evidence file above; no quarantine
+candidate is admitted or passed into runtime. Next viable check is an exact
+publisher release/version marker or accepted same-scope input for the
+existing watchlist. Owner: source authority for admission and publisher for
+release metadata; no gate promotion.
+
 ### Continuation evidence — literal context and finite closure checks
 
 Date: 2026-10-01 local / 2026-10-02 UTC. Base d40901b, candidate isolated
