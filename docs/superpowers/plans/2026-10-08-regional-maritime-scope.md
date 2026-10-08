@@ -59,7 +59,7 @@
 - [x] Acquire official terms and regional methodology within the session budget; record URL, times, candidate IDs, byte hashes and errors.
 - [x] Run the read-only review over retained bytes; compare the literal regional-scope passage with the current Statbel/Eurostat report.
 - [x] Repeat full Python and JavaScript regression, compile check and closure preflight after the final reviewer-driven repair: 1021/1021 Python, 18/18 JavaScript, 24/24 preflight and successful compile check.
-- [ ] Commit and push the reviewed increment; verify hosted CI on the exact SHA; update the evidence ledger without promoting a product gate.
+- [x] Commit and push the reviewed increment as `fc3e01afe1c40565b4695f7ea05df3a87c995f8e`; exact-SHA hosted CI run 37835900480 succeeded. Record the result without promoting a product gate.
 
 ### Task 4: Second-capture version boundary
 

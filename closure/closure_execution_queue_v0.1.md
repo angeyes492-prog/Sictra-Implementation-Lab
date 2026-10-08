@@ -372,8 +372,11 @@ positive; a failing adversarial test drove the standalone-paragraph and
 retraction guard. Focused regional 7/7 and acquisition 18/18 passed. Final
 full regression passed 1021/1021 Python in 917.531 seconds, 18/18 JavaScript,
 `compileall` and 24/24 changed-tree preflight with
-`product_completion=NOT_DEMONSTRATED`. Exact new-SHA hosted CI remains to be verified after
-push. Candidate contract, original IDs/hashes, source links,
+`product_completion=NOT_DEMONSTRATED`. Material commit
+`fc3e01afe1c40565b4695f7ea05df3a87c995f8e` was pushed; clean-checkout
+preflight passed 24/24 on that SHA and exact-SHA GitHub Actions run
+`37835900480` (SICTrA bounded runtime validation) completed successfully.
+Candidate contract, original IDs/hashes, source links,
 rights, errors, limits and test vectors:
 `contracts/block1_regional_maritime_scope_research_contract_v0.1.md` and
 `evidence/telecare_regional_maritime_scope_2026-10-08.md`.

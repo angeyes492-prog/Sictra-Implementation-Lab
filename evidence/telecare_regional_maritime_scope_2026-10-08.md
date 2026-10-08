@@ -74,6 +74,12 @@ succeeded and changed-tree preflight passed 24/24 with
 `product_completion=NOT_DEMONSTRATED`. No gate is promoted by this research
 result.
 
+The material change is commit `fc3e01afe1c40565b4695f7ea05df3a87c995f8e`.
+Clean-checkout preflight on that SHA passed 24/24; GitHub Actions run
+[37835900480](https://github.com/angeyes492-prog/Sictra-Implementation-Lab/actions/runs/37835900480)
+completed successfully on the exact commit. This is implementation CI, not
+source admission, independent review or product acceptance.
+
 ## Version and watchlist boundary: second official capture
 
 The second capture is agent-only quarantined research, not an admitted
