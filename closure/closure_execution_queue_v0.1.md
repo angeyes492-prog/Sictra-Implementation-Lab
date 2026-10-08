@@ -244,9 +244,59 @@ rejects inconsistency before routing the need. Five contradictory variants
 were reproduced before repair; valid agreement, difference, partial and
 no-shared cases retain their unresolved outcomes. Full local regression after
 this second code change passed 986/986 Python tests in 314.948 seconds;
-JavaScript 18/18, compileall and launcher checks passed. Its exact SHA and CI
-remain separate until committed/published. This validates internal result
+JavaScript 18/18, compileall and launcher checks passed. Second implementation
+SHA `975082adbb71d4868842ae242d04e57c1885f8f5` passed exact GitHub PR
+workflow `37657018454`; clean preflight remained 24/24 and
+`product_completion=NOT_DEMONSTRATED`. This validates internal result
 consistency, not independent corroboration or a contracted RESOLVED outcome.
+
+### Closure delta — retained same-chain research and output currency, 2026-10-07
+
+The agent-only fixed Statbel research adapter now retains exact rights and
+sea-transport HTML bytes in a separate content-addressed quarantine, with
+pinned official HTTPS/public DNS, 8 MiB file and session budgets, exact URL,
+media, hash, terms lineage, expiry and read-back. Nine Statbel tests cover
+positive retention/extraction and redirect, hostile DNS, tamper/replay,
+expiry, malformed table, duplicated year/measurement and wrong unit.
+Actual original bytes from Statbel and a refreshed Eurostat fixed API response
+were retained on 2026-10-07; IDs, hashes, acquisition times, budget and the
+literal 2023/2024 values are in
+`evidence/telecare_statbel_same_chain_research_2026-10-07.md`. The Eurostat
+response hash matches the earlier retained response, while the displayed
+Statbel sums differ by +288.75 / +524.95 thousand tonnes. Neither exact
+definition nor release-specific cause is established. Both publications
+derive from the Belgian port-administration chain; this is NOT an independent
+root, approval, binding, attestation or resolved need. No runtime network or
+delivery effect was activated. Owner: agent for candidate research; source
+authority for admission. Next: obtain release/port-universe and methodology
+evidence, then decide compatibility; search separately for an independent
+same-scope root. Promotion boundary: quarantine research only.
+
+B4 output reads now recheck profile, source package/dossier and expiry after
+rendering; snapshot withdraws output summaries if their evidence expires or
+changes during slower catalog/task reads. Four adversarial output/snapshot
+vectors and existing positive operation cases pass. A duplicate full
+snapshot re-render caused a measurable validation slowdown, so the final
+implementation performs one initial content validation plus a batched final
+source/profile/output check and an end-of-read expiry fence. This remains a
+local read-side integrity repair, not operational availability proof.
+
+Final changed-tree regression: 999/999 Python cases passed in one sequential
+run before the batching optimization (1,219.444 seconds). After that code
+change, the same 999-case discovery was partitioned by disjoint filename
+patterns with counts 743+115+97+44; `a-f`, `g-r` and `t-z` passed as groups,
+while the 97-case `s` group was executed as its six complete modules after
+the grouped run stalled: counts 21+22+21+15+16+2, all passed. The slowest
+module, statistical review dossier, took 2,411.573 seconds independently and
+does not import the changed B4 output path; no speed claim is inferred from
+this host. Focused operation suite passed 43/43 before the final batching
+change; final adversarial output/snapshot tests passed separately. Full
+regression is verified by exhaustive disjoint execution, not by a completed
+single-process post-optimization run. Both JavaScript suites passed 18/18;
+compileall, launcher paths and diff checks passed. Changed-tree preflight
+passed 24/24 with unchanged checkout during execution, while reporting
+`product_completion=NOT_DEMONSTRATED`. Published SHA and exact CI remain
+separate until push/workflow completion; no gate is promoted by test count.
 
 Remaining boundaries: COMPARABLE-APPROVED-INPUT stays INSUFFICIENT EVIDENCE;
 owner: source authority for approval, agent for the bounded Statbel/Eurostat

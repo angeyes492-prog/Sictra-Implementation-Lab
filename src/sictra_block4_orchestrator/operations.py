@@ -662,7 +662,7 @@ class OperationsService:
             return {"state": "RUNNING", "intake": intake_result[-1]["state"],
                     "outcomes": outcome, "research_outcomes": research}
 
-    def output(self, identity):
+    def _output_checked(self, identity, *, final_check):
         value = self.store.latest("OUTPUT").get(identity)
         if value is None:
             raise OperationsError("OUTPUT_NOT_FOUND")
@@ -699,7 +699,36 @@ class OperationsService:
         if (value.get("html") != html or value.get("plain_text") != plain
                 or value.get("html_sha256") != sha256(html.encode()).hexdigest()):
             raise OperationsError("OUTPUT_CONTENT_MISMATCH")
-        return value
+        if not final_check:
+            return value, package, dossiers
+        # The producer, profile or clock may change while the design is rendered.
+        final_now = int(self.clock())
+        if final_now < now:
+            raise OperationsError("OUTPUT_CLOCK_ROLLBACK")
+        validate_profile(value["profile"], now=final_now)
+        if self.store.latest("PROFILE").get(value["profile"]["id"]) != value["profile"]:
+            raise OperationsError("PROFILE_SUPERSEDED")
+        current = datetime.fromtimestamp(final_now, timezone.utc)
+        if (self.exporter.export(value["dossier_id"], now=current) != package
+                or [item for item in self.exporter.list_dossiers(now=current)
+                    if item.get("dossier_id") == value["dossier_id"]] != dossiers):
+            raise OperationsError("OUTPUT_SOURCE_CHANGED_DURING_READ")
+        # The final source reads can themselves cross the expiration boundary.
+        returned_at = int(self.clock())
+        if returned_at < final_now:
+            raise OperationsError("OUTPUT_CLOCK_ROLLBACK")
+        validate_profile(value["profile"], now=returned_at)
+        _validate_package(package, self.package_key,
+                          datetime.fromtimestamp(returned_at, timezone.utc))
+        if datetime.fromisoformat(package["expires_at"]).timestamp() <= returned_at:
+            raise OperationsError("OUTPUT_SOURCE_EXPIRED_DURING_READ")
+        if (self.store.latest("PROFILE").get(value["profile"]["id"]) != value["profile"]
+                or self.store.latest("OUTPUT").get(identity) != value):
+            raise OperationsError("OUTPUT_CHANGED_DURING_READ")
+        return value, package, dossiers
+
+    def output(self, identity):
+        return self._output_checked(identity, final_check=True)[0]
 
     def snapshot(self):
         with self.lock:
@@ -707,9 +736,10 @@ class OperationsService:
             active = self.thread is not None and self.thread.is_alive() and not self.stop_event.is_set()
             status = "ERROR" if self.last_error else "PAUSED" if paused else "RUNNING" if active else "STOPPED"
             summaries = []
+            checked_outputs = {}
             for identity, value in self.store.latest("OUTPUT").items():
                 try:
-                    self.output(identity)
+                    checked_outputs[identity] = self._output_checked(identity, final_check=False)
                     summaries.append({"id": identity, "title": value["adaptation"]["heading"],
                         "profile": value["profile"]["label"], "case_id": value["case_id"],
                         "dossier_id": value["dossier_id"], "created_at": value["created_at"],
@@ -789,6 +819,62 @@ class OperationsService:
             for state in evidence.values():
                 if state["change_context"] is not None and datetime.fromisoformat(state["expires_at"]) <= final_now:
                     state["change_context"] = None
+            # Output summaries were checked before slower task/catalog reads.
+            # Withdraw their content if that evidence is no longer current.
+            current_dossiers = None
+            checked_at = -1
+            current = final_now
+            try:
+                checked_at = int(self.clock())
+                current = datetime.fromtimestamp(checked_at, timezone.utc)
+                if checked_outputs:
+                    current_dossiers = self.exporter.list_dossiers(now=current)
+                current_profiles = self.store.latest("PROFILE")
+                current_outputs = self.store.latest("OUTPUT")
+            except (OperationsError, FederatedContractError, DesignArtifactError, AudiencePolicyError):
+                current_dossiers, current_profiles, current_outputs = None, {}, {}
+            for summary in summaries:
+                if summary["availability"] != "CURRENT":
+                    continue
+                try:
+                    value, package, dossiers = checked_outputs[summary["id"]]
+                    if current_dossiers is None:
+                        raise OperationsError("OUTPUT_SOURCE_CHANGED_DURING_SNAPSHOT")
+                    validate_profile(value["profile"], now=checked_at)
+                    if (current_profiles.get(value["profile"]["id"]) != value["profile"]
+                            or current_outputs.get(summary["id"]) != value):
+                        raise OperationsError("OUTPUT_CHANGED_DURING_SNAPSHOT")
+                    selected = [item for item in current_dossiers
+                                if item.get("dossier_id") == value["dossier_id"]]
+                    if (self.exporter.export(value["dossier_id"], now=current) != package
+                            or selected != dossiers):
+                        raise OperationsError("OUTPUT_SOURCE_CHANGED_DURING_SNAPSHOT")
+                    _validate_package(package, self.package_key, current)
+                except (OperationsError, FederatedContractError, DesignArtifactError, AudiencePolicyError):
+                    summary.update({"title": "Resultado no verificable", "profile": "No verificable",
+                                    "case_id": None, "dossier_id": None, "created_at": None,
+                                    "availability": "STALE_OR_REVOKED", "state": "UNVERIFIED"})
+            returned_at = int(self.clock())
+            if current_dossiers is not None:
+                try:
+                    if self.exporter.list_dossiers(
+                            now=datetime.fromtimestamp(returned_at, timezone.utc)) != current_dossiers:
+                        raise OperationsError("OUTPUT_SOURCE_CHANGED_DURING_SNAPSHOT")
+                except (OperationsError, FederatedContractError):
+                    for summary in summaries:
+                        if summary["availability"] == "CURRENT":
+                            summary.update({"title": "Resultado no verificable", "profile": "No verificable",
+                                            "case_id": None, "dossier_id": None, "created_at": None,
+                                            "availability": "STALE_OR_REVOKED", "state": "UNVERIFIED"})
+            for summary in summaries:
+                context = checked_outputs.get(summary["id"])
+                value = context[0] if context is not None else None
+                if (summary["availability"] == "CURRENT" and value is not None and
+                        (value["profile"]["expires_at"] <= returned_at
+                         or datetime.fromisoformat(value["design_artifact"]["expires_at"]).timestamp() <= returned_at)):
+                    summary.update({"title": "Resultado no verificable", "profile": "No verificable",
+                                    "case_id": None, "dossier_id": None, "created_at": None,
+                                    "availability": "STALE_OR_REVOKED", "state": "UNVERIFIED"})
             return result
 
     def serve_loop(self, interval=5):

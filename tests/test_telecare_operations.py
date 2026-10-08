@@ -82,6 +82,93 @@ class OperationsTests(unittest.TestCase):
         self.assertIn("UNCERTAINTY", [block["kind"] for block in output["adaptation"]["content_blocks"]])
         self.assertEqual(output, self.service.output(output["id"]))
 
+    def test_output_rejects_source_expiry_while_rendering(self):
+        output = self.ready()
+        identity = output["id"]
+        self.assertEqual(output, self.service.output(identity))
+        before = self.service.store.records()
+        actual_render = render_designed_review_artifact
+
+        def expiring_render(design, adaptation):
+            result = actual_render(design, adaptation)
+            self.now += 86402
+            return result
+
+        with patch("sictra_block4_orchestrator.operations.render_designed_review_artifact",
+                   side_effect=expiring_render):
+            with self.assertRaises((OperationsError, FederatedContractError, AudiencePolicyError)):
+                self.service.output(identity)
+        self.assertEqual(before, self.service.store.records())
+
+    def test_output_rejects_source_replacement_after_initial_verification(self):
+        output = self.ready()
+        identity = output["id"]
+        before = self.service.store.records()
+        actual_export = self.service.exporter.export
+        calls = 0
+
+        def switching_export(*args, **kwargs):
+            nonlocal calls
+            package = actual_export(*args, **kwargs)
+            calls += 1
+            if calls > 1:
+                package["evidence_id"] = "substituted"
+            return package
+
+        with patch.object(self.service.exporter, "export", side_effect=switching_export):
+            with self.assertRaises((OperationsError, FederatedContractError)):
+                self.service.output(identity)
+        self.assertGreaterEqual(calls, 2)
+        self.assertEqual(before, self.service.store.records())
+
+    def test_snapshot_withdraws_output_expired_during_slow_catalog_read(self):
+        output = self.ready()
+        identity = output["id"]
+        self.assertEqual("CURRENT", self.service.snapshot()["outputs"][0]["availability"])
+        before = self.service.store.records()
+        actual_catalog = self.service._catalog_snapshot
+
+        def expiring_catalog():
+            result = actual_catalog()
+            self.now += 86402
+            return result
+
+        with patch.object(self.service, "_catalog_snapshot", side_effect=expiring_catalog):
+            view = self.service.snapshot()
+        summary = next(item for item in view["outputs"] if item["id"] == identity)
+        self.assertEqual("STALE_OR_REVOKED", summary["availability"])
+        self.assertEqual("Resultado no verificable", summary["title"])
+        self.assertEqual("No verificable", summary["profile"])
+        self.assertNotIn(output["adaptation"]["heading"], str(summary))
+        self.assertEqual(before, self.service.store.records())
+
+    def test_snapshot_withdraws_output_if_source_changes_during_catalog_read(self):
+        output = self.ready()
+        identity = output["id"]
+        actual_export = self.service.exporter.export
+        actual_catalog = self.service._catalog_snapshot
+        changed = False
+
+        def switching_export(*args, **kwargs):
+            package = actual_export(*args, **kwargs)
+            if changed:
+                package["evidence_id"] = "substituted"
+            return package
+
+        def changing_catalog():
+            nonlocal changed
+            result = actual_catalog()
+            changed = True
+            return result
+
+        with patch.object(self.service.exporter, "export", side_effect=switching_export), \
+             patch.object(self.service, "_catalog_snapshot", side_effect=changing_catalog):
+            view = self.service.snapshot()
+        summary = next(item for item in view["outputs"] if item["id"] == identity)
+        self.assertEqual("STALE_OR_REVOKED", summary["availability"])
+        self.assertEqual("Resultado no verificable", summary["title"])
+        self.assertNotIn(output["adaptation"]["heading"], str(summary))
+
     def test_retained_expired_dossier_cannot_create_autonomy_work(self):
         self.register(workbook())
         self.service.intake.run()
