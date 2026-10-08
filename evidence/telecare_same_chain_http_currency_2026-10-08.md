@@ -72,6 +72,9 @@ the two new HTTP operation methods plus command-surface compatibility passed
 also passed. JavaScript suites passed 18/18, `compileall` and preserved
 launcher paths passed. The final changed-tree full Python discovery passed
 1013/1013 in 258.051 seconds. The 24/24 twelve-arista preflight passed with
-an unchanged dirty checkout during execution and reported
-`product_completion=NOT_DEMONSTRATED`. Exact-final-SHA hosted CI remains
-separate evidence until the push workflow succeeds. No gate was changed.
+an unchanged clean checkout at code SHA
+`d49e3a70ef7c18308860ffbb57b5aee72edebf7c`, source-tree SHA-256
+`89f715907ba9b549e9ea6dae7c9d8e32a160d9503c72c97065fbd799f1a3ca5a`, and
+reported `product_completion=NOT_DEMONSTRATED`. GitHub Actions workflow
+`37715797525` completed success on that exact code SHA; PR #18 remains draft.
+No gate was changed.

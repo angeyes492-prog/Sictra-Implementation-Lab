@@ -325,8 +325,12 @@ success-header emission; this is not a permanent lock on outside source
 state. Focused 20/20 Python tests, JavaScript 18/18, compileall and
 launcher checks passed. Final changed-tree full Python discovery passed
 1013/1013 in 258.051 seconds. Changed-tree twelve-arista preflight passed
-24/24 with `product_completion=NOT_DEMONSTRATED`. Exact-final-SHA hosted CI
-remains a separate evidence requirement before counting the commit as closure.
+24/24 with `product_completion=NOT_DEMONSTRATED`. Clean preflight on code SHA
+`d49e3a70ef7c18308860ffbb57b5aee72edebf7c` passed 24/24, unchanged checkout,
+source-tree SHA-256 `89f715907ba9b549e9ea6dae7c9d8e32a160d9503c72c97065fbd799f1a3ca5a`.
+GitHub Actions workflow `37715797525` completed success on that exact code
+SHA; the draft PR remains #18. These checks close only the two bounded local
+technical increments, not source admission or any product gate.
 Detailed inputs, failure-before-repair and limits:
 `evidence/telecare_same_chain_http_currency_2026-10-08.md`. Neither source
 admission nor installed-runtime research activation was performed.
