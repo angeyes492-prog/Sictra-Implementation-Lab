@@ -9,6 +9,7 @@ from test_agent_research_acquisition import Response, NOW
 from test_research_methodology import html_sections
 from test_research_statistics import dataset, raw
 from test_national_methodology import national_html
+from test_regional_methodology import page as regional_page
 from sictra_block1.research_acquisition import ResearchQuarantine, ResearchAcquisitionError
 from sictra_block1.research_review import ResearchReview, render_research_review
 from sictra_block4_orchestrator.operations import initialize
@@ -25,6 +26,7 @@ class ResearchReviewTests(unittest.TestCase):
         self.metadata = self.acquire('EUROSTAT_MAR_METADATA', html_sections())
         self.data = self.acquire('EUROSTAT_MAR_BE_2023_2024', raw(dataset()), 'application/json')
         self.national = self.acquire('EUROSTAT_BE_MAR_METADATA', national_html())
+        self.regional = self.acquire('EUROSTAT_REGIONAL_MAR_METADATA', regional_page())
         self.review = ResearchReview(self.fixture.session.quarantine, self.data, self.metadata,
                                     national_id=self.national, clock=lambda: self.now)
 
@@ -60,12 +62,60 @@ class ResearchReviewTests(unittest.TestCase):
         review = ResearchReview(self.fixture.session.quarantine, self.data, self.metadata,
                                 clock=lambda: self.now)
         self.assertIsNone(review.read()['national_methodology'])
+        self.assertIsNone(review.read()['regional_methodology'])
+        self.assertIn('Metodología regional no adjuntada', render_research_review(review.read()))
         for identity in ('../escape', 'A' * 64, None):
             with self.assertRaisesRegex(ResearchAcquisitionError, 'CONFIGURATION_INVALID'):
                 ResearchReview(self.fixture.session.quarantine, identity, self.metadata)
         with self.assertRaises(Exception):
             ResearchReview(self.fixture.session.quarantine, self.data, self.national,
                           clock=lambda: self.now).read()
+
+    def test_regional_scope_is_reopened_shown_but_never_admitted(self):
+        before = self.files()
+        review = ResearchReview(self.fixture.session.quarantine, self.data, self.metadata,
+                                regional_id=self.regional, clock=lambda: self.now)
+        report = review.read()
+        self.assertEqual('EXPLICIT_MAIN_PORTS_ONLY',
+                         report['regional_methodology']['regional_scope_label'])
+        self.assertEqual('UNCONFIRMED', report['regional_methodology']['statbel_scope_equivalence'])
+        self.assertEqual('NOT_ADMITTED', report['admission'])
+        self.assertEqual('NONE', report['runtime_effect'])
+        html = render_research_review(report)
+        self.assertIn('EXPLICIT_MAIN_PORTS_ONLY', html)
+        self.assertIn('No demuestra equivalencia', html)
+        reopened = ResearchReview(ResearchQuarantine(self.fixture.root), self.data, self.metadata,
+                                  regional_id=self.regional, clock=lambda: self.now)
+        self.assertEqual(report, reopened.read())
+        review.verify_current(report)
+        self.assertEqual(before, self.files())
+
+    def test_regional_substitution_terms_and_tamper_reject(self):
+        with self.assertRaises(ResearchAcquisitionError):
+            ResearchReview(self.fixture.session.quarantine, self.data, self.metadata,
+                           regional_id=self.national, clock=lambda: self.now).read()
+        self.fixture.now += 1
+        other_terms = self.fixture.terms()
+        other = self.acquire('EUROSTAT_REGIONAL_MAR_METADATA', regional_page(), terms=other_terms)
+        self.now += 1
+        with self.assertRaisesRegex(ResearchAcquisitionError, 'TERMS_MISMATCH'):
+            ResearchReview(self.fixture.session.quarantine, self.data, self.metadata,
+                           regional_id=other, clock=lambda: self.now).read()
+        review = ResearchReview(self.fixture.session.quarantine, self.data, self.metadata,
+                                regional_id=self.regional, clock=lambda: self.now)
+        report = review.read()
+        (self.fixture.root / self.regional / 'content.bin').write_bytes(b'altered')
+        with self.assertRaises(ResearchAcquisitionError):
+            review.verify_current(report)
+
+    def test_regional_review_remains_current_across_clock_tick(self):
+        ticks = iter((NOW, NOW + 1, NOW + 2, NOW + 3, NOW + 4))
+        review = ResearchReview(self.fixture.session.quarantine, self.data, self.metadata,
+                                regional_id=self.regional, clock=lambda: next(ticks))
+        report = review.read()
+        self.assertEqual('EXPLICIT_MAIN_PORTS_ONLY',
+                         report['regional_methodology']['regional_scope_label'])
+        self.assertEqual(NOW + 2, report['checked_at'])
 
     def test_national_terms_substitution_cannot_join_separate_collection_lineages(self):
         self.fixture.now += 1
@@ -147,6 +197,24 @@ class ResearchReviewTests(unittest.TestCase):
             self.assertEqual(409, status)
             self.assertIn(b'UNAVAILABLE', body)
             self.assertNotIn(b'12.5', body)
+        self.assertEqual(before, service.store.records())
+
+    def test_http_regional_scope_is_current_escaped_and_withdrawn_on_expiry(self):
+        review = ResearchReview(self.fixture.session.quarantine, self.data, self.metadata,
+                                regional_id=self.regional, clock=lambda: self.now)
+        server, service = self.server(review)
+        before = service.store.records()
+        status, _, body = self.request(server, '/research')
+        self.assertEqual(200, status)
+        self.assertIn(b'EXPLICIT_MAIN_PORTS_ONLY', body)
+        self.assertIn(b'No demuestra equivalencia', body)
+        status, _, body = self.request(server, '/api/research')
+        self.assertEqual(200, status)
+        self.assertIn(b'"regional_methodology"', body)
+        self.now += 86400
+        status, _, body = self.request(server, '/research')
+        self.assertEqual(409, status)
+        self.assertNotIn(b'EXPLICIT_MAIN_PORTS_ONLY', body)
         self.assertEqual(before, service.store.records())
 
     def test_unconfigured_server_does_not_choose_or_admit_a_source(self):

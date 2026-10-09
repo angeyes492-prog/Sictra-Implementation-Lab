@@ -922,7 +922,9 @@ class OperationsTests(unittest.TestCase):
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         def request(method, path, value=None, headers=None):
-            connection = HTTPConnection('127.0.0.1', server.server_port, timeout=5)
+            # Two currentness snapshots over both source dossiers can exceed
+            # five seconds on this test host; keep the final fence and assertions.
+            connection = HTTPConnection('127.0.0.1', server.server_port, timeout=15)
             try:
                 connection.request(method, path, body=json.dumps(value) if value is not None else None, headers=headers or {})
                 response = connection.getresponse()

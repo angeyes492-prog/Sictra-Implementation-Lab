@@ -10,8 +10,12 @@ Expose the actual missing input by need type without substituting an unrelated
 root, approving the source or closing a task. No source or operations write.
 
 Configuration requires an existing ResearchQuarantine and exact data and generic
-methodology candidate IDs. Optional national metadata must share the same current
-reuse-notice ID and hash. Directory enumeration, automatic selection, network
+methodology candidate IDs. Optional national and regional metadata each must
+share the same current reuse-notice ID and hash. The regional receipt must use
+the exact `EUROSTAT_REGIONAL_MAR_METADATA` recipe, never substitute for generic
+or national metadata, and retains its original-byte hash and literal scope
+label. Its absence is displayed as unconfirmed coverage, not silently omitted.
+Directory enumeration, automatic selection, network
 download, user supplied facts, source attestation and approval are excluded.
 
 Each read recomputes the existing B1 admission review; its registration and
@@ -23,6 +27,14 @@ malformed input exposes only UNAVAILABLE with no remembered measurements.
 The HTTP consumer repeats canonical input/integrity and expiry checks after HTML
 rendering and before emitting success headers; preparing a response cannot keep
 an expired selection current. JSON responses use the same final fence.
+
+Additive report version 0.2.0 includes nullable `regional_methodology`,
+which is re-read and participates in the earliest expiry and final HTTP fence.
+The HTML escapes and labels its publisher statement, including the explicit
+limit that it cannot establish Statbel coverage equivalence or a numeric-gap
+cause. Earlier configured views without a regional candidate remain read-only
+and explicitly show that regional methodology was not supplied; no old
+quarantine record or journal is migrated. Rollback omits the optional ID.
 
 The console reports three separate needs: independent same-scope measurement,
 release-specific revision explanation, and authorized company exposure. General
@@ -44,6 +56,9 @@ Rollback omits its explicit configuration and preserves quarantine and operation
 Acceptance and installed UI adoption require MAR; this standalone lab view does
 not broaden approved source scope or acquire runtime authority.
 
-Validate exact values and source/terms identity, wrong recipe, terms substitution,
+Validate exact values and source/terms identity, regional wrong recipe and
+terms substitution, missing regional metadata without fabricated scope,
+regional byte tamper, exact reopened scope, HTTP rendering and expiry withdrawal,
+wrong recipe, terms substitution,
 expiry and clock rollback during read, tamper, reopen, no writes, safe HTML,
 loopback Host rejection, unavailable withdrawal and absent configuration.

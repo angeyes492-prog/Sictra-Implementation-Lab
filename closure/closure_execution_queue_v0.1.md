@@ -404,6 +404,53 @@ publisher release/version marker or accepted same-scope input for the
 existing watchlist. Owner: source authority for admission and publisher for
 release metadata; no gate promotion.
 
+### Closure delta — regional scope visible in bounded source review, 2026-10-09 UTC
+
+Four exact official Eurostat GETs renewed the rights/generic-methodology/data/
+regional-methodology chain into ignored quarantine (674,954 retained bytes,
+no retry/redirect). The statistical data's original-byte SHA remained
+`5525b2ac0f59d6439f62829ecda9a2bc7727d91486e6a3475fbda3965c8a6175`:
+this is a recapture of the same fixed response, not a demonstrated second
+release. `research_admission` generated a current pending review fingerprint
+`683ed1b31418468bbd1d438ef6e23f4914d8cf37cdbc704ac3c84d2b26105149`;
+reviewer is null, source NOT_ADMITTED and runtime NONE.
+
+The candidate read-only `ResearchReview` 0.2.0 now optionally consumes the
+exact current regional methodology under the same rights lineage, shows its
+literal main-ports-only label and limit in escaped HTML/JSON, and rechecks
+all originals and the earliest expiry before a response. Missing regional
+metadata remains explicitly unconfirmed. Red tests exposed unsupported
+regional configuration and a false changed-input result across an ordinary
+clock tick; repairs preserved byte/tamper/terms/expiry rejection. Focused
+research-review tests: 14/14. Full-regression diagnosis and rerun are recorded
+below; exact new-SHA CI remains required for commit closure evidence.
+IDs, hashes, publisher URLs, budget, expiry, tests and limits:
+`evidence/telecare_regional_review_console_2026-10-09.md`.
+
+The first full run failed 1/1025 in an unrelated two-dossier operations HTTP
+test: its five-second test-client timeout expired during the intended double
+integrity snapshot (measured ~2.4–2.8 seconds per snapshot). Isolated
+reproduction confirmed the timing boundary. Only that test client's timeout
+was changed to 15 seconds; semantic assertions and the server's final fence
+remain intact. The isolated test then passed 1/1. Serial full regression
+passed 1025/1025 Python in 1365.001 seconds, JavaScript 18/18,
+`compileall` and changed-tree preflight 24/24 with
+`product_completion=NOT_DEMONSTRATED`. The failed run is preserved, not
+counted as a pass. Exact new-SHA CI remains required.
+
+This reduces the source-review scope blind spot but does not alter the
+statistical admission bridge's authority. Owner: source authority for actual
+approval; architecture authority for a series-specific admission dependency
+and runtime connection. Next action: determine the exact approved scope and
+whether the regional-methodology receipt must become a mandatory signed
+admission dependency; then seek MAR before promotion. The existing watchlist
+is implemented in fixtures, but this recapture is not an admitted release.
+Eurostat's official API introduction explicitly states that its statistical
+database exposes only the latest dataset version and does not document past
+data versions. Hence another query cannot recover a prior publisher release;
+the two-release operational watchlist requires prospective retained captures
+after admission or a separate official source with a verifiable archive.
+
 ### Continuation evidence — literal context and finite closure checks
 
 Date: 2026-10-01 local / 2026-10-02 UTC. Base d40901b, candidate isolated

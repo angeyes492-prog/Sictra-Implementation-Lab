@@ -7,19 +7,28 @@ import time
 from .research_acquisition import ResearchAcquisitionError, ResearchQuarantine, canonical
 from .research_admission import prepare_admission_review
 from .national_methodology import review_national_methodology
+from .regional_methodology import review_regional_methodology
+
+
+def _stable_inputs(inputs):
+    admission, national, regional = inputs
+    stable_regional = ({key: value for key, value in regional.items()
+                        if key not in {"checked_at", "fingerprint"}} if regional else None)
+    return canonical((admission, national, stable_regional))
 
 
 class ResearchReview:
-    def __init__(self, quarantine, data_id, metadata_id, *, national_id=None,
+    def __init__(self, quarantine, data_id, metadata_id, *, national_id=None, regional_id=None,
                  clock=lambda: int(time.time())):
         if (not isinstance(quarantine, ResearchQuarantine) or not callable(clock)
                 or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value)
                        for value in (data_id, metadata_id))
-                or national_id is not None and
-                (not isinstance(national_id, str) or not re.fullmatch(r"[0-9a-f]{64}", national_id))):
+                or any(value is not None and
+                       (not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value))
+                       for value in (national_id, regional_id))):
             raise ResearchAcquisitionError("RESEARCH_REVIEW_CONFIGURATION_INVALID")
         self.quarantine, self.data_id, self.metadata_id = quarantine, data_id, metadata_id
-        self.national_id, self.clock = national_id, clock
+        self.national_id, self.regional_id, self.clock = national_id, regional_id, clock
 
     def _time(self):
         now = self.clock()
@@ -32,27 +41,35 @@ class ResearchReview:
                                             self.metadata_id, clock=lambda: now)
         national = (review_national_methodology(self.quarantine, self.national_id,
                     clock=lambda: now) if self.national_id else None)
+        regional = (review_regional_methodology(self.quarantine, self.regional_id,
+                    clock=lambda: now) if self.regional_id else None)
         if national and (national["terms_candidate_id"] != admission["terms"]["candidate_id"]
                          or national["terms_content_sha256"] != admission["terms"]["content_sha256"]):
             raise ResearchAcquisitionError("RESEARCH_REVIEW_TERMS_MISMATCH")
-        return admission, national
+        if regional and (regional["terms_candidate_id"] != admission["terms"]["candidate_id"]
+                         or regional["terms_content_sha256"] != admission["terms"]["content_sha256"]):
+            raise ResearchAcquisitionError("RESEARCH_REVIEW_TERMS_MISMATCH")
+        return admission, national, regional
 
     def read(self):
         started = self._time()
-        admission, national = self._inputs(started)
+        admission, national, regional = self._inputs(started)
         finish = self._time()
         if finish < started:
             raise ResearchAcquisitionError("RESEARCH_REVIEW_CLOCK_REGRESSED")
-        if canonical((admission, national)) != canonical(self._inputs(finish)):
+        if _stable_inputs((admission, national, regional)) != _stable_inputs(self._inputs(finish)):
             raise ResearchAcquisitionError("RESEARCH_REVIEW_INPUT_CHANGED")
-        expires = min(admission["expires_at"], national["expires_at"] if national else admission["expires_at"])
+        expires = min(admission["expires_at"],
+                      national["expires_at"] if national else admission["expires_at"],
+                      regional["expires_at"] if regional else admission["expires_at"])
         final = self._time()
         if final < finish or final >= expires:
             raise ResearchAcquisitionError("RESEARCH_REVIEW_NOT_CURRENT")
         report = {
-            "version": "0.1.0", "scope": "LABORATORY_INTERNAL_SUPERVISED",
+            "version": "0.2.0", "scope": "LABORATORY_INTERNAL_SUPERVISED",
             "availability": "CURRENT_CANDIDATES", "checked_at": final, "expires_at": expires,
             "admission_review": admission, "national_methodology": national,
+            "regional_methodology": regional,
             "needs": [
                 {"kind": "INDEPENDENT_CORROBORATION", "state": "INSUFFICIENT EVIDENCE",
                  "reason": "No independently established root for the same metric, unit, place, period and coverage.",
@@ -77,7 +94,8 @@ class ResearchReview:
                 {key: value for key, value in report.items() if key != "fingerprint"})).hexdigest()
                 or not report["checked_at"] <= now < report["expires_at"]):
             raise ResearchAcquisitionError("RESEARCH_REVIEW_NOT_CURRENT")
-        if canonical(self._inputs(now)) != canonical((report["admission_review"], report["national_methodology"])):
+        if _stable_inputs(self._inputs(now)) != _stable_inputs((report["admission_review"],
+                report["national_methodology"], report["regional_methodology"])):
             raise ResearchAcquisitionError("RESEARCH_REVIEW_INPUT_CHANGED")
         final = self._time()
         if not now <= final < report["expires_at"]:
@@ -104,6 +122,17 @@ def render_research_review(report):
             'no aporta por sí solo otra raíz independiente.</p>' +
             "".join(f'<details><summary>{e(s["anchor"])}</summary><p>{e(s["text"])}</p></details>'
                     for s in national["sections"]))
+    regional = report["regional_methodology"]
+    regional_html = ('<h2>Alcance regional de la serie</h2>'
+        '<p>Metodología regional no adjuntada; cobertura regional sin confirmar.</p>')
+    if regional:
+        regional_html = ('<h2>Alcance regional de la serie</h2>'
+            f'<p>Etiqueta literal: {e(regional["regional_scope_label"])}. '
+            'No demuestra equivalencia con la cobertura de Statbel ni explica una discrepancia.</p>'
+            f'<p>Fuente regional: <a href="{e(regional["source_url"])}" rel="noreferrer">Eurostat</a>; '
+            f'original SHA-256 <code>{e(regional["content_sha256"])}</code>.</p>'
+            f'<details><summary>{e(regional["section_anchor"])}</summary>'
+            f'<p>{e(regional["section_text"])}</p></details>')
     return ('<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
         '<title>Telecare OS · Investigación oficial</title><style>body{font:17px system-ui;max-width:960px;'
         'margin:2rem auto;padding:0 1rem;color:#16333a;background:#f5faf9}table{border-collapse:collapse;width:100%}'
@@ -119,7 +148,7 @@ def render_research_review(report):
         f'<p>Fuente oficial: <a href="{e(data["source_url"])}" rel="noreferrer">Eurostat</a></p>'
         f'<p>SHA-256 de bytes originales: <code>{e(data["content_sha256"])}</code></p>'
         f'<p>Aviso de reutilización retenido: <code>{e(admission["terms"]["candidate_id"])}</code></p>'
-        '<h2>Necesidades que siguen abiertas</h2><ul>' + needs + '</ul><h2>Metodología oficial general</h2>' + sections + national_html +
+        '<h2>Necesidades que siguen abiertas</h2><ul>' + needs + '</ul><h2>Metodología oficial general</h2>' + sections + national_html + regional_html +
         '<h2>Frontera de esta revisión</h2><p>NOT_ADMITTED · NOT_RESOLVED · NOT_ACCEPTED · Publicación BLOCKED.</p>'
         '<p>No se ha creado aprobación, evidencia atestada, tarea resuelta ni efecto en otro bloque.</p>'
         '<p><a href="/api/research">Leer revisión JSON con procedencia y requisitos de admisión</a></p></main></html>')
