@@ -62,6 +62,12 @@ Changed-tree preflight passed 24/24 with product completion
 `NOT_DEMONSTRATED`. The failed first run remains recorded, not counted as a
 pass.
 
+The material code commit is `a83fbd1d7df5b7fbd645d4bfc0e4e4629fb7af4b`.
+Clean-checkout preflight on that SHA passed 24/24; [GitHub Actions run
+37960580703](https://github.com/angeyes492-prog/Sictra-Implementation-Lab/actions/runs/37960580703)
+completed successfully on the exact SHA. This validates the candidate
+increment's tested behavior, not source admission or product completion.
+
 Remaining source decision: the generic metadata review alone is not a
 series-specific coverage approval. The standalone admission bridge still
 requires an authorized approval/binding; its current contract does not consume

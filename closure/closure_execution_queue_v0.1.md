@@ -423,7 +423,7 @@ metadata remains explicitly unconfirmed. Red tests exposed unsupported
 regional configuration and a false changed-input result across an ordinary
 clock tick; repairs preserved byte/tamper/terms/expiry rejection. Focused
 research-review tests: 14/14. Full-regression diagnosis and rerun are recorded
-below; exact new-SHA CI remains required for commit closure evidence.
+below; exact new-SHA CI evidence is recorded with the material commit below.
 IDs, hashes, publisher URLs, budget, expiry, tests and limits:
 `evidence/telecare_regional_review_console_2026-10-09.md`.
 
@@ -436,7 +436,11 @@ remain intact. The isolated test then passed 1/1. Serial full regression
 passed 1025/1025 Python in 1365.001 seconds, JavaScript 18/18,
 `compileall` and changed-tree preflight 24/24 with
 `product_completion=NOT_DEMONSTRATED`. The failed run is preserved, not
-counted as a pass. Exact new-SHA CI remains required.
+counted as a pass. Material commit
+`a83fbd1d7df5b7fbd645d4bfc0e4e4629fb7af4b` was pushed; clean-checkout
+preflight passed 24/24 on that SHA, and GitHub Actions run `37960580703`
+completed successfully on the exact commit. No source or product gate was
+promoted.
 
 This reduces the source-review scope blind spot but does not alter the
 statistical admission bridge's authority. Owner: source authority for actual
