@@ -45,6 +45,9 @@ attested dossier or a consumer for E01–E08, B2 or B3. No task transitions foll
 
 Explicit candidate CLI configuration adds read-only loopback GET /research and
 /api/research. Existing Host enforcement and no-store/security headers apply;
+`serve --research-regional-id <exact-id>` selects the optional regional candidate
+alongside required root/data/generic metadata arguments. It undergoes the same
+initial validation before worker/server startup and every subsequent read fence.
 remote HTML is never rendered or executed. Escaped application-owned HTML has a
 sandbox CSP. Default server has NOT_CONFIGURED and no source data. Missing IDs,
 partial configuration or malformed IDs reject before startup. Pause/STOP prevents

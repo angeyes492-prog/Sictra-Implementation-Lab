@@ -942,19 +942,21 @@ def main():
     serve.add_argument("--research-data-id")
     serve.add_argument("--research-metadata-id")
     serve.add_argument("--research-national-id")
+    serve.add_argument("--research-regional-id")
     args = parser.parse_args()
     service = initialize(args.state) if args.command == "init" else OperationsService(args.state)
     if args.command == "serve":
         from .operations_web import create_operations_server
         review = None
         selected = (args.research_root, args.research_data_id, args.research_metadata_id)
-        if any(value is not None for value in (*selected, args.research_national_id)):
+        if any(value is not None for value in (*selected, args.research_national_id, args.research_regional_id)):
             if not all(value is not None for value in selected) or not args.research_root.is_dir():
                 parser.error("research requires an existing root and exact data and methodology candidate IDs")
             from sictra_block1.research_acquisition import ResearchQuarantine
             from sictra_block1.research_review import ResearchReview
             review = ResearchReview(ResearchQuarantine(args.research_root),
-                args.research_data_id, args.research_metadata_id, national_id=args.research_national_id)
+                args.research_data_id, args.research_metadata_id, national_id=args.research_national_id,
+                regional_id=args.research_regional_id)
             review.read()  # Reject an invalid initial selection before starting a worker.
         with process_lock(service.root / "service.lock"):
             server = create_operations_server(service, port=args.port, research_review=review)

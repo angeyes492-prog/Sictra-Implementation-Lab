@@ -199,6 +199,54 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    or architecture acceptance authority. Next action: exact-final-SHA CI and
    retained diagnostic; installed app/live state remain untouched.
 
+### Closure delta — 2026-10-10 local / UTC
+
+Selected viable item: `COMPARABLE-APPROVED-INPUT` retention/recovery boundary
+(aristas 1/2/12; Block 1 milestones 1/6/7/8). Source-admission and resolution
+authority remain pending; recovery of original quarantine was an independent
+unimplemented safe route. Observable close: recover exact selected official
+originals and terms into a new quarantine while altered/expired/unauthorized
+inputs cannot become current admitted evidence or overwrite existing data.
+
+Candidate `research_recovery` now IMPLEMENTED / EXECUTED: bounded original-byte
+and descriptor inventory, exact dependency closure, separately retained manifest
+digest, no-replace atomic publication, recovery failure cleanup and preserved
+expiry/NOT_ADMITTED. Actual four-candidate archive restored all eight files
+identically (678781 payload+descriptor bytes; zero network requests). Current
+read of restored expired data rejected `CANDIDATE_NOT_CURRENT`. Original files
+remain untouched. Evidence: `evidence/telecare_research_recovery_2026-10-10.md`;
+contract: `contracts/block1_research_quarantine_recovery_contract_v0.1.md`.
+The optional regional ID is now accepted by `operations serve` and validated
+through the existing reader before starting workers; regional-only or wrong
+recipe configuration rejects. No installed launch/service was changed.
+
+Focused 20-case recovery/startup verification: no failures; one Windows symlink
+privilege skip, real Windows junction rejection executed. Fresh read-only model
+review reported no Critical/Important issue; both Minor findings were reproduced
+and repaired (cleanup-primary-error preservation, bounded nested JSON rejection).
+External review, source admission and MAR are not inferred. Final serial full
+regression: 1045 cases in 1598.360s, 1044 passes, one Windows symlink-privilege
+skip, zero failures/errors; 20 unique added cases. JavaScript 18/18, compileall
+and launcher paths passed. Precommit preflight: exact 24/24 selected mechanism
+tests, stable checkout, product NOT_DEMONSTRATED. Clean committed preflight and
+hosted CI on the exact containing SHA remain the final machine conditions; their
+immutable workflow outcomes apply without another documentation-only commit.
+
+Reconciliation: Notion plan 3f289f66-067b-811f-b6ea-cf97047e1bc3 (last edit
+2026-10-09) still records all seven fronts as partial. Slack public Telecare
+search returned no results this cycle. Baseline GitHub exact HEAD 3786cc46f
+had successful run 37962371794. Wolfram enumerated 64 abstract guard states,
+one accepts all six required guards; not implementation or source acceptance.
+The historical B1 narrow gate explicitly treats `AWAIT_NEWER_SOURCE` as a valid
+operating state, not missing code. Current product-level independent evidence,
+source-specific resolution semantics and MAR remain genuine separate gaps;
+do not wait endlessly for an unchanged source page or fabricate a second release.
+Owner/next action: source authority supplies actual format-specific approval/
+binding; B1 architecture authority decides per-need resolution/reference cases;
+agent may build only sufficiently specified candidate routes, without adoption.
+Certainty VERIFIED / confidence B for executed candidate recovery, product
+completion INSUFFICIENT EVIDENCE. All existing gates unchanged.
+
 ### Closure delta — 2026-10-07 local / 2026-10-07 UTC
 
 On the isolated `codex/telecare-integrated-autonomy` candidate, three bounded
@@ -595,7 +643,13 @@ passed. This is 31 new Python vectors over c528205: 17 acquisition, eight
 methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
-Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-04 local):
+Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-10 local):
+bounded quarantine-original backup/restoration with actual bytes, preserved
+expiry/admission, no-clobber publication and controlled failure; regional
+CLI startup now reaches existing validated review. Executable positive and
+adversarial vectors, not documentation, justify this delta. Paused automation
+remains PAUSED; no gate changed.
+Prior real delta (2026-10-04 local):
 type-specific B1 research routes integrated with persistent B4 evaluation,
 legacy observation withdrawal/reassessment without history edits, repaired
 console validation, and the actual official-candidate read-only console with

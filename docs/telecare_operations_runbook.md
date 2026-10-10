@@ -107,6 +107,36 @@ de una fuente real. No mezcles su carpeta con la operación real.
 
 ## Respaldo, incidentes y alcance
 
+### Investigación oficial en cuarentena (candidato no instalado)
+
+Los originales descargados por el agente no pertenecen al respaldo operativo.
+Para conservar una selección Eurostat y su aviso de reutilización, usa una
+carpeta nueva cuyo padre ya exista:
+
+```powershell
+python -m sictra_block1.research_recovery backup --root CUARENTENA --candidate-id ID_EXACTO --destination ARCHIVO_NUEVO
+python -m sictra_block1.research_recovery restore --archive ARCHIVO --destination CUARENTENA_NUEVA --manifest-sha256 HASH_CONSERVADO
+```
+
+Puedes repetir `--candidate-id` para seleccionar datos y metodologías. El
+respaldo incluye automáticamente su aviso exacto de reutilización. Conserva el
+`manifest_sha256` devuelto en otro lugar confiable; no lo recuperes de un archivo
+que podría haber sido alterado. Se rechazan carpetas existentes, enlaces,
+archivos extra, dependencias ausentes y bytes modificados. No se copian claves
+ni aprobaciones. El material vencido se conserva como historia, pero restaurarlo
+no lo vuelve vigente ni lo admite como fuente.
+
+Para abrir una selección vigente en la consola candidata, inicia explícitamente:
+
+```powershell
+python -m sictra_block4_orchestrator.operations --state RUTA serve --research-root CUARENTENA --research-data-id ID_DATOS --research-metadata-id ID_METODOLOGIA --research-regional-id ID_REGIONAL
+```
+
+El ID regional es opcional; `--research-national-id` agrega la metodología
+nacional. Ambos deben compartir el mismo aviso vigente. Selecciones incompletas,
+equivocadas o vencidas rechazan el arranque. `/research` muestra originales
+cuarentenados y necesidades pendientes: no publica, admite ni resuelve.
+
 El servicio crea diariamente un respaldo firmado de su journal de operaciones,
 configuración y artefactos de diseño. `restore` sólo admite un destino inexistente y
 verifica firmas/hash. Ese respaldo **no incluye** claves, pipeline de fuentes
