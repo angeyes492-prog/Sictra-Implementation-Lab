@@ -42,19 +42,48 @@
       $('deferred-reviews').replaceChildren();
       for(const item of data.deferred_reviews || []) {const row=document.createElement('li');row.textContent=item.dossier_id+' · Cerrado por abstención · evidencia pendiente · no aceptado';$('deferred-reviews').append(row);}
       $('autonomy-task-list').replaceChildren();
+      const comparisonLabels={NO_SHARED_MEASUREMENT:'Sin mediciones equivalentes',PARTIAL_COVERAGE_REVIEW_REQUIRED:'Cobertura parcial para revisión',VALUE_DIFFERENCE_REVIEW_REQUIRED:'Valor posterior discrepante; revisión pendiente',EXACT_VALUE_AGREEMENT_REVIEW_REQUIRED:'Mismo valor posterior; revisión pendiente'};
+      const assessmentLabels={INSUFFICIENT:'Necesidad aún insuficiente',MEASUREMENT_DISAGREEMENT:'Mediciones discrepantes; investigar revisiones',REVIEW_REQUIRED:'Comparación pendiente de evaluación de Intelligence'};
+      const researchLabels={WAITING_LOCAL_EVIDENCE:'espera evidencia local de otra raíz',WAITING_TASK_SPECIFIC_EVIDENCE:'espera el tipo de evidencia específico de esta tarea',INSUFFICIENT:'evidencia examinada insuficiente',MEASUREMENT_DISAGREEMENT:'mediciones discrepantes',REVIEW_REQUIRED:'evidencia candidata para revisión'};
       for (const item of data.autonomy_tasks) {
         const card=document.createElement('article');card.className='case';
         const text=document.createElement('div'), title=document.createElement('strong'), body=document.createElement('p');
-        title.textContent=item.kind+' · '+item.state;
-        body.textContent=item.requirement+' · raíz requerida: '+item.required_evidence_root;
+        title.textContent=item.effective_kind+' · '+item.state;
+        body.textContent=item.requirement+' · evidencia requerida: '+(item.effective_required_evidence_root || item.required_evidence_root)+
+          (item.source_evidence_status==='CURRENT' ? ' · fuente vigente' : ' · fuente no vigente: tarea histórica, acciones suspendidas')+
+          (item.evidence_link ? ' · dossier candidato: '+item.evidence_link.dossier_id+' · '+item.evidence_status : '')+
+          (item.evidence_comparison ? ' · '+comparisonLabels[item.evidence_comparison.status]+' · mediciones comparadas: '+item.evidence_comparison.matched.length : '')+
+          (item.evidence_assessment ? ' · '+assessmentLabels[item.evidence_assessment.verdict]+' · siguiente: '+item.evidence_assessment.next_action : '')+
+          (item.research_evaluation ? ' · última búsqueda local: '+(item.research_evaluation.availability==='CURRENT_INPUTS' ? researchLabels[item.research_evaluation.verdict] : 'datos vencidos o revocados') : '')+
+          (data.dossier_evidence.find(d=>d.dossier_id===item.dossier_id)?.change_context ?
+            ' · '+changeContextLabel(data.dossier_evidence.find(d=>d.dossier_id===item.dossier_id).change_context) : '')+
+          ' · cierre pendiente de resolución contratada por Intelligence'+
+          (item.boundary_status==='LEGACY_SUPERSEDED' ? ' · metadato histórico reemplazado' : '');
         text.append(title,body);card.append(text);
-        if (item.state==='OPEN') {
+        if (item.state==='OPEN' && item.source_evidence_status==='CURRENT') {
           const button=document.createElement('button');button.type='button';button.textContent='Registrar lectura humana';
           button.addEventListener('click',()=>{
             const reviewer=prompt('Identificador del revisor local:');
             const rationale=prompt('Explica qué evidencia falta y la siguiente acción (20–1000 caracteres):');
             if(reviewer&&rationale) post('/api/operations/tasks/review',{task_id:item.task_id,reviewer_id:reviewer,rationale}).catch(error=>$('operations-feedback').textContent=error.message);
           });card.append(button);
+        }
+        if (item.effective_evidence_route==='INDEPENDENT_DOSSIER' && ['OPEN','HUMAN_ACKNOWLEDGED'].includes(item.state) && item.source_evidence_status==='CURRENT') {
+          const link=document.createElement('button');link.type='button';link.textContent='Vincular dossier independiente vigente';
+          link.addEventListener('click',()=>{
+            const dossier=prompt('ID exacto del dossier de otra raíz actualmente exportable (solo candidato):');
+            if(dossier) post('/api/operations/tasks/link',{task_id:item.task_id,evidence_dossier_id:dossier.trim()}).catch(error=>$('operations-feedback').textContent=error.message);
+          });card.append(link);
+        }
+        if (item.state==='EVIDENCE_LINKED_REVIEW_REQUIRED' && item.evidence_status==='CURRENT' && item.source_evidence_status==='CURRENT') {
+          for(const [label,decision] of [['Solicitar reevaluación de Intelligence · la tarea sigue abierta','REQUEST_BLOCK1_REASSESSMENT'],['La evidencia es insuficiente','EVIDENCE_INSUFFICIENT']]) {
+            const button=document.createElement('button');button.type='button';button.textContent=label;
+            button.addEventListener('click',()=>{
+              const reviewer=prompt('Identificador del revisor local (no verifica identidad independiente):');
+              const rationale=prompt('Justificación de la reevaluación (20–1000 caracteres):');
+              if(reviewer&&rationale) post('/api/operations/tasks/reassess',{task_id:item.task_id,reviewer_id:reviewer,rationale,decision}).catch(error=>$('operations-feedback').textContent=error.message);
+            });card.append(button);
+          }
         }
         $('autonomy-task-list').append(card);
       }
@@ -98,7 +127,9 @@
       }
       if (!data.outputs.length) $('operations-outputs').textContent='Todavía no hay boletines. Registra una versión base y después una versión distinta de la fuente marítima autorizada.';
       if(requestedArtifact){const match=data.outputs.find(item=>item.id===requestedArtifact&&item.availability==='CURRENT');if(match)openPreview(match.id);else $('operations-feedback').textContent='El boletín solicitado no está vigente o no pertenece a esta cadena. No se sustituyó por otro.';requestedArtifact=null;}
-      $('operations-wait').textContent = data.waiting.map(w=>w.reason).join(' · ');
+      $('operations-wait').textContent = data.waiting.map(w=>w.reason).concat(
+        data.dossier_evidence.filter(d=>d.status!=='CURRENT').map(d=>
+          'Dossier sin evidencia vigente: '+d.dossier_id+' · no genera trabajo nuevo')).join(' · ');
       controls();
     } catch (error) {
       token=''; $('operations-status').textContent=error.message; $('operations-outputs').replaceChildren();

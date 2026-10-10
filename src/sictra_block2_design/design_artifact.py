@@ -118,9 +118,59 @@ def compose_content_design(dossier: dict, package: dict) -> dict:
 
 def render_designed_review_artifact(design: dict, adaptation: dict) -> tuple[str, str]:
     """Render a B2 design candidate after B3 has selected its declared view."""
+    if (not isinstance(design, dict) or design.get("version") != 1
+            or design.get("artifact_type") != "CONTENT_DESIGN_CANDIDATE"
+            or design.get("format") != "REVIEW_NEWSLETTER"
+            or design.get("status") != "DESIGN_CANDIDATE_NOT_ACCEPTED"
+            or design.get("review") != "HUMAN_REVIEW_REQUIRED"
+            or design.get("publication") != "BLOCKED"
+            or design.get("delivery") != "NONE"
+            or design.get("acceptance") != "NOT_ACCEPTED"
+            or design.get("fingerprint") != fingerprint({k: v for k, v in design.items() if k != "fingerprint"})):
+        raise DesignArtifactError("DESIGN_ARTIFACT_INVALID")
+    if not isinstance(adaptation, dict):
+        raise DesignArtifactError("ADAPTATION_ARTIFACT_BINDING_INVALID")
     if (adaptation.get("artifact_fingerprint") != design.get("fingerprint")
             or adaptation.get("fingerprint") != fingerprint({k: v for k, v in adaptation.items() if k != "fingerprint"})):
         raise DesignArtifactError("ADAPTATION_ARTIFACT_BINDING_INVALID")
+    if (adaptation.get("version") != 1
+            or adaptation.get("channel") != "LOCAL_REVIEW"
+            or adaptation.get("level") != "DECLARED_GENERIC_AUDIENCE"
+            or adaptation.get("status") != "DESIGN_REVIEW_REQUIRED"
+            or adaptation.get("publication") != "BLOCKED"
+            or adaptation.get("delivery") != "NONE"):
+        raise DesignArtifactError("ADAPTATION_AUTHORITY_INVALID")
+    required = {"CONTEXT", "REVIEW_QUESTIONS", "EVIDENCE_GAP",
+                "UNCERTAINTY", "LIMITATION", "PROVENANCE"}
+    immutable = required - {"REVIEW_QUESTIONS"}
+    source_blocks = design.get("content_blocks")
+    selected_blocks = adaptation.get("content_blocks")
+    if not isinstance(source_blocks, list) or not isinstance(selected_blocks, list):
+        raise DesignArtifactError("REQUIRED_BLOCK_INVALID")
+    if any(not isinstance(block, dict) for block in source_blocks + selected_blocks):
+        raise DesignArtifactError("REQUIRED_BLOCK_INVALID")
+    for kind in required:
+        original = [block for block in source_blocks if block.get("kind") == kind]
+        selected = [block for block in selected_blocks if block.get("kind") == kind]
+        if len(original) != 1 or len(selected) != 1 or (kind in immutable and selected != original):
+            raise DesignArtifactError("REQUIRED_BLOCK_INVALID")
+    claims = design.get("claims")
+    if (not isinstance(claims, list) or not claims
+            or any(not isinstance(claim, dict) or not isinstance(claim.get("id"), str)
+                   for claim in claims)):
+        raise DesignArtifactError("OBSERVATION_BLOCK_INVALID")
+    claim_ids = {claim["id"] for claim in claims}
+    original_observations = [block for block in source_blocks if block.get("kind") == "OBSERVED_CHANGE"]
+    selected_observations = [block for block in selected_blocks if block.get("kind") == "OBSERVED_CHANGE"]
+    if not claim_ids or not selected_observations:
+        raise DesignArtifactError("OBSERVATION_BLOCK_INVALID")
+    remaining = iter(original_observations)
+    for block in selected_observations:
+        refs = block.get("source_claim_ids")
+        if (not isinstance(refs, list) or not refs
+                or any(not isinstance(ref, str) or ref not in claim_ids for ref in refs)
+                or not any(block == original for original in remaining)):
+            raise DesignArtifactError("OBSERVATION_BLOCK_INVALID")
     heading = adaptation["heading"]
     blocks = adaptation["content_blocks"]
     plain = heading + "\n\n" + adaptation["framing"] + "\n\n" + "\n\n".join(

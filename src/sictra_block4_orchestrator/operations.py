@@ -10,6 +10,12 @@ import threading
 import time
 
 from sictra_block1.operator_pipeline import initialize_operator_pipeline, load_operator_pipeline
+from sictra_block1.evidence_comparison import (
+    EvidenceComparisonViolation, compare_dossier_measurements,
+)
+from sictra_block1.need_classification import classify_data_need, route_data_need
+from sictra_block1.need_assessment import assess_linked_data_need
+from sictra_block1.change_context import ChangeContextViolation, project_change_context
 from sictra_block1.hn_customs_pipeline import (
     HNCustomsPipelineViolation, initialize_hn_customs_pipeline,
     parse_hn_customs_workbook,
@@ -26,8 +32,28 @@ from .producer_adapters import (
     Block1DossierPackageAdapter, CompositeDossierPackageAdapter,
     HNCustomsDossierPackageAdapter,
 )
-from .runtime import FederatedContractError, FederatedOrchestratorStore
+from .runtime import FederatedContractError, FederatedOrchestratorStore, _validate_package
 from .operations_store import OperationsError, OperationsStore, process_lock
+from .research_cycle import LocalResearchCycle
+
+AUTONOMY_TASK_RESOLUTION_BOUNDARY = "BLOCK1_CONTRACTED_RESOLUTION_REQUIRED"
+
+
+def _evidence_route(source_id, requirement):
+    """Consume Block 1 routing without adding Block 4 evidence semantics."""
+    return route_data_need(source_id, requirement)
+
+
+def _design_for_dossier(dossier, package, *, synthetic):
+    """Reproduce the local Block 2 handoff, including its explicit pilot label."""
+    design = compose_content_design(dossier, package)
+    if synthetic:
+        design["title"] = "PRUEBA SINTÉTICA · " + design["title"]
+        design["content_blocks"][0]["body"] = (
+            "Datos de prueba generados localmente; no representan una publicación real de Eurostat. "
+            + design["content_blocks"][0]["body"])
+        design["fingerprint"] = fingerprint({k: v for k, v in design.items() if k != "fingerprint"})
+    return design
 
 
 def initialize(root, *, now=None):
@@ -106,6 +132,11 @@ class OperationsService:
                 pipeline=self.hn_pipeline, integrity_key=self.hn_key,
                 package_key=self.package_key,
             ),
+        )
+        self.research = LocalResearchCycle(
+            store=self.store, source_check=self._dossier_evidence,
+            candidate_check=self._current_task_evidence, clock=lambda: self.clock(),
+            stopped=lambda: self.stop_event.is_set() or (self.root / "STOP").exists() or self.is_paused(),
         )
 
     def add_profile(self, profile):
@@ -288,6 +319,7 @@ class OperationsService:
         """
         existing = self.store.latest("AUTONOMY_TASK")
         now = int(self.clock())
+        current_dossiers = []
         for dossier in dossiers:
             source = dossier.get("source", {})
             needs = dossier.get("next_data_needs", [])
@@ -298,6 +330,11 @@ class OperationsService:
             root = source.get("root_source_identity", source["source_id"])
             if not isinstance(root, str) or not root:
                 raise OperationsError("AUTONOMY_TASK_ROOT_INVALID")
+            evidence = self._dossier_evidence(dossier["dossier_id"], dossier=dossier)
+            self._record_dossier_evidence(evidence)
+            if evidence["status"] != "CURRENT":
+                continue
+            current_dossiers.append(dossier)
             for ordinal, need in enumerate(needs, 1):
                 if not isinstance(need, str) or not need.strip() or len(need) > 1000:
                     raise OperationsError("AUTONOMY_TASK_NEED_INVALID")
@@ -307,20 +344,87 @@ class OperationsService:
                 })[:24]
                 if identity in existing:
                     continue
-                kind = ("INDEPENDENT_CORROBORATION" if "independiente" in need.lower()
-                        else "EVIDENCE_GAP")
+                # Do not turn an earlier observation into durable execution
+                # authority after expiry or a concurrent source replacement.
+                latest = self._dossier_evidence(dossier["dossier_id"], dossier=dossier)
+                self._record_dossier_evidence(latest)
+                if latest["status"] != "CURRENT":
+                    current_dossiers.remove(dossier)
+                    break
+                route = _evidence_route(source["source_id"], need)
+                required_root = (route["required_evidence_root"] + ":" + root
+                                 if route["id"] == "INDEPENDENT_DOSSIER"
+                                 else route["required_evidence_root"] + ":" + source["source_id"])
                 task = {
                     "task_id": identity, "dossier_id": dossier["dossier_id"],
                     "source_id": source["source_id"], "source_root": root,
-                    "ordinal": ordinal, "kind": kind, "priority": "HIGH",
+                    "ordinal": ordinal, "kind": route["kind"], "priority": "HIGH",
                     "state": "OPEN", "requirement": need.strip(), "created_at": now,
-                    "required_evidence_root": "MUST_DIFFER_FROM:" + root,
-                    "allowed_actions": ["REGISTER_APPROVED_LOCAL_SOURCE", "LINK_VERIFIED_EVIDENCE"],
+                    "evidence_route": route["id"], "required_evidence_root": required_root,
+                    "allowed_actions": route["allowed_actions"],
+                    "next_action": route["next_action"],
                     "forbidden_actions": ["NETWORK_ACQUISITION", "CAUSAL_CONCLUSION", "PUBLICATION", "DELIVERY"],
-                    "completion_boundary": "VERIFIED_EVIDENCE_LINK_AND_HUMAN_REASSESSMENT_REQUIRED",
+                    "completion_boundary": AUTONOMY_TASK_RESOLUTION_BOUNDARY,
                     "last_human_review": None,
                 }
                 self.store.put("AUTONOMY_TASK", identity, task, immutable=True)
+        return current_dossiers
+
+    def _dossier_evidence(self, dossier_id, *, dossier=None):
+        """Read current producer authority; the lifecycle journal is not a cache."""
+        checked_at = int(self.clock())
+        state = {"dossier_id": dossier_id, "checked_at": checked_at,
+                 "status": "UNAVAILABLE", "reason": None, "evidence_id": None,
+                 "source_hash": None, "expires_at": None}
+        try:
+            package = self.exporter.export(
+                dossier_id, now=datetime.fromtimestamp(checked_at, timezone.utc))
+            _validate_package(package, self.package_key, datetime.fromtimestamp(checked_at, timezone.utc))
+            if (package.get("dossier_id") != dossier_id
+                    or package.get("currentness") != "CURRENT"
+                    or package.get("certainty") in {"CONTRADICTED", "INSUFFICIENT EVIDENCE"}
+                    or package.get("disposition") != "REVIEW_REQUIRED"
+                    or datetime.fromisoformat(package["expires_at"]).timestamp() <= checked_at
+                    or dossier is not None and
+                    package.get("source_hash") != dossier["source"].get("content_sha256")):
+                raise FederatedContractError("DOSSIER_PACKAGE_BINDING_INVALID")
+        except FederatedContractError as error:
+            state["reason"] = str(error)
+            return state
+        return {**state, "status": "CURRENT", "evidence_id": package["evidence_id"],
+                "source_hash": package["source_hash"], "expires_at": package["expires_at"]}
+
+    def _record_dossier_evidence(self, evidence):
+        # Retain transitions, not an ever-growing event for each unchanged poll.
+        value = {key: value for key, value in evidence.items() if key != "checked_at"}
+        previous = self.store.latest("DOSSIER_EVIDENCE_STATE").get(value["dossier_id"])
+        if previous is None or {k: v for k, v in previous.items() if k != "changed_at"} != value:
+            self.store.put("DOSSIER_EVIDENCE_STATE", value["dossier_id"],
+                           {**value, "changed_at": evidence["checked_at"]})
+
+    def _current_change_context(self, dossier_id):
+        """Read-only projection, withdrawn if producer input changes mid-read."""
+        now = datetime.fromtimestamp(self.clock(), timezone.utc)
+        package = self.exporter.export(dossier_id, now=now)
+        _validate_package(package, self.package_key, now)
+        matches = [d for d in self.exporter.list_dossiers(now=now) if d.get("dossier_id") == dossier_id]
+        if (len(matches) != 1 or package["dossier_id"] != dossier_id
+                or package["source_hash"] != matches[0]["source"].get("content_sha256")
+                or package["currentness"] != "CURRENT" or package["disposition"] != "REVIEW_REQUIRED"
+                or package["certainty"] in {"CONTRADICTED", "INSUFFICIENT EVIDENCE"}
+                or datetime.fromisoformat(package["expires_at"]) <= now):
+            raise OperationsError("CHANGE_CONTEXT_BINDING_INVALID")
+        context = project_change_context(matches[0])
+        current = datetime.fromtimestamp(self.clock(), timezone.utc)
+        if (self.exporter.export(dossier_id, now=current) != package
+                or [d for d in self.exporter.list_dossiers(now=current) if d.get("dossier_id") == dossier_id] != matches):
+            raise OperationsError("CHANGE_CONTEXT_INPUT_CHANGED")
+        # The producer's calls may advance time; validate at return, not only at entry.
+        final_now = datetime.fromtimestamp(self.clock(), timezone.utc)
+        _validate_package(package, self.package_key, final_now)
+        if datetime.fromisoformat(package["expires_at"]) <= final_now:
+            raise OperationsError("CHANGE_CONTEXT_EXPIRED")
+        return context
 
     def acknowledge_autonomy_task(self, task_id, *, reviewer_id, rationale):
         """Record a human reading of a task without accepting its evidence."""
@@ -334,6 +438,10 @@ class OperationsService:
             task = tasks.get(task_id)
             if task is None or task.get("state") not in {"OPEN", "HUMAN_ACKNOWLEDGED"}:
                 raise OperationsError("AUTONOMY_TASK_NOT_REVIEWABLE")
+            if self.stop_event.is_set() or (self.root / "STOP").exists():
+                raise OperationsError("AUTONOMY_TASK_STOPPED")
+            if self._dossier_evidence(task["dossier_id"])["status"] != "CURRENT":
+                raise OperationsError("AUTONOMY_TASK_SOURCE_NOT_CURRENT")
             review = {
                 "task_id": task_id, "reviewer_id": reviewer_id.strip(),
                 "rationale": rationale.strip(), "reviewed_at": int(self.clock()),
@@ -347,6 +455,111 @@ class OperationsService:
             })
             return {"status": "ACKNOWLEDGED_NOT_ACCEPTED", "task_id": task_id,
                     "publication": "BLOCKED", "evidence_link": None}
+
+    def _current_task_evidence(self, task, evidence_dossier_id):
+        """Recheck both Block 1 stores; a saved link is never proof of currency."""
+        if _evidence_route(task["source_id"], task["requirement"])["id"] != "INDEPENDENT_DOSSIER":
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_ROUTE_NOT_LINKABLE")
+        if (not isinstance(evidence_dossier_id, str) or not evidence_dossier_id.strip()
+                or evidence_dossier_id == task["dossier_id"]):
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_ID_INVALID")
+        now = datetime.fromtimestamp(self.clock(), timezone.utc)
+        try:
+            original = self.exporter.export(task["dossier_id"], now=now)
+            package = self.exporter.export(evidence_dossier_id, now=now)
+            _validate_package(original, self.package_key, now)
+            _validate_package(package, self.package_key, now)
+            dossiers = self.exporter.list_dossiers(now=now)
+            originals = [item for item in dossiers if item.get("dossier_id") == task["dossier_id"]]
+            matches = [item for item in dossiers if item.get("dossier_id") == evidence_dossier_id]
+        except FederatedContractError as error:
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_NOT_CURRENT") from error
+        if (len(matches) != 1 or len(originals) != 1
+                or not isinstance(matches[0].get("source"), dict)
+                or original.get("dossier_id") != task["dossier_id"]
+                or original["source_hash"] != originals[0]["source"].get("content_sha256")
+                or package["source_hash"] != matches[0]["source"].get("content_sha256")):
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_NOT_CURRENT")
+        source = matches[0]["source"]
+        root = source.get("root_source_identity", source.get("source_id"))
+        if not isinstance(root, str) or not root or root == task["source_root"]:
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_ROOT_NOT_INDEPENDENT")
+        if package["dossier_id"] != evidence_dossier_id:
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_ID_INVALID")
+        try:
+            comparison = compare_dossier_measurements(originals[0], matches[0])
+        except EvidenceComparisonViolation as error:
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_NOT_COMPARABLE") from error
+        assessment = assess_linked_data_need(task["source_id"], task["requirement"], comparison)
+        return {"dossier_id": evidence_dossier_id, "source_root": root,
+                "evidence_id": package["evidence_id"], "source_hash": package["source_hash"],
+                "expires_at": package["expires_at"], "comparison": comparison,
+                "assessment": assessment}
+
+    def _revalidate_task_link(self, task):
+        link = task.get("evidence_link")
+        if not isinstance(link, dict):
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_LINK_MISSING")
+        current = self._current_task_evidence(task, link.get("dossier_id"))
+        if any(link.get(key) != value for key, value in current.items()
+               if key not in {"comparison", "assessment"} or key in link):
+            raise OperationsError("AUTONOMY_TASK_EVIDENCE_LINK_CHANGED")
+        return current
+
+    def link_autonomy_task_evidence(self, task_id, evidence_dossier_id):
+        """Link independent current evidence for review; do not close the task."""
+        if not isinstance(task_id, str) or not task_id.startswith("TASK-"):
+            raise OperationsError("AUTONOMY_TASK_ID_INVALID")
+        with self.lock:
+            if self.stop_event.is_set() or (self.root / "STOP").exists():
+                raise OperationsError("AUTONOMY_TASK_STOPPED")
+            task = self.store.latest("AUTONOMY_TASK").get(task_id)
+            if task is None:
+                raise OperationsError("AUTONOMY_TASK_NOT_FOUND")
+            if task["state"] == "EVIDENCE_LINKED_REVIEW_REQUIRED":
+                link = self._revalidate_task_link(task)
+                if link["dossier_id"] != evidence_dossier_id:
+                    raise OperationsError("AUTONOMY_TASK_LINK_REPLACEMENT_REQUIRES_REVIEW")
+                return {"status": task["state"], "task_id": task_id,
+                        "evidence_link": link, "publication": "BLOCKED", "acceptance": "NOT_ACCEPTED"}
+            if task["state"] not in {"OPEN", "HUMAN_ACKNOWLEDGED"}:
+                raise OperationsError("AUTONOMY_TASK_NOT_LINKABLE")
+            link = self._current_task_evidence(task, evidence_dossier_id)
+            self.store.put("AUTONOMY_TASK", task_id, {
+                **task, "state": "EVIDENCE_LINKED_REVIEW_REQUIRED", "evidence_link": link,
+                "publication": "BLOCKED", "acceptance": "NOT_ACCEPTED",
+            })
+            return {"status": "EVIDENCE_LINKED_REVIEW_REQUIRED", "task_id": task_id,
+                    "evidence_link": link, "publication": "BLOCKED", "acceptance": "NOT_ACCEPTED"}
+
+    def reassess_autonomy_task(self, task_id, *, reviewer_id, rationale, decision):
+        """Record a local request for Block 1 reassessment, never close the gap."""
+        if (not isinstance(task_id, str) or not task_id.startswith("TASK-")
+                or not isinstance(reviewer_id, str) or not reviewer_id.strip()
+                or len(reviewer_id) > 128 or not isinstance(rationale, str)
+                or not 20 <= len(rationale.strip()) <= 1000
+                or not isinstance(decision, str)
+                or decision not in {"REQUEST_BLOCK1_REASSESSMENT", "EVIDENCE_INSUFFICIENT"}):
+            raise OperationsError("AUTONOMY_TASK_REASSESSMENT_INVALID")
+        with self.lock:
+            if self.stop_event.is_set() or (self.root / "STOP").exists():
+                raise OperationsError("AUTONOMY_TASK_STOPPED")
+            task = self.store.latest("AUTONOMY_TASK").get(task_id)
+            if task is None or task["state"] != "EVIDENCE_LINKED_REVIEW_REQUIRED":
+                raise OperationsError("AUTONOMY_TASK_NOT_REASSESSABLE")
+            link = self._revalidate_task_link(task)
+            review = {"task_id": task_id, "reviewer_id": reviewer_id.strip(),
+                      "rationale": rationale.strip(), "decision": decision,
+                      "evidence_link": link, "reviewed_at": int(self.clock()),
+                      "publication": "BLOCKED", "acceptance": "NOT_ACCEPTED",
+                      "identity_boundary": "SELF_DECLARED_LOCAL_OPERATOR"}
+            state = "BLOCK1_REASSESSMENT_REQUIRED" if decision == "REQUEST_BLOCK1_REASSESSMENT" else "OPEN"
+            self.store.put("AUTONOMY_TASK", task_id, {
+                **task, "state": state, "evidence_link": link if state != "OPEN" else None,
+                "last_human_review": review, "publication": "BLOCKED", "acceptance": "NOT_ACCEPTED",
+            })
+            return {"status": state, "task_id": task_id, "publication": "BLOCKED",
+                    "acceptance": "NOT_ACCEPTED", "evidence_link": link}
 
     def _close_review_waits_by_abstention(self):
         if not self.store.latest('CONTROL').get('deferred-evidence-review', {}).get('enabled', False):
@@ -377,9 +590,11 @@ class OperationsService:
                 recovery_key=self.recovery_key)
             self.intake.recover(receipt, recovery_key=self.recovery_key)
 
-    def tick(self, *, max_cases=16):
+    def tick(self, *, max_cases=16, max_research_attempts=8):
         if type(max_cases) is not int or not 1 <= max_cases <= 32:
             raise OperationsError("CASE_BUDGET_INVALID")
+        if type(max_research_attempts) is not int or not 1 <= max_research_attempts <= 32:
+            raise OperationsError("RESEARCH_BUDGET_INVALID")
         with self.lock:
             now = int(self.clock())
             if self.stop_event.is_set() or (self.root / "STOP").exists():
@@ -390,10 +605,17 @@ class OperationsService:
                 return {"state": "PAUSED"}
             self.scan_inbox()
             intake_result = self.intake.run(max_jobs=1)
-            # Both source adapters verify their own stores and authority before
-            # returning a dossier. One source can never stand in for the other.
+            # Listing verifies storage, not current execution authority. Retained
+            # history must pass a fresh producer export before deriving work.
             dossiers = self.exporter.list_dossiers(now=datetime.fromtimestamp(now, timezone.utc))
-            self._ensure_autonomy_tasks(dossiers)
+            dossiers = self._ensure_autonomy_tasks(dossiers)
+            research_tasks = []
+            for task in self.store.latest("AUTONOMY_TASK").values():
+                route = _evidence_route(task["source_id"], task["requirement"])
+                research_tasks.append({**task, "evidence_route": route["id"],
+                                       "next_action": route["next_action"]})
+            research = self.research.run(research_tasks,
+                                         dossiers, budget=max_research_attempts)
             profiles = self.store.latest("PROFILE")
             outputs = self.store.latest("OUTPUT")
             work = [(d, p) for d in dossiers for p in profiles.values()]
@@ -414,13 +636,9 @@ class OperationsService:
                         validate_profile(profile, now=int(current.timestamp()))
                         package = self.exporter.export(dossier["dossier_id"], now=current)
                         self.cases.ingest(package, now=current)
-                        design = compose_content_design(dossier, package)
-                        if self.store.latest("ENV").get("data", {}).get("class") == "SYNTHETIC_PILOT":
-                            design["title"] = "PRUEBA SINTÉTICA · " + design["title"]
-                            design["content_blocks"][0]["body"] = (
-                                "Datos de prueba generados localmente; no representan una publicación real de Eurostat. "
-                                + design["content_blocks"][0]["body"])
-                            design["fingerprint"] = fingerprint({k: v for k, v in design.items() if k != "fingerprint"})
+                        design = _design_for_dossier(
+                            dossier, package,
+                            synthetic=self.store.latest("ENV").get("data", {}).get("class") == "SYNTHETIC_PILOT")
                         adaptation = adapt_content_design(design, profile, now=int(current.timestamp()))
                         html, plain = render_designed_review_artifact(design, adaptation)
                         # Recheck mutable source controls before committing a completed artifact.
@@ -441,9 +659,10 @@ class OperationsService:
                 self.store.put("CURSOR", "designs", {"position": (cursor + len(batch)) % len(work)})
             self._close_review_waits_by_abstention()
             self.last_cycle, self.last_error = int(self.clock()), None
-            return {"state": "RUNNING", "intake": intake_result[-1]["state"], "outcomes": outcome}
+            return {"state": "RUNNING", "intake": intake_result[-1]["state"],
+                    "outcomes": outcome, "research_outcomes": research}
 
-    def output(self, identity):
+    def _output_checked(self, identity, *, final_check):
         value = self.store.latest("OUTPUT").get(identity)
         if value is None:
             raise OperationsError("OUTPUT_NOT_FOUND")
@@ -452,14 +671,64 @@ class OperationsService:
         # compatible artifact under the new design boundary.
         if "design_artifact" not in value:
             raise OperationsError("LEGACY_OUTPUT_REQUIRES_MIGRATION")
+        if (value.get("id") != identity or value.get("state") != "DESIGN_REVIEW_REQUIRED"
+                or value.get("review") != "HUMAN_REVIEW_REQUIRED"
+                or value.get("publication") != "BLOCKED" or value.get("delivery") != "NONE"
+                or value.get("stages") != ["BLOCK1_DOSSIER_VERIFIED", "BLOCK2_CONTENT_DESIGN",
+                                            "BLOCK3_AUDIENCE_ADAPTATION"]):
+            raise OperationsError("OUTPUT_BOUNDARY_INVALID")
         now = int(self.clock())
         validate_profile(value["profile"], now=now)
         if self.store.latest("PROFILE").get(value["profile"]["id"]) != value["profile"]:
             raise OperationsError("PROFILE_SUPERSEDED")
-        package = self.exporter.export(value["dossier_id"], now=datetime.fromtimestamp(now, timezone.utc))
-        if package["source_hash"] != value["design_artifact"]["source_hash"]:
-            raise OperationsError("SOURCE_SUPERSEDED")
-        return value
+        current = datetime.fromtimestamp(now, timezone.utc)
+        package = self.exporter.export(value["dossier_id"], now=current)
+        dossiers = [item for item in self.exporter.list_dossiers(now=current)
+                    if item.get("dossier_id") == value["dossier_id"]]
+        if len(dossiers) != 1 or value.get("case_id") != package["case_id"]:
+            raise OperationsError("OUTPUT_SOURCE_LINEAGE_INVALID")
+        design = _design_for_dossier(
+            dossiers[0], package,
+            synthetic=self.store.latest("ENV").get("data", {}).get("class") == "SYNTHETIC_PILOT")
+        if value["design_artifact"] != design:
+            raise OperationsError("OUTPUT_DESIGN_MISMATCH")
+        adaptation = adapt_content_design(design, value["profile"], now=now)
+        if value.get("adaptation") != adaptation:
+            raise OperationsError("OUTPUT_ADAPTATION_MISMATCH")
+        html, plain = render_designed_review_artifact(design, adaptation)
+        if (value.get("html") != html or value.get("plain_text") != plain
+                or value.get("html_sha256") != sha256(html.encode()).hexdigest()):
+            raise OperationsError("OUTPUT_CONTENT_MISMATCH")
+        if not final_check:
+            return value, package, dossiers
+        # The producer, profile or clock may change while the design is rendered.
+        final_now = int(self.clock())
+        if final_now < now:
+            raise OperationsError("OUTPUT_CLOCK_ROLLBACK")
+        validate_profile(value["profile"], now=final_now)
+        if self.store.latest("PROFILE").get(value["profile"]["id"]) != value["profile"]:
+            raise OperationsError("PROFILE_SUPERSEDED")
+        current = datetime.fromtimestamp(final_now, timezone.utc)
+        if (self.exporter.export(value["dossier_id"], now=current) != package
+                or [item for item in self.exporter.list_dossiers(now=current)
+                    if item.get("dossier_id") == value["dossier_id"]] != dossiers):
+            raise OperationsError("OUTPUT_SOURCE_CHANGED_DURING_READ")
+        # The final source reads can themselves cross the expiration boundary.
+        returned_at = int(self.clock())
+        if returned_at < final_now:
+            raise OperationsError("OUTPUT_CLOCK_ROLLBACK")
+        validate_profile(value["profile"], now=returned_at)
+        _validate_package(package, self.package_key,
+                          datetime.fromtimestamp(returned_at, timezone.utc))
+        if datetime.fromisoformat(package["expires_at"]).timestamp() <= returned_at:
+            raise OperationsError("OUTPUT_SOURCE_EXPIRED_DURING_READ")
+        if (self.store.latest("PROFILE").get(value["profile"]["id"]) != value["profile"]
+                or self.store.latest("OUTPUT").get(identity) != value):
+            raise OperationsError("OUTPUT_CHANGED_DURING_READ")
+        return value, package, dossiers
+
+    def output(self, identity):
+        return self._output_checked(identity, final_check=True)[0]
 
     def snapshot(self):
         with self.lock:
@@ -467,21 +736,63 @@ class OperationsService:
             active = self.thread is not None and self.thread.is_alive() and not self.stop_event.is_set()
             status = "ERROR" if self.last_error else "PAUSED" if paused else "RUNNING" if active else "STOPPED"
             summaries = []
+            checked_outputs = {}
             for identity, value in self.store.latest("OUTPUT").items():
                 try:
-                    self.output(identity)
-                    availability = "CURRENT"
+                    checked_outputs[identity] = self._output_checked(identity, final_check=False)
+                    summaries.append({"id": identity, "title": value["adaptation"]["heading"],
+                        "profile": value["profile"]["label"], "case_id": value["case_id"],
+                        "dossier_id": value["dossier_id"], "created_at": value["created_at"],
+                        "availability": "CURRENT", "state": value["state"]})
                 except (OperationsError, FederatedContractError, DesignArtifactError, AudiencePolicyError):
-                    availability = "STALE_OR_REVOKED"
-                summaries.append({"id": identity, "title": value["adaptation"]["heading"],
-                    "profile": value["profile"]["label"], "case_id": value["case_id"], "dossier_id": value["dossier_id"],
-                    "created_at": value["created_at"], "availability": availability, "state": value["state"]})
+                    # A rejected artifact cannot donate display text to the dashboard.
+                    summaries.append({"id": identity, "title": "Resultado no verificable",
+                        "profile": "No verificable", "case_id": None, "dossier_id": None,
+                        "created_at": None, "availability": "STALE_OR_REVOKED", "state": "UNVERIFIED"})
             done = self.store.latest("OUTPUT")
             runs = self.store.latest("ORCHESTRATION_RESULT")
             latest_run = max(runs.values(), key=lambda item: item["requested_at"], default=None)
-            return {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
+            tasks = []
+            dossier_ids = set(self.store.latest("DOSSIER_EVIDENCE_STATE"))
+            dossier_ids.update(t["dossier_id"] for t in self.store.latest("AUTONOMY_TASK").values())
+            dossier_ids.update(o["dossier_id"] for o in done.values())
+            evidence = {identity: self._dossier_evidence(identity) for identity in sorted(dossier_ids)}
+            for task in self.store.latest("AUTONOMY_TASK").values():
+                view = dict(task)
+                view["source_evidence_status"] = evidence[task["dossier_id"]]["status"]
+                view["effective_completion_boundary"] = AUTONOMY_TASK_RESOLUTION_BOUNDARY
+                route = _evidence_route(task["source_id"], task["requirement"])
+                view["effective_kind"] = route["kind"]
+                view["effective_evidence_route"] = route["id"]
+                view["effective_required_evidence_root"] = (
+                    route["required_evidence_root"] + ":" + task["source_root"]
+                    if route["id"] == "INDEPENDENT_DOSSIER"
+                    else route["required_evidence_root"] + ":" + task["source_id"])
+                view["effective_allowed_actions"] = route["allowed_actions"]
+                research_task = {**task, "evidence_route": route["id"],
+                                 "next_action": route["next_action"]}
+                view["research_evaluation"] = self.research.view(research_task)
+                view["boundary_status"] = ("CURRENT" if task.get("completion_boundary") ==
+                                           AUTONOMY_TASK_RESOLUTION_BOUNDARY else "LEGACY_SUPERSEDED")
+                if view.get("evidence_link"):
+                    try:
+                        current_link = self._revalidate_task_link(view)
+                        view["evidence_status"] = "CURRENT"
+                        view["evidence_comparison"] = current_link["comparison"]
+                        view["evidence_assessment"] = current_link["assessment"]
+                    except (OperationsError, FederatedContractError):
+                        view["evidence_status"] = "STALE_OR_REVOKED"
+                        view["evidence_comparison"] = None
+                        view["evidence_assessment"] = None
+                else:
+                    view["evidence_status"] = "NOT_LINKED"
+                    view["evidence_comparison"] = None
+                    view["evidence_assessment"] = None
+                tasks.append(view)
+            result = {"status": status, "last_cycle": self.last_cycle, "error": self.last_error,
+                    "dossier_evidence": list(evidence.values()),
                     "source_catalogs": self._catalog_snapshot(),
-                    "autonomy_tasks": sorted(self.store.latest("AUTONOMY_TASK").values(),
+                    "autonomy_tasks": sorted(tasks,
                                              key=lambda item: (item["state"], item["created_at"], item["task_id"])),
                     "evidence_review_deferred": self.store.latest('CONTROL').get('deferred-evidence-review', {}).get('enabled', False),
                     "deferred_reviews": list(self.store.latest('DEFERRED_REVIEW').values()),
@@ -496,6 +807,75 @@ class OperationsService:
                     "generator": "LOCAL_CONTENT_DESIGN_V1",
                     "orchestration": {"source_monitor": "ACTIVE" if self.store.latest("CONTROL").get("watch", {}).get("enabled", False) else "INACTIVE",
                                       "last_run": latest_run}}
+            # Derive context after every slower task/catalog/intake read.
+            for identity, state in evidence.items():
+                state["change_context"] = None
+                if state["status"] == "CURRENT":
+                    try:
+                        state["change_context"] = self._current_change_context(identity)
+                    except (OperationsError, FederatedContractError, ChangeContextViolation):
+                        pass  # An unavailable projection cannot donate a claim to the view.
+            final_now = datetime.fromtimestamp(self.clock(), timezone.utc)
+            for state in evidence.values():
+                if state["change_context"] is not None and datetime.fromisoformat(state["expires_at"]) <= final_now:
+                    state["change_context"] = None
+            # Output summaries were checked before slower task/catalog reads.
+            # Withdraw their content if that evidence is no longer current.
+            current_dossiers = None
+            checked_at = -1
+            current = final_now
+            try:
+                checked_at = int(self.clock())
+                current = datetime.fromtimestamp(checked_at, timezone.utc)
+                if checked_outputs:
+                    current_dossiers = self.exporter.list_dossiers(now=current)
+                current_profiles = self.store.latest("PROFILE")
+                current_outputs = self.store.latest("OUTPUT")
+            except (OperationsError, FederatedContractError, DesignArtifactError, AudiencePolicyError):
+                current_dossiers, current_profiles, current_outputs = None, {}, {}
+            for summary in summaries:
+                if summary["availability"] != "CURRENT":
+                    continue
+                try:
+                    value, package, dossiers = checked_outputs[summary["id"]]
+                    if current_dossiers is None:
+                        raise OperationsError("OUTPUT_SOURCE_CHANGED_DURING_SNAPSHOT")
+                    validate_profile(value["profile"], now=checked_at)
+                    if (current_profiles.get(value["profile"]["id"]) != value["profile"]
+                            or current_outputs.get(summary["id"]) != value):
+                        raise OperationsError("OUTPUT_CHANGED_DURING_SNAPSHOT")
+                    selected = [item for item in current_dossiers
+                                if item.get("dossier_id") == value["dossier_id"]]
+                    if (self.exporter.export(value["dossier_id"], now=current) != package
+                            or selected != dossiers):
+                        raise OperationsError("OUTPUT_SOURCE_CHANGED_DURING_SNAPSHOT")
+                    _validate_package(package, self.package_key, current)
+                except (OperationsError, FederatedContractError, DesignArtifactError, AudiencePolicyError):
+                    summary.update({"title": "Resultado no verificable", "profile": "No verificable",
+                                    "case_id": None, "dossier_id": None, "created_at": None,
+                                    "availability": "STALE_OR_REVOKED", "state": "UNVERIFIED"})
+            returned_at = int(self.clock())
+            if current_dossiers is not None:
+                try:
+                    if self.exporter.list_dossiers(
+                            now=datetime.fromtimestamp(returned_at, timezone.utc)) != current_dossiers:
+                        raise OperationsError("OUTPUT_SOURCE_CHANGED_DURING_SNAPSHOT")
+                except (OperationsError, FederatedContractError):
+                    for summary in summaries:
+                        if summary["availability"] == "CURRENT":
+                            summary.update({"title": "Resultado no verificable", "profile": "No verificable",
+                                            "case_id": None, "dossier_id": None, "created_at": None,
+                                            "availability": "STALE_OR_REVOKED", "state": "UNVERIFIED"})
+            for summary in summaries:
+                context = checked_outputs.get(summary["id"])
+                value = context[0] if context is not None else None
+                if (summary["availability"] == "CURRENT" and value is not None and
+                        (value["profile"]["expires_at"] <= returned_at
+                         or datetime.fromisoformat(value["design_artifact"]["expires_at"]).timestamp() <= returned_at)):
+                    summary.update({"title": "Resultado no verificable", "profile": "No verificable",
+                                    "case_id": None, "dossier_id": None, "created_at": None,
+                                    "availability": "STALE_OR_REVOKED", "state": "UNVERIFIED"})
+            return result
 
     def serve_loop(self, interval=5):
         if type(interval) is not int or not 1 <= interval <= 60:
@@ -558,12 +938,28 @@ def main():
     serve = commands.add_parser("serve")
     serve.add_argument("--port", type=int, default=8768)
     serve.add_argument("--interval", type=int, default=5)
+    serve.add_argument("--research-root", type=Path)
+    serve.add_argument("--research-data-id")
+    serve.add_argument("--research-metadata-id")
+    serve.add_argument("--research-national-id")
+    serve.add_argument("--research-regional-id")
     args = parser.parse_args()
     service = initialize(args.state) if args.command == "init" else OperationsService(args.state)
     if args.command == "serve":
         from .operations_web import create_operations_server
+        review = None
+        selected = (args.research_root, args.research_data_id, args.research_metadata_id)
+        if any(value is not None for value in (*selected, args.research_national_id, args.research_regional_id)):
+            if not all(value is not None for value in selected) or not args.research_root.is_dir():
+                parser.error("research requires an existing root and exact data and methodology candidate IDs")
+            from sictra_block1.research_acquisition import ResearchQuarantine
+            from sictra_block1.research_review import ResearchReview
+            review = ResearchReview(ResearchQuarantine(args.research_root),
+                args.research_data_id, args.research_metadata_id, national_id=args.research_national_id,
+                regional_id=args.research_regional_id)
+            review.read()  # Reject an invalid initial selection before starting a worker.
         with process_lock(service.root / "service.lock"):
-            server = create_operations_server(service, port=args.port)
+            server = create_operations_server(service, port=args.port, research_review=review)
             service.start(args.interval)
             print(f"Telecare OS: http://127.0.0.1:{server.server_port}/", flush=True)
             try:

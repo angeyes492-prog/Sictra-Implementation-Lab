@@ -36,6 +36,14 @@ El comando antiguo `operations backup` sigue siendo sólo del journal operativo.
 
 ## Iniciar y usar
 
+En el candidato de arquitectura de doce aristas (no instalado por este
+incremento), cada ciclo ejecuta también una búsqueda local automática. Examina
+dossiers de raíces distintas ya admitidos, con presupuesto de hasta ocho
+intentos por defecto y cursor persistente. «Última búsqueda local» informa
+espera, insuficiencia o revisión; no cierra la tarea ni acepta evidencia.
+Un resultado vencido se muestra sin su veredicto anterior. Reiniciar no duplica
+la evaluación; la pausa y STOP suspenden intentos nuevos. No busca en Internet.
+
 Intelligence abre directamente los dossiers retenidos de la operación. Su
 catálogo sintético queda en «Vista de pruebas». En cada boletín vigente de B4,
 «Ficha de trazabilidad» muestra la fuente normalizada, el perfil, las etapas y
@@ -93,10 +101,79 @@ python -m sictra_block4_orchestrator.pilot --state RUTA_NUEVA_PARA_PILOTO
 ```
 
 El piloto crea datos sintéticos etiquetados y verifica dos versiones, dos
-perfiles, contenido numérico y restauración. No descarga ni simula aprobación
+perfiles, tres ciclos, contenido numérico, investigación en espera,
+reinicio sin duplicados, pausa y restauración del journal operativo. No descarga ni simula aprobación
 de una fuente real. No mezcles su carpeta con la operación real.
 
 ## Respaldo, incidentes y alcance
+
+### Investigación oficial en cuarentena (candidato no instalado)
+
+Los originales descargados por el agente no pertenecen al respaldo operativo.
+Para reunir las siete recetas oficiales ya especificadas en un único ciclo
+finito de investigación, ejecuta explícitamente desde este checkout candidato:
+
+```powershell
+python -m sictra_block1.research_collection collect --root CICLO_NUEVO
+python -m sictra_block1.research_collection read --root CICLO_EXISTENTE --selection-id ID_DEVUELTO
+```
+
+El primer comando usa red pública con presupuesto compartido; no activa red en
+Telecare instalado. El segundo no usa red: vuelve a verificar originales,
+derechos, caducidad y el recibo de éxito antes de recalcular las revisiones.
+No elige archivos recientes automáticamente. Conserva el `selection_id` fuera
+de la carpeta. Una recaptura no demuestra nueva publicación ni independencia.
+
+Cada carpeta admite sólo un inicio, incluso tras fallo o reinicio del proceso.
+`cycle-outcome.json` conserva presupuesto, error y, para nuevos ciclos, los IDs
+retenidos. En fallo no hay selección utilizable; no elimines el marcador para
+reintentar ni repitas una denegación sin cambio de acceso o nueva evidencia.
+Los originales parciales permanecen en cuarentena. Una selección publicada
+sin recibo `COLLECTED` coincidente tampoco se puede leer como ciclo válido.
+El resultado conserva NOT_ADMITTED / NOT_RESOLVED / NOT_ACCEPTED; diferencia
+aritmética no significa explicación causal, corroboración ni aprobación.
+
+Si el Python de laboratorio rechaza una cadena TLS por autoridad local ausente,
+no desactives la verificación ni instales raíces desconocidas. En este equipo se
+verificó el paquete `certifi` **ya instalado**; el ajuste se hizo sólo para el
+proceso de investigación, sin cambiar certificados del sistema ni servicios:
+
+```powershell
+$env:SSL_CERT_FILE = python -m certifi
+```
+
+El contexto conservó CERT_REQUIRED y comprobación del hostname; guarda versión
+y SHA-256 del bundle usado. Un TLS correcto no demuestra admisión ni acceso al
+contenido. Referencia: [certifi oficial](https://github.com/certifi/python-certifi).
+La salida de `research_collection` usa escapes JSON ASCII sin pérdida para que
+la procedencia Unicode también pueda guardarse por pipes Windows heredados.
+
+Para conservar una selección Eurostat y su aviso de reutilización, usa una
+carpeta nueva cuyo padre ya exista:
+
+```powershell
+python -m sictra_block1.research_recovery backup --root CUARENTENA --candidate-id ID_EXACTO --destination ARCHIVO_NUEVO
+python -m sictra_block1.research_recovery restore --archive ARCHIVO --destination CUARENTENA_NUEVA --manifest-sha256 HASH_CONSERVADO
+```
+
+Puedes repetir `--candidate-id` para seleccionar datos y metodologías. El
+respaldo incluye automáticamente su aviso exacto de reutilización. Conserva el
+`manifest_sha256` devuelto en otro lugar confiable; no lo recuperes de un archivo
+que podría haber sido alterado. Se rechazan carpetas existentes, enlaces,
+archivos extra, dependencias ausentes y bytes modificados. No se copian claves
+ni aprobaciones. El material vencido se conserva como historia, pero restaurarlo
+no lo vuelve vigente ni lo admite como fuente.
+
+Para abrir una selección vigente en la consola candidata, inicia explícitamente:
+
+```powershell
+python -m sictra_block4_orchestrator.operations --state RUTA serve --research-root CUARENTENA --research-data-id ID_DATOS --research-metadata-id ID_METODOLOGIA --research-regional-id ID_REGIONAL
+```
+
+El ID regional es opcional; `--research-national-id` agrega la metodología
+nacional. Ambos deben compartir el mismo aviso vigente. Selecciones incompletas,
+equivocadas o vencidas rechazan el arranque. `/research` muestra originales
+cuarentenados y necesidades pendientes: no publica, admite ni resuelve.
 
 El servicio crea diariamente un respaldo firmado de su journal de operaciones,
 configuración y artefactos de diseño. `restore` sólo admite un destino inexistente y
