@@ -199,6 +199,101 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    or architecture acceptance authority. Next action: exact-final-SHA CI and
    retained diagnostic; installed app/live state remain untouched.
 
+### Closure delta — finite official collection, 2026-10-10 UTC
+
+Selected highest-risk viable route: COMPARABLE-APPROVED-INPUT, aristas
+1/2/4/10/12. Source approval and source-specific resolution remain separate;
+eliminating seven manual acquisition/ID-copy steps was sufficiently specified.
+Observable close: fixed rights-first recipes share one budget, seal exact seven
+candidate identities, reopen offline without requests and refuse a spent root,
+altered/expired/forged output or uncommitted selection. Candidate contract:
+contracts/block1_research_collection_contract_v0.1.md.
+
+IMPLEMENTED / EXECUTED: standalone research_collection, durable start/outcome,
+shared Eurostat/Statbel budget, immutable bounded exact selection, offline real
+parser/review composition and final fence. No scheduler, install, source admission,
+attestation, RESOLVED, publication or gate change. Thirty unique focused cases
+passed in 154.598s. Real collection retained five Eurostat originals, then stopped
+at request six (Statbel terms), 865993 received bytes. No retry or success selection;
+the original generic error does not establish its exact external cause. New
+tested failures record kind/recipe/partial IDs without rewriting that history.
+Evidence: evidence/telecare_research_collection_2026-10-10.md.
+
+New bounded diagnosis: IPv4/IPv6 verified TLS both failed for missing local CA;
+the existing certifi bundle selected only for the child research process verified
+TLS without disabling CERT_REQUIRED/hostname checking or installing roots. One
+new permitted root then retained six candidates including Statbel rights, failing
+at acquisition seven with PermissionError; no usable collection. Combined budget
+13 source attempts / 1937510 received bytes plus three body-free TLS probes.
+Exact current five-document Eurostat partial review passed offline; it is not a
+complete collection or admission. No further HTTP retry. Missing errno/location
+remains UNCONFIRMED; a new test now proves safe errno/winerror diagnostics without
+private error messages. Actual Unicode pipe failure was reproduced and repaired
+with lossless JSON escapes. Two added cases RED→GREEN; final increment adds 32
+cases. Earlier full run began before those repairs; final-version full regression
+will run separately, never inferred from it. Next local diagnostic target is
+PermissionError, not another unchanged blocked request. Source approval/resolution
+semantics and activation boundaries remain unchanged.
+
+Subsequent closure evidence, not rewritten history: a local write/rename probe
+passed and one budget-preserving diagnostic request retained actual Statbel data
+after the prior PermissionError. The FAILED root stayed FAILED. A new finite
+cycle then COLLECTED all seven official originals, 7 requests / 1071588 bytes,
+selection b48aae1b6a098fbd62df60f019d13b700243809cc88af4bc873ff892b9e92548.
+Exact-ID offline CLI reopen passed with zero requests; actual literal gaps
+288.75/524.95 thousand tonnes remained non-causal, independence NOT_ESTABLISHED,
+admission/resolution/acceptance absent. Total work-cycle source budget 21 requests,
+3120768 bytes, at most three attempts per fixed recipe plus three body-free TLS
+probes. The original permission cause remains unknown but is not a current
+blocked acquisition. No more recapture is needed for this mechanism. Next true
+boundary is comparable admitted evidence/per-need semantics, not that old error.
+
+Fresh incremental read-only model review: no Critical, two Important, no Minor.
+Final: fixed parser/HTTP failure accounting — malformed HTML assertion and
+BadStatusLine RED→GREEN, durable outcome/counters/original IDs; full suite pending.
+Final: fixed uncommitted publication becoming readable — missing, FAILED and
+wrong-ID success receipt RED→GREEN; cleanup failure leaves unusable residue.
+Final: Ruling: historical branch/engine integration — not certified by this
+incremental review; cost: integration defects; full regression/exact CI required.
+Final: Ruling: real seven-source success — request six remains failed; cost:
+false official selection; no admission or live-success claim.
+Final: Ruling: full regression/CI — separately required before material closure;
+cost: untested regressions; reviewer output never substitutes their execution.
+Final: Ruling: malicious replacement plus supplied IDs — hashes are integrity,
+not authenticated approval; cost: forged provenance; admission not granted.
+Final: Ruling: excluded admission/resolution/activation/publication — still absent,
+not complete; cost: unsupported effects; fixed boundaries preserved.
+Final: Ruling: separate-root budgets — bounded per authorized cycle, no automatic
+restart; cost: repeated-cycle misuse; blocked requests are not retried unchanged.
+Final: Ruling: concurrent filesystem/power loss — not certified; cost: races or
+lost durability; link guards and ordinary interruption rejection tested, runtime
+adoption excluded.
+Final: Ruling: rejected raw responses — retain completed quarantine candidates,
+not rejected partial bodies; cost: missing diagnostic bytes; counters/error retained.
+Final: Ruling: inherited TLS/DNS/deadlines — unchanged, not independently certified
+here; cost: network/security failures; existing tests and fixed recipes retained.
+
+Notion as of 2026-10-10T19:11:55.299Z still says seven fronts partial; Slack public
+Telecare search returned no results. Baseline 74558ab exact CI 38077832715 success.
+Wolfram: seven 8-MiB bodies fit within 100 MiB; preserved expiry cannot admit an
+expired closure. Model only, not runtime/gate proof. Final serial regression,
+clean preflight and this increment's exact containing SHA/CI remain pending at
+this entry's initial creation and are recorded after execution. No 100% claim.
+Next action/owner: agent verifies the increment; source authority/architecture
+decide actual approval/binding and accepted per-need semantics/reference cases.
+Statbel retry needs new access/transport evidence. All gates and paused automation
+unchanged. See evidence for explicit current reassessment of each twelve aristas.
+
+Final technical verification: 1077 cases in 4418.563s, 1076 passes, one Windows
+symlink-creation privilege skip, zero failures/errors; Windows junction rejection
+ran. All 32 added cases passed. JavaScript 18/18, compileall and launcher paths
+passed. Precommit finite preflight exactly 24/24 PASS, stable checkout,
+product_completion NOT_DEMONSTRATED. Final clean preflight and immutable hosted
+CI apply to this entry's containing SHA and are confirmed separately after push;
+no documentation-only commit is needed to repeat them. Candidate capabilities
+and live collection are verified at their bounded scope; all product acceptance,
+source admission, semantic resolution and shared activation remain unchanged.
+
 ### Closure delta — 2026-10-10 local / UTC
 
 Selected viable item: `COMPARABLE-APPROVED-INPUT` retention/recovery boundary
@@ -643,7 +738,11 @@ passed. This is 31 new Python vectors over c528205: 17 acquisition, eight
 methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
-Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-10 local):
+Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-10 UTC):
+finite seven-recipe collection composition, shared budgets and spent-root guard,
+known-ID offline review, durable commit fence, Unicode-safe CLI and failure diagnostics; thirty-two
+new positive/adversarial vectors executed. No reset for repeated downloads or
+documentation. Previous real delta (2026-10-10 local):
 bounded quarantine-original backup/restoration with actual bytes, preserved
 expiry/admission, no-clobber publication and controlled failure; regional
 CLI startup now reaches existing validated review. Executable positive and
