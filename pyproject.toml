@@ -8,6 +8,10 @@ version = "1.2.0"
 description = "Bounded, evidence-backed SICTrA Intelligence runtimes"
 requires-python = ">=3.11"
 
+[project.optional-dependencies]
+# Standalone construction-agent PDF inspection; not installed-runtime activation.
+research_pdf = ["pypdf==6.10.0"]
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 

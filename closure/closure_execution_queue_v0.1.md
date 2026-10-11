@@ -32,6 +32,39 @@ no-delta counter or resume the paused automation.
    Next action: retain that immutable evidence, then the approved-input decision below. Promotion boundary:
    candidate local mechanism only, not resolved need or accepted architecture.
 2. `COMPARABLE-APPROVED-INPUT` (aristas 1/2/4/5): INSUFFICIENT EVIDENCE.
+   Selected P04-STATBEL-PDF-METADATA, 2026-10-11: DESIGNED candidate reader,
+   not accepted. Observable closure: read the exact retained four-page Statbel
+   maritime metadata PDF and current referenced terms, reconstruct literal
+   coverage/revision fields with page provenance, withdraw on tamper/expiry,
+   and reject forged projections, ambiguous or active/malformed PDF content.
+   Dependencies: existing agent-acquisition boundary, Statbel terms quarantine,
+   explicit manual PDF receipt identity; optional pinned parser, isolated child
+   with byte/stream/text/object/time limits. Positive: reopen current retained
+   originals without network or writes, preserving blank units and limits.
+   Adversarial: modified original/terms/receipt/report, clock rollback, malformed,
+   encrypted, active, oversized and ambiguous text; timeout kills parser child.
+   Recovery: fresh reader recomputes from originals, never trusts saved report.
+   Owner: B1 construction agent. Integration: standalone CLI only, not engines,
+   seven-recipe collection, scheduler or installed app. Authority/acceptance:
+   NOT_ADMITTED / NOT_RESOLVED / NOT_ACCEPTED, independence NOT_ESTABLISHED;
+   PDF reuse applicability UNCONFIRMED. No causal explanation of numeric gaps.
+   SHA/CI: pending new implementation; no closure credited yet. Next: TDD,
+   real-original demonstration, review, full regression and exact-SHA CI.
+   P04 implementation/review checkpoint: original-derived11 fields executed,
+   old expired original rejected; two bounded fresh official requests122567B,
+   receipt4cc73900cd59cb0b4e2bb6ffed38d635819fe3d5125ce097964f765ceb6ed798.
+   Important timestamp/delimiter defects reproduced RED and repaired in one
+   review-fix pass; no authority bypass. Minor CLI traceback deferred. All
+   declined-topic rulings/costs in evidence/telecare_statbel_pdf_metadata_2026-10-11.md.
+   Mechanism IMPLEMENTED/EXECUTED; final suite/CI still pending, not closed.
+   Subsequent local final verification:1117 unique Python cases in1991.046s,
+   1116 pass/one Windows permission skip, no failures/errors; all23 new PDF
+   vectors and two review repairs executed. JS18, compile, launcher/diff pass;
+   stable changed-tree preflight24/24. Code frozen throughout full regression.
+   Evidence artifact/log hashes retained; new containing-SHA CI still pending.
+   Re-entry next candidate: P12 retained full-collection recovery where its
+   existing custody/selection contract specifies safe behavior; no admission,
+   installed activation or unresolved metadata semantics fabricated.
    Current increment verification blocker C0 (rechecked 2026-10-11 context):
    exact HEAD/remote 210843b6ec43204461530512bdc3640930dca638 has local
    final regression evidence and clean stable 24/24 preflight, but hosted PR

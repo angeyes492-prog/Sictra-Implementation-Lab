@@ -148,8 +148,28 @@ contenido. Referencia: [certifi oficial](https://github.com/certifi/python-certi
 La salida de `research_collection` usa escapes JSON ASCII sin pérdida para que
 la procedencia Unicode también pueda guardarse por pipes Windows heredados.
 
+La inspección candidata de un PDF Statbel retenido es independiente de la
+colección de siete recetas y del servicio instalado. En el entorno de
+desarrollo/laboratorio (también para ejecutar la suite completa), instala el
+addon del checkout aislado y proporciona el recibo exacto:
+
+```powershell
+python -m pip install -e '.[research_pdf]'
+python -m sictra_block1.research_statbel_metadata --pdf-root CUARENTENA_PDF_EXISTENTE --candidate-id ID_PDF_EXACTO --terms-root CUARENTENA_STATBEL_EXISTENTE
+```
+
+Lee únicamente `descriptor.json`, `original.pdf` y el recibo de derechos ligado;
+no descarga ni sigue enlaces del PDF. Caducidad, cambio de bytes, PDF no
+soportado o sección ambigua rechazan sin imprimir un informe parcial. La salida
+separa campos literales/página y límites: «Not applicable» no significa ausencia
+de revisiones; una cobertura trimestral no prueba equivalencia anual. No se
+admite la fuente, se resuelve una necesidad ni se configura la aplicación.
+El parser está acotado y aislado en un proceso, no en un sandbox del sistema.
+No cambies fechas ni hashes para volver vigente un recibo rechazado.
+
 Para conservar una selección Eurostat y su aviso de reutilización, usa una
-carpeta nueva cuyo padre ya exista:
+carpeta nueva cuyo padre ya exista. Este respaldo conserva su alcance exclusivo;
+**no respalda el PDF ni Statbel**:
 
 ```powershell
 python -m sictra_block1.research_recovery backup --root CUARENTENA --candidate-id ID_EXACTO --destination ARCHIVO_NUEVO
