@@ -78,8 +78,7 @@ class OperationsHandler(CommandCenterHandler):
                     return
                 report = review.read()
                 if path == "/api/research":
-                    review.verify_current(report)
-                    self._json(HTTPStatus.OK, report)
+                    self._json(HTTPStatus.OK, report, before_send=lambda: review.verify_current(report))
                 else:
                     body = render_research_review(report).encode("utf-8")
                     review.verify_current(report)

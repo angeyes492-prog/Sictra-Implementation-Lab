@@ -129,6 +129,12 @@ that stops at `HUMAN_REVIEW_REQUIRED`.
     research observations become unavailable pending a new bounded evaluation.
     Acceptance, installed adoption and contracted need-resolution semantics
     remain separate decisions; fixture success cannot approve any of them.
+    Candidate addendum2026-10-11 proposes exact finite-collection root/ID
+    configuration instead of copying individual IDs. Review whole-collection
+    original/rights/success-outcome checks, earliest expiry including Statbel,
+    canonical outer projection and post-render verifier. Explicit modes cannot
+    mix; no default selection, network, migration or source approval. This
+    records the requested shared review, not its acceptance or activation.
 
 ## Evidence available
 

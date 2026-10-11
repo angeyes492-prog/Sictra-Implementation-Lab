@@ -2,7 +2,7 @@
 
 Scope: LABORATORY_INTERNAL_SUPERVISED, task C0 of the closure checklist.
 Base SHA: 210843b6ec43204461530512bdc3640930dca638.
-Status: IMPLEMENTED / local regression EXECUTED; exact new-SHA CI separately required.
+Status: CLOSED_TECHNICAL C0; no product/arista acceptance inferred.
 Certainty VERIFIED / confidence B for the observations below; no gate promotion.
 
 ## Reproduced failure and diagnosis
@@ -50,6 +50,12 @@ Stable changed-tree preflight24/24 passed at 2026-10-11T17:06:28Z, reporting
 product_completion NOT_DEMONSTRATED; clean committed preflight follows commit.
 Final full regression, preflight and exact new-SHA hosted evidence are recorded
 in the canonical closure ledger after execution, never inferred here.
+
+Exact code/test SHA4dcaa83c61463cdd01e552ee96825289415dbdcd passed GitHub
+push38158647420/job114526748651, including nativeCPython3.11.17 full suite,
+preflight, launcher, JavaScript and both reference engine steps.
+Clean local preflight24/24 at2026-10-11T17:12:46Z reported dirty=false,
+unchanged checkout and product_completion NOT_DEMONSTRATED.
 
 ## Fresh read-only agent review
 

@@ -166,6 +166,23 @@ no lo vuelve vigente ni lo admite como fuente.
 
 Para abrir una selección vigente en la consola candidata, inicia explícitamente:
 
+Si conservaste una colección completa, basta su carpeta y `selection_id`:
+
+```powershell
+python -m sictra_block4_orchestrator.operations --state ESTADO_LABORATORIO_EXISTENTE serve --research-collection-root CICLO_EXISTENTE --research-selection-id ID_DEVUELTO
+```
+
+Abre la dirección local impresa y luego `/research` (o `/api/research` para JSON).
+La vista muestra el ID, valores y diferencias literales con límites explícitos.
+No necesita copiar los siete IDs ni descargar de nuevo. Verifica todos los
+originales, derechos, caducidad y recibo COLLECTED antes de arrancar y de cada
+respuesta. Alteración o vencimiento produce UNAVAILABLE sin valores recordados.
+No mezcles estos dos argumentos con los IDs manuales siguientes. El estado de
+laboratorio debe existir (`operations --state RUTA init` crea uno aislado nuevo);
+no uses el estado instalado para esta prueba candidata ni migres sus servicios.
+
+La configuración manual anterior sigue disponible:
+
 ```powershell
 python -m sictra_block4_orchestrator.operations --state RUTA serve --research-root CUARENTENA --research-data-id ID_DATOS --research-metadata-id ID_METODOLOGIA --research-regional-id ID_REGIONAL
 ```

@@ -65,3 +65,42 @@ regional byte tamper, exact reopened scope, HTTP rendering and expiry withdrawal
 wrong recipe, terms substitution,
 expiry and clock rollback during read, tamper, reopen, no writes, safe HTML,
 loopback Host rejection, unavailable withdrawal and absent configuration.
+
+## Candidate collection selector addendum — 2026-10-11
+
+Status remains CANDIDATE / MAR item15 REQUIRED, not installed adoption.
+B1 producer CollectionResearchReview implements the existing ResearchReview
+read/verify_current interface; B4 remains a read-only consumer. Explicit
+`--research-collection-root` and `--research-selection-id` must be provided
+together, and cannot be mixed with any manual research argument. The root must
+already exist and the ID must identify the immutable successful collection;
+no directory enumeration, newest-file choice or source download is allowed.
+Validate the complete collection before worker/server startup.
+
+Additive report0.3.0 preserves the existing fields and includes `collection`,
+the complete verified finite-collection report. Outer checked_at/expiry come
+from that report, so Statbel rights/data participate even when HTML displays
+the Eurostat review. This is not an approved source or a new journal/key.
+HTML also labels the exact collection ID, literal same-chain numeric gaps and
+Statbel provenance. Comparability/cause remain UNCONFIRMED and independent_root
+NOT_ESTABLISHED. Escape all inserted text; numbers are not insight or admission.
+Every read recomputes the existing read_collection from all seven originals,
+rights links, exact manifest and matching durable COLLECTED outcome. The final
+HTTP fence compares the canonical projection to its embedded collection, binds
+it to the configured selection ID and invokes verify_collection_current after
+rendering. A self-resealed outer report cannot forge admission, comparison,
+expiry or selection. Clock rollback, a missing outcome or alteration of any
+original withdraws the entire view with UNAVAILABLE, never a partial fallback.
+
+Manual report0.2.0 and absent/default configuration remain unchanged. Reopen
+reconstructs from the same exact root/ID with no cached measurements, writes or
+requests. Rollback omits these two flags; original quarantine and operations
+history remain untouched. Do not migrate installed services or extend the
+Eurostat-only recovery contract to Statbel by implication. Acceptance remains
+NOT_ACCEPTED, admission NOT_ADMITTED, resolution NOT_RESOLVED, runtime effect
+NONE and publication BLOCKED. Shared interface acceptance still needs MAR.
+
+Positive/rejection evidence must cover real CLI selection and partial/mixed
+startup rejection, real HTTP JSON/HTML, exact original values, offline reopen,
+unchanged original files/journal, Statbel tamper during render, missing success
+outcome, self-resealed report forgery, expiry and clock rollback.

@@ -133,6 +133,27 @@ def render_research_review(report):
             f'original SHA-256 <code>{e(regional["content_sha256"])}</code>.</p>'
             f'<details><summary>{e(regional["section_anchor"])}</summary>'
             f'<p>{e(regional["section_text"])}</p></details>')
+    collection_html = ""
+    if report.get("collection") is not None:
+        collection = report["collection"]
+        comparison = collection["comparison"]
+        compared_rows = "".join(
+            f'<tr><td>{e(row["year"])}</td><td>{e(row["eurostat_thousand_tonnes"])}</td>'
+            f'<td>{e(row["statbel_sum_thousand_tonnes"])}</td>'
+            f'<td>{e(row["numeric_gap_thousand_tonnes"])}</td></tr>' for row in comparison["rows"])
+        collection_html = ('<h2>Colección retenida seleccionada</h2>'
+            f'<p>Identificador exacto: <code>{e(collection["selection_id"])}</code>. '
+            'Cada lectura verifica todos los originales y su recibo de captura.</p>'
+            '<p>No demuestra equivalencia de cobertura, independencia ni causa. '
+            f'Raíz independiente: {e(comparison["independent_root"])}; '
+            f'comparabilidad: {e(comparison["comparability"])}; '
+            f'causa: {e(comparison["gap_cause"])}.</p>'
+            '<table><caption>Comparación literal no admitida · miles de toneladas</caption>'
+            '<thead><tr><th>Año</th><th>Eurostat</th><th>Statbel: suma cargada y descargada</th>'
+            '<th>Diferencia (Statbel - Eurostat)</th></tr></thead><tbody>' + compared_rows + '</tbody></table>'
+            f'<p>Fuente Statbel: <a href="{e(comparison["statbel"]["source_url"])}" rel="noreferrer">'
+            'Página oficial retenida</a>; original SHA-256 '
+            f'<code>{e(comparison["statbel"]["content_sha256"])}</code>.</p>')
     return ('<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
         '<title>Telecare OS · Investigación oficial</title><style>body{font:17px system-ui;max-width:960px;'
         'margin:2rem auto;padding:0 1rem;color:#16333a;background:#f5faf9}table{border-collapse:collapse;width:100%}'
@@ -148,7 +169,7 @@ def render_research_review(report):
         f'<p>Fuente oficial: <a href="{e(data["source_url"])}" rel="noreferrer">Eurostat</a></p>'
         f'<p>SHA-256 de bytes originales: <code>{e(data["content_sha256"])}</code></p>'
         f'<p>Aviso de reutilización retenido: <code>{e(admission["terms"]["candidate_id"])}</code></p>'
-        '<h2>Necesidades que siguen abiertas</h2><ul>' + needs + '</ul><h2>Metodología oficial general</h2>' + sections + national_html + regional_html +
+        + collection_html + '<h2>Necesidades que siguen abiertas</h2><ul>' + needs + '</ul><h2>Metodología oficial general</h2>' + sections + national_html + regional_html +
         '<h2>Frontera de esta revisión</h2><p>NOT_ADMITTED · NOT_RESOLVED · NOT_ACCEPTED · Publicación BLOCKED.</p>'
         '<p>No se ha creado aprobación, evidencia atestada, tarea resuelta ni efecto en otro bloque.</p>'
         '<p><a href="/api/research">Leer revisión JSON con procedencia y requisitos de admisión</a></p></main></html>')

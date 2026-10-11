@@ -943,13 +943,25 @@ def main():
     serve.add_argument("--research-metadata-id")
     serve.add_argument("--research-national-id")
     serve.add_argument("--research-regional-id")
+    serve.add_argument("--research-collection-root", type=Path)
+    serve.add_argument("--research-selection-id")
     args = parser.parse_args()
     service = initialize(args.state) if args.command == "init" else OperationsService(args.state)
     if args.command == "serve":
         from .operations_web import create_operations_server
         review = None
         selected = (args.research_root, args.research_data_id, args.research_metadata_id)
-        if any(value is not None for value in (*selected, args.research_national_id, args.research_regional_id)):
+        manual = (*selected, args.research_national_id, args.research_regional_id)
+        collection = (args.research_collection_root, args.research_selection_id)
+        if any(value is not None for value in collection):
+            if (any(value is not None for value in manual) or
+                    not all(value is not None for value in collection) or
+                    not args.research_collection_root.is_dir()):
+                parser.error("research collection requires an existing root and exact selection ID, without manual IDs")
+            from sictra_block1.research_collection_review import CollectionResearchReview
+            review = CollectionResearchReview(*collection)
+            review.read()  # Validate the complete collection before worker/server startup.
+        elif any(value is not None for value in manual):
             if not all(value is not None for value in selected) or not args.research_root.is_dir():
                 parser.error("research requires an existing root and exact data and methodology candidate IDs")
             from sictra_block1.research_acquisition import ResearchQuarantine

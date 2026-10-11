@@ -212,6 +212,31 @@ no-delta counter or resume the paused automation.
    work continue; restart replay preserves outputs. No country mapping,
    personal exposure, consent or delivery was inferred.
 5. `INTEGRATED-ACTIVATION` (arista 12): ARCHITECTURE_DECISION_REQUIRED.
+   Selected independent subcriterion P12-COLLECTION-CONSOLE, 2026-10-11 UTC:
+   DESIGNED / candidate console addendum under MAR item15. Owner agent.
+   Observable close: operator supplies existing collection root and exact
+   selection ID, reaches the real read-only console, reopens without network
+   or source/journal writes, and cannot retain measurements after any selected
+   original/outcome changes or expires. Dependencies: finite collection,
+   ResearchReview interface and existing final HTTP fence; no source admission
+   needed for a labelled quarantine view. Positive: actual CLI/HTTP/reopen and
+   literal fixture values. Adversarial: mixed/partial config, Statbel tamper
+   during render, forged self-sealed report, missing outcome, expiry/rollback.
+   C0's unchanged clean preflight24/24 passed on4dcaa83; hosted push38158647420
+   is running, not accepted evidence yet. Independent candidate construction
+   does not promote that commit or activate the installed application.
+   IMPLEMENTED / focused EXECUTED: real root/ID CLI and HTTP, whole-collection
+   final fence and additive labelled numeric comparison. A new isolated real
+   server reopened the retained official selection with both200 routes,
+   originals/journal unchanged and zero source requests. Review reproduced
+   JSON serialization-time expiry/tamper returning200 and ambiguous difference
+   direction; all three new rejection/label vectors passed after one fix pass.
+   Final full regression1094 unique cases in979.762s:1093 passed, one Windows
+   symlink permission skip, zero failures/errors. JavaScript18/18, compileall,
+   launcher and stable changed-tree preflight24/24 passed. Source/test code
+   unchanged throughout regression; exact containing-SHA CI still required.
+   Evidence: evidence/telecare_collection_console_2026-10-11.md. Parent activation,
+   source admission, per-need semantics and whole product acceptance remain open.
    Isolated candidate tests/pilot cannot promote the installed app. Owner:
    architecture/operator authority. Next action: MAR, accepted activation and
    sustained multi-cycle operation with organizational identity/key custody;
@@ -245,6 +270,15 @@ permission skip, zero failures/errors. New exact-SHA hosted CI remains required
 before crediting C0; native3.11 is not inferred from the local3.12 result.
 Evidence: evidence/telecare_collection_portability_2026-10-11.md.
 
+Subsequent immutable C0 closure:4dcaa83c61463cdd01e552ee96825289415dbdcd
+passed hosted push38158647420/job114526748651, all workflow steps, native
+CPython3.11.17. Clean committed preflight24/24 at2026-10-11T17:12:46Z bound
+source tree371d262d6fbd81cd6792304ab5f6d4ad5be33fc842be1e2893e917306c212c5e,
+dirty=false, unchanged during execution, product NOT_DEMONSTRATED.
+C0 is CLOSED_TECHNICAL at this exact boundary; P01–P12 product acceptance is
+not inferred. Skill/checklist re-entry selects the independent P12 criterion
+recorded under INTEGRATED-ACTIVATION, not another full-system green claim.
+
 Fresh read-only agent review found no Critical/Important; one Minor deferred:
 the injected-fault case checks retained IDs, while the real malformed-input case
 checks original bytes/hashes. Cost: deletion specific to the injected exception
@@ -258,6 +292,20 @@ Next viable P12 subcriterion: open the existing read-only research console by
 collection root plus exact selection ID, with all seven originals and committed
 outcome revalidated on each read/final HTTP fence. Preserve manual configuration,
 default absence, restart, expiry/tamper withdrawal and no writes/network effects.
+
+Independent P04 scope research while P12 regression runs: official Statbel
+four-page metadata PDF newly retained, one pinned TLS request/30197 bytes,
+original SHA256c50665e258b3215505399034d678a5922441e6fa4460ce55146014bf23a8d208.
+Text plus visual inspection supports the publisher's all-Belgian-seaport
+administrative coverage statement; regional Eurostat states main-port aggregation.
+Revision-policy/practice fields are declared not applicable, not a proof that
+no revision ever occurs. The mismatching inland-water database link is preserved
+as a metadata contradiction, not followed as a replacement maritime endpoint.
+Owner agent for candidate collection, source authority for rights/admission,
+B1/MAR for accepted per-need interpretation. Source/root independence and
+numeric-gap cause remain UNCONFIRMED. No new application recipe/parser/approval
+or task closure. Exact raw descriptor/rights lineage/expiry and original location
+are in the same evidence artifact; research permission is not admission.
 
 ### Closure delta — finite official collection, 2026-10-10 UTC
 
@@ -798,7 +846,13 @@ passed. This is 31 new Python vectors over c528205: 17 acquisition, eight
 methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
-Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-10 UTC):
+Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-11 UTC):
+C0 portable failure verification and independent malformed-input/fault vectors,
+full regression and exact native3.11 hosted CI4dcaa83/38158647420; product
+failure controls unchanged. Current P12 collection-console implementation has
+positive/expiry/tamper/startup/HTTP evidence, but its containing-SHA CI remains
+separate until recorded. No reset for documentation or renewed downloads.
+Previous real delta (2026-10-10 UTC):
 finite seven-recipe collection composition, shared budgets and spent-root guard,
 known-ID offline review, durable commit fence, Unicode-safe CLI and failure diagnostics; thirty-two
 new positive/adversarial vectors executed. No reset for repeated downloads or
