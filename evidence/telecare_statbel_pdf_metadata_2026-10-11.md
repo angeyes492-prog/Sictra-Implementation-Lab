@@ -120,6 +120,11 @@ checked1791754731/expiry1791840518, runtime NONE. Final CLI log
 `.runtime/statbel-pdf-original-review-final.json`, SHA256
 2b3abf60819b6901a495c6986aafcd3f4a1d973357e3e969dda163f48a8236d9.
 New committed-SHA/preflight/CI receipts remain separate until executed.
+Subsequent exact closure:7072caf18242c39c04da9f33151d9d7510888297,
+hosted push38179387293/job114588513805, every step succeeded. Clean committed
+preflight24/24 at2026-10-11T22:11:21Z, dirty=false, unchanged tree
+dadc1aa199a57dbac8a6ee31cf680b18b833f77df9669574fea93814981b941f.
+P04-STATBEL-PDF-METADATA CLOSED_TECHNICAL, not arista4/global completion.
 No product arista or governance gate is promoted by these tests.
 P04 parent remains INSUFFICIENT EVIDENCE for actual approved comparable sources.
 Next: retained collection recovery/admission consumers only where specified;

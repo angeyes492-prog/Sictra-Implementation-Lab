@@ -62,6 +62,16 @@ no-delta counter or resume the paused automation.
    vectors and two review repairs executed. JS18, compile, launcher/diff pass;
    stable changed-tree preflight24/24. Code frozen throughout full regression.
    Evidence artifact/log hashes retained; new containing-SHA CI still pending.
+   Subsequent closure P04-STATBEL-PDF-METADATA: CLOSED_TECHNICAL on
+   7072caf18242c39c04da9f33151d9d7510888297. Hosted push38179387293,
+   job114588513805 succeeded with all workflow steps. Committed preflight24/24
+   at2026-10-11T22:11:21Z, dirty=false/unchanged tree
+   dadc1aa199a57dbac8a6ee31cf680b18b833f77df9669574fea93814981b941f.
+   Certainty VERIFIED/confidence B for bounded reader only, not source truth,
+   acceptance or arista4 completion. Earlier seven-source selection expired;
+   the new PDF/terms are fresh candidates, not a renewed statistical admission.
+   Re-entry: reread skill/checklist; next independent P12-COLLECTION-RECOVERY
+   below, preserving old archive scope and every admission/activation boundary.
    Re-entry next candidate: P12 retained full-collection recovery where its
    existing custody/selection contract specifies safe behavior; no admission,
    installed activation or unresolved metadata semantics fabricated.
@@ -245,6 +255,21 @@ no-delta counter or resume the paused automation.
    work continue; restart replay preserves outputs. No country mapping,
    personal exposure, consent or delivery was inferred.
 5. `INTEGRATED-ACTIVATION` (arista 12): ARCHITECTURE_DECISION_REQUIRED.
+   Selected independent P12-COLLECTION-RECOVERY, 2026-10-11 UTC: DESIGNED,
+   candidate standalone archive/restore for exact seven-recipe selection.
+   Observable close: preserve17 selected original/descriptor/selection/outcome/
+   spent-cycle-marker files byte-for-byte, restore only to a new isolated root
+   under separately held digest, reopen current input or reject expired history.
+   Dependencies: existing collection/typed quarantine validation and no-replace
+   recovery primitives; old Eurostat archive stays unchanged and rejects new type.
+   Positive: offline fixture+actual history recovery, no source requests/keys/
+   source writes, unchanged TTL/budget and blocked repeat acquisition. Refutation:
+   tamper/digest substitution/foreign lineage/extra or missing files/path overlap/
+   interrupted publication/clock rollback; no selectable partial final root.
+   Mechanism/integration/evidence real: pending. Authority NOT_ACCEPTED; no
+   installation, approved source, need closure or runtime activation. Owner agent;
+   external digest custody remains operator responsibility, not self-authenticated.
+   SHA/CI pending new increment. Next: bounded immutable snapshot contract/TDD.
    Selected independent subcriterion P12-COLLECTION-CONSOLE, 2026-10-11 UTC:
    DESIGNED / candidate console addendum under MAR item15. Owner agent.
    Observable close: operator supplies existing collection root and exact
