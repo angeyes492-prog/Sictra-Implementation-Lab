@@ -3,7 +3,7 @@
 P12-COLLECTION-CONSOLE, parent INTEGRATED-ACTIVATION. Owner construction agent.
 Scope LABORATORY_INTERNAL_SUPERVISED; CANDIDATE / MAR item15 REQUIRED.
 Base4dcaa83c61463cdd01e552ee96825289415dbdcd passed exact hosted C0 CI.
-State IMPLEMENTED / full local regression EXECUTED; containing-SHA CI pending.
+State CLOSED_TECHNICAL P12-COLLECTION-CONSOLE; parent activation/product remain open.
 Certainty VERIFIED / confidence B at each executed boundary, not source truth.
 
 ## Implemented operator path
@@ -51,6 +51,15 @@ JavaScript18/18, compileall, launcher and diff checks passed. Stable changed-tre
 preflight24/24 at2026-10-11T17:33:56Z returned product NOT_DEMONSTRATED;
 source/test code stayed unchanged throughout final regression. Clean committed
 preflight and exact containing-SHA hosted CI follow publication, not inferred.
+
+Subsequent immutable evidence: code/test SHA
+60f3a8dd7684d9c6032b2611a4748b5a5acf7ef0 passed hosted push38160717271
+(job114532863242) and PR38160721086(job114532875060), all workflow steps.
+NativeCPython3.11.17 ran1094 cases in109.467s, zero failures/errors, one skip.
+The three review-fix vectors executed and passed in the hosted log.
+Clean committed preflight24/24 at2026-10-11T17:42:12Z, dirty=false,
+unchanged tree9efe22e6f4cd322ee209b691b1eff0e0755f62965b295566cf17ccbf104a3c1b,
+product NOT_DEMONSTRATED. Evidence is technical candidate closure, not MAR.
 
 Rulings on every declined review topic:
 
@@ -130,3 +139,33 @@ No repeated source recapture, new application parser, source admission, task
 resolution or new independent root follows. Next boundary: explicitly specified
 PDF-candidate reader/rights applicability and exact source approval/per-need
 policy, not an unsupported automatic green.
+
+## Reassessment of all twelve criteria, not another backlog
+
+The canonical ledger/plan still own ordering and acceptance. No product row is
+declared complete by this increment. The next high-risk actual-data boundary is
+P01-ACTUAL-STATISTICAL-ADMISSION: exact current registration/rights review and
+signed APPROVED/BOUND lineage, not another unchanged download. The prepared
+packet exposes PENDING/null reviewer; choosing that authority decision is not
+covered by permission to collect public documents. P05/P06/P07 additionally need
+accepted per-need/interpretation/editorial policy and reference cases.
+
+| Criterion | Executable boundary retained | Remaining product boundary |
+| --- | --- | --- |
+| P01 | Quarantine, admission port and retention/recovery mechanisms | Actual reviewed JSON-stat approval/binding; PDF rights applicability unknown |
+| P02 | Finite seven-recipe agent collection and periodic local files | Approved source/adapter and explicit runtime networking activation |
+| P03 | Same-period releases/flags/missingness comparison | Admitted real publication history; waiting for a newer publication is valid |
+| P04 | Literal gaps, current originals and documented scope question | Equivalent coverage/method and independence when required; no cause inferred |
+| P05 | Typed needs, bounded assessment and durable waits/reopening | Accepted source-specific resolution policy and admissible evidence |
+| P06 | Separated literal dossiers and protected engine adapters | Real evaluated interpretation/refutable hypotheses and accepted integration |
+| P07 | Traceable conservative shortlist/abstention | Accepted real quality/relevance cases; no publication |
+| P08 | Evidence-first bound design/render | Authorized user comprehension/accessibility/visual evaluation |
+| P09 | Current declared-profile adaptation and identity checks | Authorized real account exposure/consent where applicable |
+| P10 | Fair bounded local research, STOP/replay/recovery | Permitted acquisition through accepted B1 resolution and new decision |
+| P11 | Blocked no-effect candidates/receipt mechanisms | Authorized actual effect plus measured outcome for M08; outside default lab |
+| P12 | Exact collection console, launch/recovery/preflight/CI | MAR, operator/key/checkpoint custody, sustained admitted-source pilot, review |
+
+Eight B1 milestones remain the plan's P01, P03, P05/P06, P06, P07, P12,
+P12/P02 and C0/P12 crosswalk. Current exact regression/CI closes technical
+verification of this increment, not the missing input, semantic or acceptance
+conditions in the other milestones. No runtime activation or gate is promoted.

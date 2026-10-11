@@ -235,6 +235,20 @@ no-delta counter or resume the paused automation.
    symlink permission skip, zero failures/errors. JavaScript18/18, compileall,
    launcher and stable changed-tree preflight24/24 passed. Source/test code
    unchanged throughout regression; exact containing-SHA CI still required.
+   Subsequent closure: P12-COLLECTION-CONSOLE CLOSED_TECHNICAL on
+   60f3a8dd7684d9c6032b2611a4748b5a5acf7ef0, successful hosted
+   push38160717271/job114532863242 and PR38160721086/job114532875060.
+   Native3.11 full1094-case suite and all subsequent workflow steps passed;
+   clean committed24/24 preflight, unchanged tree, product NOT_DEMONSTRATED.
+   Skill/checklist re-entry: next P01-ACTUAL-STATISTICAL-ADMISSION under parent2,
+   PENDING SOURCE_DECISION. Actual pending packet9fe0ce3c158ea57d6c82de7c3f45b496655405597b0f13a3e3682041df4d4897
+   has exact current rights/data/methodology lineage, reviewer null and no
+   APPROVED/BOUND record for this JSON-stat selection. Owner source authority;
+   next action decide scoped registration/rights/approval and issue exact binding,
+   then agent exercises the existing port/retention with actual admissible input.
+   That decision is not inferred from collection permission. P05's accepted
+   per-need policy and editorial/user/pilot inputs are separate open boundaries;
+   the evidence artifact audits all12/eight B1 milestones, no global closure.
    Evidence: evidence/telecare_collection_console_2026-10-11.md. Parent activation,
    source admission, per-need semantics and whole product acceptance remain open.
    Isolated candidate tests/pilot cannot promote the installed app. Owner:
@@ -847,6 +861,10 @@ methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
 Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-11 UTC):
+P12 exact collection console, real original-byte HTTP/reopen, full regression,
+repaired serialization-time withdrawal, and exact60f3a8d hosted push/PR CI.
+Source admission/MAR/installed activation unchanged; paused heartbeat untouched.
+Previous real delta (2026-10-11 UTC):
 C0 portable failure verification and independent malformed-input/fault vectors,
 full regression and exact native3.11 hosted CI4dcaa83/38158647420; product
 failure controls unchanged. Current P12 collection-console implementation has
