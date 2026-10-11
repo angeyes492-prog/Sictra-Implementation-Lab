@@ -11,6 +11,13 @@ This is the single active backlog; the lists below retain historical evidence,
 not parallel queues. Architecture: `architecture/telecare_twelve_aristas_v0.1.md`.
 Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
 
+Execution criteria reference updated at owner request 2026-10-11:
+`docs/superpowers/plans/2026-10-11-telecare-closure-checklist.md` maps P01–P12
+to these existing parents, eight Block 1 milestones, observable closure,
+dependencies and tests. It is not another backlog, accepted architecture or
+product-completion evidence. Planning/skill edits do not reset the durable
+no-delta counter or resume the paused automation.
+
 1. `LOCAL-RESEARCH-CYCLE` (aristas 4/5/10/12): IMPLEMENTED / EXECUTED locally;
    final-SHA CI remains a separate GitHub evidence requirement. B4 automatically examines
    admitted current local dossier pairs, consumes B1 comparison/assessment,
@@ -25,6 +32,27 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    Next action: retain that immutable evidence, then the approved-input decision below. Promotion boundary:
    candidate local mechanism only, not resolved need or accepted architecture.
 2. `COMPARABLE-APPROVED-INPUT` (aristas 1/2/4/5): INSUFFICIENT EVIDENCE.
+   Current increment verification blocker C0 (rechecked 2026-10-11 context):
+   exact HEAD/remote 210843b6ec43204461530512bdc3640930dca638 has local
+   final regression evidence and clean stable 24/24 preflight, but hosted PR
+   CI 38088995012 FAILED, job 114321361316. One failure among 1077 cases:
+   test_remote_html_parser_assertion_is_durable_controlled_failure, line 284,
+   expected AssertionError, got ResearchAcquisitionError on CPython 3.11.17.
+   Post-regression hosted steps were skipped. No final-commit closure is
+   credited; prior 74558ab success does not validate this SHA. Owner: agent.
+   Next action: reproduce platform/parser difference, preserve durable failure
+   and no-selection assertions, repair/test, full regression and new exact-SHA
+   CI. This planning cycle diagnoses/records but changes no product code,
+   does not claim repair and does not reset the no-delta counter. Source/MAR
+   boundaries are unchanged; independent specified work remains permissible.
+   Documentation contradiction identified during checklist forward-test:
+   evidence/telecare_research_collection_2026-10-10.md line 144 says real
+   numeric gaps 288.75/524.95, while its arista-4 row at line 199 calls those
+   same numbers fixture gaps. Retained capture/offline log identities are
+   provided there; historical text is preserved. Owner: agent; next action:
+   distinguish executed original-byte observations from fixture oracles when
+   citing P04 evidence. This wording mismatch cannot establish independent
+   roots, equivalent coverage, cause, source admission or arista closure.
    Eurostat maritime tonnes and HN customs CIF USD do not measure the same
    phenomenon. Registry candidates are not approvals. Owner authorization
    changed 2026-10-03: agent-assisted public official research acquisition is
@@ -198,6 +226,38 @@ Scope remains LABORATORY_INTERNAL_SUPERVISED; all shared acceptance awaits MAR.
    this command in addition to full regression. It is not an exhaustive proof
    or architecture acceptance authority. Next action: exact-final-SHA CI and
    retained diagnostic; installed app/live state remain untouched.
+
+### C0 portability repair — 2026-10-11 UTC
+
+ID C0; parent COMPARABLE-APPROVED-INPUT; owner construction agent.
+Observable close: real malformed HTML is rejected with durable FAILED outcome,
+exact request/byte accounting, retained original bytes/hashes and no usable
+selection on both supported interpreter paths. Separate injected parser fault
+must preserve failure handling even if a standard-library parser changes.
+Base 210843b6ec43204461530512bdc3640930dca638; failed hosted run 38088995012.
+Official CPython3.11.17 and3.12.10 parser sources explain the different internal
+exceptions; the contract specifies controlled rejection, not that private type.
+Implementation changes only verification, not the product failure handler or
+source controls. Focused 33/33 passed in 93.772s; JavaScript18/18, compileall,
+launcher paths and stable changed-tree preflight24/24 passed. Full regression
+executed 1078 unique cases in 1030.967s: 1077 passed, one Windows symlink creation
+permission skip, zero failures/errors. New exact-SHA hosted CI remains required
+before crediting C0; native3.11 is not inferred from the local3.12 result.
+Evidence: evidence/telecare_collection_portability_2026-10-11.md.
+
+Fresh read-only agent review found no Critical/Important; one Minor deferred:
+the injected-fault case checks retained IDs, while the real malformed-input case
+checks original bytes/hashes. Cost: deletion specific to the injected exception
+has less direct future coverage. Reviewer did not execute native3.11 or full
+regression; those are separate requirements, not inferred review evidence.
+Historical failed-CI record above is preserved, not silently rewritten.
+Notion remains dated contextual history; public Slack search yielded no match;
+Wolfram request failed internally, so no new formal result is claimed.
+Boundary: source admission, resolution, installed activation and MAR remain open.
+Next viable P12 subcriterion: open the existing read-only research console by
+collection root plus exact selection ID, with all seven originals and committed
+outcome revalidated on each read/final HTTP fence. Preserve manual configuration,
+default absence, restart, expiry/tamper withdrawal and no writes/network effects.
 
 ### Closure delta — finite official collection, 2026-10-10 UTC
 

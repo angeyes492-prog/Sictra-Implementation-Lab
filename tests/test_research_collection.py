@@ -275,15 +275,36 @@ class CollectionTests(unittest.TestCase):
             with self.assertRaises(ResearchAcquisitionError):
                 self.module.verify_collection_current(self.root, body, clock=lambda: self.now)
 
-    def test_remote_html_parser_assertion_is_durable_controlled_failure(self):
+    def test_malformed_remote_html_is_durable_controlled_failure(self):
         self.bodies['EUROSTAT_MAR_METADATA'] = b'<![bad]>'
         with self.assertRaises(ResearchAcquisitionError):
             self.collect()
         outcome = json.loads((self.root / 'cycle-outcome.json').read_bytes())
         self.assertEqual('FAILED', outcome['state'])
-        self.assertEqual('AssertionError', outcome['error_type'])
         self.assertEqual(7, outcome['budget']['attempts'])
-        self.assertEqual(7, len(outcome['retained']))
+        self.assertEqual(sum(map(len, self.bodies.values())), outcome['budget']['received_bytes'])
+        self.assertEqual(set(self.bodies), set(outcome['retained']))
+        for recipe, entry in outcome['retained'].items():
+            publisher = 'eurostat' if recipe in RECIPES else 'statbel'
+            original = self.root / publisher / entry['candidate_id'] / 'content.bin'
+            self.assertEqual(self.bodies[recipe], original.read_bytes())
+            self.assertEqual(sha256(self.bodies[recipe]).hexdigest(), entry['content_sha256'])
+        self.assertFalse((self.root / 'selections').exists())
+
+    def test_remote_parser_assertion_retains_failure_and_originals(self):
+        # The parser's exception depends on CPython's version. Inject the
+        # external parser fault, keeping collection and persistence real.
+        with patch('sictra_block1.research_methodology.MethodologyParser.feed',
+                   side_effect=AssertionError('remote parser fault')):
+            with self.assertRaises(ResearchAcquisitionError):
+                self.collect()
+        outcome = json.loads((self.root / 'cycle-outcome.json').read_bytes())
+        self.assertEqual('FAILED', outcome['state'])
+        self.assertEqual('AssertionError', outcome['error_type'])
+        self.assertEqual('COLLECTION_FAILED', outcome['error'])
+        self.assertEqual(7, outcome['budget']['attempts'])
+        self.assertEqual(sum(map(len, self.bodies.values())), outcome['budget']['received_bytes'])
+        self.assertEqual(set(self.bodies), set(outcome['retained']))
         self.assertFalse((self.root / 'selections').exists())
 
     def test_bad_http_status_line_is_durable_controlled_failure(self):
