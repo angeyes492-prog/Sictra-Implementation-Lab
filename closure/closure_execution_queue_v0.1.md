@@ -32,7 +32,7 @@ no-delta counter or resume the paused automation.
    Next action: retain that immutable evidence, then the approved-input decision below. Promotion boundary:
    candidate local mechanism only, not resolved need or accepted architecture.
 2. `COMPARABLE-APPROVED-INPUT` (aristas 1/2/4/5): INSUFFICIENT EVIDENCE.
-   Selected P04-STATBEL-PDF-METADATA, 2026-10-11: DESIGNED candidate reader,
+   Historical P04-STATBEL-PDF-METADATA design, 2026-10-11 (subsequently CLOSED_TECHNICAL below): DESIGNED candidate reader,
    not accepted. Observable closure: read the exact retained four-page Statbel
    maritime metadata PDF and current referenced terms, reconstruct literal
    coverage/revision fields with page provenance, withdraw on tamper/expiry,
@@ -265,6 +265,25 @@ no-delta counter or resume the paused automation.
    work continue; restart replay preserves outputs. No country mapping,
    personal exposure, consent or delivery was inferred.
 5. `INTEGRATED-ACTIVATION` (arista 12): ARCHITECTURE_DECISION_REQUIRED.
+   Current P12-COLLECTION-RECOVERY: CLOSED_TECHNICAL,2026-10-17, bounded
+   standalone candidate only. Codef78dea71ce883a922267f02c0909ae4d42d0d7d3,
+   exact hosted push39068599312/job117501316101 completed success, every
+   step passed. Hosted1134 cases in117.649s,17 new cases verified in logs;
+   clean committed24/24 preflight at20:54:01Z, dirty=false/unchanged tree
+   a97b48e4bda486d6e6873c2a060f4b3793d1fc904795f06d82a69956e807123c.
+   Evidence/rulings: evidence/telecare_collection_recovery_2026-10-11.md.
+   Skill/checklist re-entry applied; NEXT P01-ACTUAL-STATISTICAL-ADMISSION,
+   parent2, SOURCE_DECISION_REQUIRED. Fresh proposed packet already prepared;
+   actual scoped APPROVED/BOUND, rights/renewal decision and custody checkpoint
+   are required before exercising existing admission/retention on real input.
+   Owner source/architecture authority. No source approval or policy inferred
+   from this code closure. Other open boundaries retain their evidence/state:
+   need-specific resolution/interpretation, accepted quality/user/account cases,
+   authorized effects and operator/custody/pilot/MAR. No undefined policy is
+   fabricated; block only affected promotion/activation, not independently
+   specified future engineering. Do not repeat unchanged captures/old closed
+   tests as progress. Paused automation remains PAUSED; no product row closes.
+   Historical design/execution checkpoints follow:
    Selected independent P12-COLLECTION-RECOVERY, 2026-10-11 UTC: DESIGNED,
    candidate standalone archive/restore for exact seven-recipe selection.
    Observable close: preserve17 selected original/descriptor/selection/outcome/
@@ -950,7 +969,12 @@ passed. This is 31 new Python vectors over c528205: 17 acquisition, eight
 methodology and six transport. Final checkout preflight and hosted exact-SHA
 CI are separately recorded in PR #18, not inferred from local test counts.
 
-Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-11 UTC):
+Consecutive zero-technical-delta runs: `0`. Last real delta (2026-10-17 UTC):
+P12 exact17-file seven-recipe recovery, real original-byte restore/rejection,
+parser-fault repair, full1134-case regression, clean24 preflight and exact
+f78dea71 hosted39068599312 success. No reset credited for documentation or the
+three-request source-review refresh; source/MAR/installed activation unchanged.
+Previous real delta (2026-10-11 UTC):
 P12 exact collection console, real original-byte HTTP/reopen, full regression,
 repaired serialization-time withdrawal, and exact60f3a8d hosted push/PR CI.
 Source admission/MAR/installed activation unchanged; paused heartbeat untouched.

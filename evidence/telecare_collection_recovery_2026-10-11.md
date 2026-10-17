@@ -206,3 +206,36 @@ Mechanism IMPLEMENTED/EXECUTED/locally VERIFIED at bounded candidate scope,
 confidence B. New material commit, clean committed24-test preflight and exact
 containing-SHA hosted CI remain separate until executed. No whole arista,
 source admission, policy, installed activation or program completion credited.
+
+## Exact technical closure — 2026-10-17T20:55Z
+
+Code/test commitf78dea71ce883a922267f02c0909ae4d42d0d7d3 pushed successfully.
+Exact push39068599312, job117501316101 completed success, all steps:1134 cases
+in117.649s/one platform skip, compile,24 sentinel preflight, launcher,18 JS,
+execution manifest and B1/B2 eight-engine reference runtimes. All17 newly
+added recovery cases explicitly executed successfully in the hosted log,
+including actual malformed metadata and both parser-exception boundaries.
+Independent local log inventory1134 unique IDs/zero duplicates/import errors;
+the Windows skip was lack of symlink-creation permission, not an ignored failure.
+Clean committed preflight24/24 at2026-10-17T20:54:01Z, dirty=false,
+checkout_unchanged=true, SHA exact, source tree
+a97b48e4bda486d6e6873c2a060f4b3793d1fc904795f06d82a69956e807123c;
+JSON receipt SHA25668f2aa2faabd838dd76d4f6f1f15ca965837c15b0819d7f0d0dc55caaf321de0.
+It intentionally retains product_completion=NOT_DEMONSTRATED.
+P12-COLLECTION-RECOVERY CLOSED_TECHNICAL at bounded candidate scope only.
+Parent12/Block1/global acceptance remain open, never GREEN from these tests.
+
+Mandatory re-entry: SKILL/checklist reread, all12/eight-B1 boundaries remain as
+audited above; next highest-risk P01-ACTUAL-STATISTICAL-ADMISSION has the fresh
+pending packet but needs genuine source authority/renewal decision and exact
+APPROVED/BOUND before real admission/retention. Source-approval contract producer
+is human review; task-evidence contract explicitly says no current input may
+mint RESOLVED and requires separate contracted per-need resolution. These are
+concrete authority/semantics boundaries, not permission to manufacture reviewer,
+signature, policy, source independence or acceptance. Existing fixture mechanisms
+are not rebuilt; no further unchanged recapture used as progress. P08/P09/P11/P12
+also retain their real authorized cases/identity/custody/effect/pilot requirements.
+Any future independently specified technical work may continue without promoting
+these gates, but those requirements must be supplied before full project closure.
+Automation PAUSED freshly confirmed in its existing TOML; not resumed or duplicated.
+Broader plan/worktree/scratch and original history preserved; no merge or deletion.
