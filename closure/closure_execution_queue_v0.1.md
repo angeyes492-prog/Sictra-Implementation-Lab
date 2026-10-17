@@ -72,10 +72,20 @@ no-delta counter or resume the paused automation.
    the new PDF/terms are fresh candidates, not a renewed statistical admission.
    Re-entry: reread skill/checklist; next independent P12-COLLECTION-RECOVERY
    below, preserving old archive scope and every admission/activation boundary.
+   P01 current decision input refreshed2026-10-17 by agent,3 official requests/
+   444356B, no runtime requests or source authority created. Pending packet
+   b1612fa5ff18eeafd4160fc2c14708e16f6429d2bb194aace299eddc7acecba7,
+   `.runtime/actual-admission-review-2026-10-17/pending-review.json`; reviewer
+   null/PENDING, expires1792354493. Required scope/rights reference/approval
+   fields recorded in the collection-recovery evidence. Statistical bytes
+   identical to earlier capture, not new revision or independence. Owner source
+   authority: review exact source rights/scope and provide authentic APPROVED/
+   BOUND plus renewal policy; no inheritance from XLSX or collection permission.
    Re-entry next candidate: P12 retained full-collection recovery where its
    existing custody/selection contract specifies safe behavior; no admission,
    installed activation or unresolved metadata semantics fabricated.
-   Current increment verification blocker C0 (rechecked 2026-10-11 context):
+   Historical C0 verification blocker (superseded by closed C0 receipt below;
+   do not reopen from this historical annotation; rechecked2026-10-17):
    exact HEAD/remote 210843b6ec43204461530512bdc3640930dca638 has local
    final regression evidence and clean stable 24/24 preflight, but hosted PR
    CI 38088995012 FAILED, job 114321361316. One failure among 1077 cases:
@@ -270,6 +280,28 @@ no-delta counter or resume the paused automation.
    installation, approved source, need closure or runtime activation. Owner agent;
    external digest custody remains operator responsibility, not self-authenticated.
    SHA/CI pending new increment. Next: bounded immutable snapshot contract/TDD.
+   Subsequent implementation checkpoint: exact17-file standalone archive/
+   restore IMPLEMENTED and executed over real original history; all17 restored
+   hashes equal/source unchanged, current read rejects expiry, recollection
+   rejects spent marker, zero source requests. Fresh Astra review found one
+   Important parser-exception boundary: two new tests RED3failures/2errors then
+   GREEN2/2 after one fix pass;17 focused final/full regression and exact new-SHA
+   CI still pending. Two Minor coverage/inventory-width limits deferred, all
+   declined-topic rulings/costs in evidence/telecare_collection_recovery_2026-10-11.md.
+   No global gate/arista promotion; parent activation remains open.
+   Resumption2026-10-17: exactHEAD/origin f54c41f and inheritedPR38179847234
+   success revalidated; five pending files belong to this increment. Previous
+   full regression was INTERRUPTED with no final verdict, not a pass; process
+   no longer exists. Run unchanged frozen source/tests to a new dated log,
+   then material commit, clean committed preflight and exact containing-SHA CI.
+   Source admission, installed activation and scheduler pause unchanged.
+   Final local verification2026-10-17:1134 unique cases/1133 pass/one Windows
+   skip in2442.574s, no failures/errors, source/tests frozen before/after;
+   all17 new vectors/review repair included. JS18,7 syntax,compile,launcher
+   passed. Actual17-file history recovery/source/archive unchanged/no requests,
+   current read expiry/recollection spent-marker rejection demonstrated afresh.
+   Log/hash and all review rulings in evidence artifact. New material SHA,
+   clean committed preflight and exact hosted CI pending, not yet closed.
    Selected independent subcriterion P12-COLLECTION-CONSOLE, 2026-10-11 UTC:
    DESIGNED / candidate console addendum under MAR item15. Owner agent.
    Observable close: operator supplies existing collection root and exact

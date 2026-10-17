@@ -184,6 +184,26 @@ archivos extra, dependencias ausentes y bytes modificados. No se copian claves
 ni aprobaciones. El material vencido se conserva como historia, pero restaurarlo
 no lo vuelve vigente ni lo admite como fuente.
 
+Para respaldar la colección completa de siete recetas (Eurostat y Statbel),
+usa el formato separado candidato de 17 archivos. Ambos destinos deben ser
+nuevos y tener un padre existente:
+
+```powershell
+python -m sictra_block1.research_collection_recovery backup --root CICLO_EXISTENTE --selection-id ID_EXACTO --destination ARCHIVO_COMPLETO_NUEVO
+python -m sictra_block1.research_collection_recovery restore --archive ARCHIVO_COMPLETO --destination CICLO_RESTAURADO_NUEVO --manifest-sha256 HASH_CONSERVADO_APARTE
+python -m sictra_block1.research_collection read --root CICLO_RESTAURADO --selection-id ID_EXACTO
+```
+
+Conserva aparte el digest devuelto por `backup`; no obtengas la autoridad de un
+hash guardado dentro del archivo que intentas restaurar. La restauración incluye
+los originales, recibos, selección, resultado COLLECTED y marcador de ciclo
+consumido. No renueva vigencia, presupuesto ni permiso de descarga: una lectura
+actual puede rechazar NOT_CURRENT, y `collect` seguirá rechazando ALREADY_STARTED.
+No borres el marcador para eludir ese control. La salida de recuperación es
+HISTORICAL_CONTEXT_ONLY, no una admisión ni una evaluación actual de Intelligence.
+No incluye el PDF, claves, aprobaciones, estado operativo o configuración instalada.
+No reemplaza el respaldo integral del laboratorio ni activa un worker restaurado.
+
 Para abrir una selección vigente en la consola candidata, inicia explícitamente:
 
 Si conservaste una colección completa, basta su carpeta y `selection_id`:
