@@ -116,6 +116,27 @@ class OperationsStore:
     def latest(self, kind):
         return {x["identity"]: x["value"] for x in self.records() if x["kind"] == kind}
 
+    def put_batch(self, entries):
+        """Atomically append a bounded group, including immutable replay checks."""
+        if not isinstance(entries, list) or not 1 <= len(entries) <= 3:
+            raise OperationsError("OPERATIONS_BATCH_INVALID")
+        with closing(self.connect()) as db:
+            db.execute("BEGIN IMMEDIATE")
+            records = self._read(db)
+            changed = False
+            for kind, identity, value, immutable in entries:
+                prior = next((x for x in reversed(records)
+                              if x["kind"] == kind and x["identity"] == identity), None)
+                if prior and prior["value"] == value:
+                    continue
+                if immutable and prior:
+                    raise OperationsError("IMMUTABLE_IDENTITY_COLLISION")
+                self._append(db, kind, identity, value)
+                records.append({"kind": kind, "identity": identity, "value": value})
+                changed = True
+            db.commit()
+            return changed
+
     def backup(self, directory):
         target = Path(directory)
         if target.exists() or target.is_symlink():

@@ -15,17 +15,20 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install SICTrA packages
-        run: python -m pip install -e .
+        run: python -m pip install -e '.[research_pdf]'
       - name: Run bounded context-to-reassessment tests
         run: python -m unittest discover -s tests -v
       - name: Compile Python sources
         run: python -m compileall -q src tests
+      - name: Execute finite twelve-arista mechanism preflight
+        run: python -m sictra.closure_preflight
       - name: Validate preserved launcher paths
         shell: pwsh
         run: ./tests/test_launch_paths.ps1

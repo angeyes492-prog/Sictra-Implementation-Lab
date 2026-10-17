@@ -42,8 +42,11 @@ def adapt_content_design(design, profile, *, now):
                     for claim_id in block.get("source_claim_ids", ())}
     if not claim_ids or observed_ids != claim_ids:
         raise AudiencePolicyError("DESIGN_ARTIFACT_CLAIM_LINEAGE_INVALID")
+    # Customs-point claims have no geo_code. An explicit geographic filter
+    # must match an explicit producer field, never a label or inferred country.
+    # Preserve the unfiltered route and reject unsupported scopes normally.
     selected = [deepcopy(c) for c in design["claims"]
-                if not profile["geo_codes"] or c["geo_code"] in profile["geo_codes"]]
+                if not profile["geo_codes"] or c.get("geo_code") in profile["geo_codes"]]
     if not selected:
         raise AudiencePolicyError("NO_GEOGRAPHIC_MATCH")
     total = len(selected)

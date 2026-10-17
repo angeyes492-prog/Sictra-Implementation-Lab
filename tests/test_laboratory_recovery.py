@@ -36,6 +36,8 @@ class LaboratoryRecoveryTests(unittest.TestCase):
         launch_config = b'{"schema":"TELECARE_LOCAL_PATHS_V1","intake_store":"legacy","design_trace":"legacy"}'
         (self.root / 'launch-paths.json').write_bytes(launch_config)
         before = self.service.store.latest('OUTPUT')
+        research_before = self.service.store.latest('RESEARCH_EVALUATION')
+        self.assertEqual(3, len(research_before))
         result = backup(self.root, self.archive)
         self.assertFalse(result['keys_included'])
         self.assertFalse(list(self.archive.rglob('*.key')))
@@ -46,6 +48,9 @@ class LaboratoryRecoveryTests(unittest.TestCase):
         self.assertTrue(recovered.is_paused())
         self.assertEqual(launch_config, (self.root / 'launch-paths.json').read_bytes())
         self.assertEqual(before, recovered.store.latest('OUTPUT'))
+        self.assertEqual(research_before, recovered.store.latest('RESEARCH_EVALUATION'))
+        self.assertTrue(all(t['research_evaluation']['availability']=='CURRENT_INPUTS'
+                            for t in recovered.snapshot()['autonomy_tasks']))
         output = next(iter(before.values()))
         self.assertIn('12.5', recovered.output(output['id'])['plain_text'])
         self.assertIn('14 miles de toneladas', recovered.output(output['id'])['plain_text'])
